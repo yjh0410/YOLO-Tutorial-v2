@@ -5,9 +5,7 @@ import torch.nn as nn
 # -------------------- Detection Pred Layer --------------------
 ## Single-level pred layer
 class Yolov1DetPredLayer(nn.Module):
-    def __init__(self,
-                 cfg,
-                 num_classes):
+    def __init__(self, cfg, num_classes):
         super().__init__()
         # --------- Basic Parameters ----------
         self.stride  = cfg.out_stride
