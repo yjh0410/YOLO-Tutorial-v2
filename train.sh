@@ -10,8 +10,9 @@ RESUME=$7
 
 # -------------------------- Train Pipeline --------------------------
 if [ $WORLD_SIZE == 1 ]; then
-    python train.py \
+    python -m torch.distributed.run --nproc_per_node=${WORLD_SIZE} --master_port ${MASTER_PORT} train.py \
             --cuda \
+            --distributed \
             --dataset ${DATASET} \
             --root ${DATASET_ROOT} \
             --model ${MODEL} \
