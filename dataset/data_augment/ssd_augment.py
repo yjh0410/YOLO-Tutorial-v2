@@ -203,6 +203,7 @@ class RandomIoUCrop(object):
             (0.5, None),
             (0.7, None),
             (0.9, None),
+            None,
         )
 
     def intersect(self, box_a, box_b):
@@ -499,7 +500,7 @@ class SSDAugmentation(object):
         self.augment = Compose([
             RandomDistort(prob=0.8),
             RandomExpand(fill_value=self.pixel_mean[::-1]),
-            # RandomIoUCrop(p=0.8),
+            RandomIoUCrop(p=0.8),
             RandomHorizontalFlip(p=0.5),
             Resize(img_size=self.img_size),
             ConvertColorFormat(self.color_format),
