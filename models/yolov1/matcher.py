@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-class YoloMatcher(object):
+class Yolov1Matcher(object):
     def __init__(self, num_classes):
         self.num_classes = num_classes
 

@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from .matcher import Yolov1Matcher
+from .matcher import Yolov2Matcher
 from utils.box_ops import get_ious
 from utils.distributed_utils import get_world_size, is_dist_avail_and_initialized
 
@@ -14,7 +14,7 @@ class SetCriterion(object):
         self.loss_box_weight = cfg.loss_box
 
         # matcher
-        self.matcher = Yolov1Matcher(cfg.num_classes)
+        self.matcher = Yolov2Matcher(cfg.iou_thresh, cfg.num_classes, cfg.anchor_sizes)
 
     def loss_objectness(self, pred_obj, gt_obj):
         loss_obj = F.binary_cross_entropy_with_logits(pred_obj, gt_obj, reduction='none')
