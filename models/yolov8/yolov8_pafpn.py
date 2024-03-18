@@ -6,7 +6,7 @@ from typing import List
 from .yolov8_basic import BasicConv, ELANLayer
 
 
-# PaFPN-ELAN
+# Modified YOLOv8's PaFPN
 class Yolov8PaFPN(nn.Module):
     def __init__(self,
                  cfg,
@@ -17,7 +17,7 @@ class Yolov8PaFPN(nn.Module):
         print('FPN: {}'.format("Yolo PaFPN"))
         # --------------------------- Basic Parameters ---------------------------
         self.in_dims = in_dims[::-1]
-        self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
+        self.out_dims = [round(cfg.head_dim * cfg.width)] * 3
 
         # ---------------- Top dwon ----------------
         ## P5 -> P4
@@ -67,7 +67,11 @@ class Yolov8PaFPN(nn.Module):
                                            norm_type  = cfg.fpn_norm,
                                            depthwise  = cfg.fpn_depthwise,
                                            )
-        
+        self.out_layers = nn.ModuleList([
+            BasicConv(feat_dim, self.out_dims[i], kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+            for i, feat_dim in enumerate([round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)])
+            ])
+
         self.init_weights()
         
     def init_weights(self):
@@ -101,4 +105,9 @@ class Yolov8PaFPN(nn.Module):
 
         out_feats = [p3, p4, p5] # [P3, P4, P5]
         
-        return out_feats
+        # output proj layers
+        out_feats_proj = []
+        for feat, layer in zip(out_feats, self.out_layers):
+            out_feats_proj.append(layer(feat))
+        
+        return out_feats_proj

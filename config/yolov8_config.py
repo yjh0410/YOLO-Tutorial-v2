@@ -38,6 +38,7 @@ class Yolov8BaseConfig(object):
         self.head_act  = 'silu'
         self.head_norm = 'BN'
         self.head_depthwise = False
+        self.head_dim       = 256
         self.num_cls_head   = 2
         self.num_reg_head   = 2
 
@@ -52,13 +53,13 @@ class Yolov8BaseConfig(object):
 
         # ---------------- Assignment config ----------------
         ## Matcher
-        self.tal_topk_candidates = 10
-        self.tal_alpha = 0.5
+        self.tal_topk_candidates = 13
+        self.tal_alpha = 1.0
         self.tal_beta  = 6.0
         ## Loss weight
-        self.loss_cls = 0.5
-        self.loss_box = 7.5
-        self.loss_dfl = 1.5
+        self.loss_cls = 1.0
+        self.loss_box = 2.5
+        self.loss_dfl = 0.5
 
         # ---------------- ModelEMA config ----------------
         self.use_ema = True
@@ -80,7 +81,7 @@ class Yolov8BaseConfig(object):
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
         self.lr_scheduler = "cosine"
-        self.max_epoch    = 500
+        self.max_epoch    = 300
         self.eval_epoch   = 10
         self.no_aug_epoch = 20
 
@@ -90,8 +91,8 @@ class Yolov8BaseConfig(object):
         self.normalize_coords = False
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.15
-        self.copy_paste  = 0.0          # approximated by the YOLOX's mixup
-        self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.5]
+        self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
+        self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
         self.pixel_mean = [0., 0., 0.]
         self.pixel_std  = [255., 255., 255.]
