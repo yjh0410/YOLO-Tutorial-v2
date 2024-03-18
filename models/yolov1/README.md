@@ -4,7 +4,7 @@
 
 | Model  |  Backbone  | Batch | Scale | AP<sup>val<br>0.5 | Weight |
 |--------|------------|-------|-------|-------------------|--------|
-| YOLOv1 | ResNet-18  | 1xb16 |  640  |                   |  |
+| YOLOv1 | ResNet-18  | 1xb16 |  640  |       75.0        | [ckpt]() |
 
 - COCO
 
