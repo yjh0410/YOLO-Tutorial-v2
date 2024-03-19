@@ -89,8 +89,7 @@ class DetPredLayer(nn.Module):
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
         
         # 解算边界框坐标
-        cxcy_delta = torch.sigmoid(reg_pred[..., :2]) * 3.0 - 1.5
-        cxcy_pred = (cxcy_delta + anchors[..., :2]) * self.stride
+        cxcy_pred = (reg_pred[..., :2] + anchors[..., :2]) * self.stride
         bwbh_pred = torch.exp(reg_pred[..., 2:]) * anchors[..., 2:]
         pred_x1y1 = cxcy_pred - bwbh_pred * 0.5
         pred_x2y2 = cxcy_pred + bwbh_pred * 0.5
