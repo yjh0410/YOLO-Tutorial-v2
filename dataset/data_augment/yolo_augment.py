@@ -202,7 +202,6 @@ class YOLOAugmentation(object):
 
         # --------------- To torch.Tensor ---------------
         image = F.to_tensor(image) * 255.
-        image = F.normalize(image, self.pixel_mean, self.pixel_std)
         if target is not None:
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
@@ -218,11 +217,13 @@ class YOLOAugmentation(object):
                 box_bwbh =  target["boxes"][..., 2:] - target["boxes"][..., :2]
                 target["boxes"] = torch.cat([box_cxcy, box_bwbh], dim=-1)
 
-
         # --------------- Pad Image ---------------
         img_h0, img_w0 = image.shape[1:]
-        pad_image = torch.zeros([image.size(0), self.img_size, self.img_size]).float()
+        pad_image = torch.ones([image.size(0), self.img_size, self.img_size]).float() * 114.
         pad_image[:, :img_h0, :img_w0] = image
+
+        # --------------- Normalize ---------------
+        pad_image = F.normalize(pad_image, self.pixel_mean, self.pixel_std)
 
         return pad_image, target, ratio
 
@@ -260,7 +261,6 @@ class YOLOBaseTransform(object):
 
         # --------------- To torch.Tensor ---------------
         image = F.to_tensor(image) * 255.
-        image = F.normalize(image, self.pixel_mean, self.pixel_std)
         if target is not None:
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
@@ -285,7 +285,10 @@ class YOLOBaseTransform(object):
         
         pad_img_h = img_h0 + dh
         pad_img_w = img_w0 + dw
-        pad_image = torch.zeros([image.size(0), pad_img_h, pad_img_w]).float()
+        pad_image = torch.ones([image.size(0), pad_img_h, pad_img_w]).float() * 114.
         pad_image[:, :img_h0, :img_w0] = image
+
+        # --------------- Normalize ---------------
+        pad_image = F.normalize(pad_image, self.pixel_mean, self.pixel_std)
 
         return pad_image, target, ratio
