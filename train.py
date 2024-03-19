@@ -161,7 +161,7 @@ def train():
     # ---------------------------- Build Model-EMA ----------------------------
     if cfg.use_ema and distributed_utils.get_rank() in [-1, 0]:
         print('Build ModelEMA for {} ...'.format(args.model))
-        model_ema = ModelEMA(model, cfg.ema_decay, cfg.ema_tau)
+        model_ema = ModelEMA(model, cfg.ema_decay, cfg.ema_tau, args.resume)
     else:
         model_ema = None
 

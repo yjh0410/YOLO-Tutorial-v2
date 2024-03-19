@@ -59,8 +59,10 @@ class DetPredLayer(nn.Module):
         # 将xy两部分的坐标拼起来：[H, W, 2] -> [HW, 2]
         anchor_xy = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2)
         # [HW, 2] -> [HW, A, 2] -> [M, 2], M=HWA
-        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1)
-        anchor_xy = anchor_xy.view(-1, 2)
+        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1).view(-1, 2)
+
+        # 加入亚像素坐标（anchor坐标偏移至中心点）
+        anchor_xy += 0.5
 
         # [A, 2] -> [1, A, 2] -> [HW, A, 2] -> [M, 2], M=HWA
         anchor_wh = self.anchor_size.unsqueeze(0).repeat(fmp_h*fmp_w, 1, 1)
@@ -89,7 +91,7 @@ class DetPredLayer(nn.Module):
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
         
         # 解算边界框坐标
-        cxcy_pred = (torch.sigmoid(reg_pred[..., :2]) + anchors[..., :2]) * self.stride
+        cxcy_pred = (torch.sigmoid(reg_pred[..., :2]) * 3.0 - 1.5 + anchors[..., :2]) * self.stride
         bwbh_pred = torch.exp(reg_pred[..., 2:]) * anchors[..., 2:]
         pred_x1y1 = cxcy_pred - bwbh_pred * 0.5
         pred_x2y2 = cxcy_pred + bwbh_pred * 0.5
@@ -127,7 +129,6 @@ class Yolov4DetPredLayer(nn.Module):
 
     def forward(self, cls_feats, reg_feats):
         all_anchors = []
-        all_strides = []
         all_fmp_sizes = []
         all_obj_preds = []
         all_cls_preds = []

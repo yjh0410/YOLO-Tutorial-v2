@@ -136,17 +136,26 @@ class Yolov4Matcher(object):
                 # label assignment
                 for result in label_assignment_results:
                     grid_x, grid_y, level, anchor_idx = result
+                    stride = fpn_strides[level]
+                    x1s, y1s = x1 / stride, y1 / stride
+                    x2s, y2s = x2 / stride, y2 / stride
                     fmp_h, fmp_w = fmp_sizes[level]
 
-                    if grid_x < fmp_w and grid_y < fmp_h:
-                        # obj
-                        gt_objectness[level][batch_index, grid_y, grid_x, anchor_idx] = 1.0
-                        # cls
-                        cls_ont_hot = torch.zeros(self.num_classes)
-                        cls_ont_hot[int(gt_label)] = 1.0
-                        gt_classes[level][batch_index, grid_y, grid_x, anchor_idx] = cls_ont_hot
-                        # box
-                        gt_bboxes[level][batch_index, grid_y, grid_x, anchor_idx] = torch.as_tensor([x1, y1, x2, y2])
+                    # 3x3 center sampling
+                    for j in range(grid_y - 1, grid_y + 2):
+                        for i in range(grid_x - 1, grid_x + 2):
+                            is_in_box = (j >= y1s and j < y2s) and (i >= x1s and i < x2s)
+                            is_valid = (j >= 0 and j < fmp_h) and (i >= 0 and i < fmp_w)
+
+                            if is_in_box and is_valid:
+                                # obj
+                                gt_objectness[level][batch_index, j, i, anchor_idx] = 1.0
+                                # cls
+                                cls_ont_hot = torch.zeros(self.num_classes)
+                                cls_ont_hot[int(gt_label)] = 1.0
+                                gt_classes[level][batch_index, j, i, anchor_idx] = cls_ont_hot
+                                # box
+                                gt_bboxes[level][batch_index, j, i, anchor_idx] = torch.as_tensor([x1, y1, x2, y2])
 
         # [B, M, C]
         gt_objectness = torch.cat([gt.view(bs, -1, 1) for gt in gt_objectness], dim=1).float()
@@ -154,3 +163,4 @@ class Yolov4Matcher(object):
         gt_bboxes = torch.cat([gt.view(bs, -1, 4) for gt in gt_bboxes], dim=1).float()
 
         return gt_objectness, gt_classes, gt_bboxes
+    

@@ -375,13 +375,25 @@ def load_weight(model, path_to_ckpt, fuse_cbn=False, fuse_rep_conv=False):
 
 ## Model EMA
 class ModelEMA(object):
-    def __init__(self, model, ema_decay=0.9999, ema_tau=2000, updates=0):
+    def __init__(self, model, ema_decay=0.9999, ema_tau=2000, resume=None):
         # Create EMA
         self.ema = deepcopy(self.de_parallel(model)).eval()  # FP32 EMA
-        self.updates = updates  # number of EMA updates
+        self.updates = 0  # number of EMA updates
         self.decay = lambda x: ema_decay * (1 - math.exp(-x / ema_tau))  # decay exponential ramp (to help early epochs)
         for p in self.ema.parameters():
             p.requires_grad_(False)
+
+        if resume is not None and resume.lower() != "none":
+            self.load_resume(resume)
+
+        print("Initialize ModelEMA's updates: {}".format(self.updates))
+
+    def load_resume(self, resume):
+        checkpoint = torch.load(resume)
+        if 'ema_updates' in checkpoint.keys():
+            print('--Load ModelEMA updates from the checkpoint: ', resume)
+            # checkpoint state dict
+            self.updates = checkpoint.pop("ema_updates")
 
     def is_parallel(self, model):
         # Returns True if model is of type DP or DDP
@@ -409,7 +421,6 @@ class ModelEMA(object):
             if v.dtype.is_floating_point:  # true for FP16 and FP32
                 v *= d
                 v += (1 - d) * msd[k].detach()
-        # assert v.dtype == msd[k].dtype == torch.float32, f'{k}: EMA {v.dtype} and model {msd[k].dtype} must be FP32'
 
     def update_attr(self, model, include=(), exclude=('process_group', 'reducer')):
         # Update EMA attributes
