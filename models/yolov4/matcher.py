@@ -12,7 +12,6 @@ class Yolov4Matcher(object):
             for anchor in anchor_size]
             )  # [KA, 4]
 
-
     def compute_iou(self, anchor_boxes, gt_box):
         """
             anchor_boxes : ndarray -> [KA, 4] (cx, cy, bw, bh).
@@ -49,7 +48,6 @@ class Yolov4Matcher(object):
         iou = np.clip(iou, a_min=1e-10, a_max=1.0)
         
         return iou
-
 
     @torch.no_grad()
     def __call__(self, fmp_sizes, fpn_strides, targets):
