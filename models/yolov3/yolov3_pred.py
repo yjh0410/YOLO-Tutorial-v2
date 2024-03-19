@@ -72,7 +72,7 @@ class DetPredLayer(nn.Module):
         
     def forward(self, cls_feat, reg_feat):
         # 预测层
-        obj_pred = self.obj_pred(cls_feat)
+        obj_pred = self.obj_pred(reg_feat)
         cls_pred = self.cls_pred(cls_feat)
         reg_pred = self.reg_pred(reg_feat)
 

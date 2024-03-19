@@ -62,7 +62,7 @@ class YoloTrainer(object):
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
 
         # ---------------------------- Build Optimizer ----------------------------
-        cfg.grad_accumulate = max(64 // args.batch_size, 1)
+        cfg.grad_accumulate = max(64 // args.batch_size, 1, args.grad_accumulate)
         cfg.base_lr = cfg.per_image_lr * args.batch_size * cfg.grad_accumulate
         cfg.min_lr  = cfg.base_lr * cfg.min_lr_ratio
         self.optimizer, self.start_epoch = build_yolo_optimizer(cfg, model, args.resume)
@@ -353,7 +353,7 @@ class RTDetrTrainer(object):
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
 
         # ---------------------------- Build Optimizer ----------------------------
-        cfg.grad_accumulate = max(16 // args.batch_size, 1)
+        cfg.grad_accumulate = max(16 // args.batch_size, 1, args.grad_accumulate)
         cfg.base_lr = cfg.per_image_lr * args.batch_size * cfg.grad_accumulate
         cfg.min_lr  = cfg.base_lr * cfg.min_lr_ratio
         self.optimizer, self.start_epoch = build_rtdetr_optimizer(cfg, model, args.resume)

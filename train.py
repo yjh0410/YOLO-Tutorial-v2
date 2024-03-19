@@ -61,6 +61,8 @@ def parse_args():
     # Batchsize
     parser.add_argument('-bs', '--batch_size', default=16, type=int, 
                         help='batch size on all the GPUs.')
+    parser.add_argument('-gc', '--grad_accumulate', default=1, type=int, 
+                        help='number of gradient accumulate.')
 
     # Model
     parser.add_argument('-m', '--model', default='yolo_n', type=str,
