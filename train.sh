@@ -3,9 +3,10 @@ MODEL=$1
 DATASET=$2
 DATASET_ROOT=$3
 BATCH_SIZE=$4
-WORLD_SIZE=$5
-MASTER_PORT=$6
-RESUME=$7
+GRAD_ACCUMULATE=$5
+WORLD_SIZE=$6
+MASTER_PORT=$7
+RESUME=$8
 
 
 # -------------------------- Train Pipeline --------------------------
@@ -17,6 +18,7 @@ if [[ $WORLD_SIZE == 1 ]]; then
             --root ${DATASET_ROOT} \
             --model ${MODEL} \
             --batch_size ${BATCH_SIZE} \
+            --grad_accumulate ${GRAD_ACCUMULATE}\
             --resume ${RESUME} \
             --fp16
 elif [[ $WORLD_SIZE -gt 1 && $WORLD_SIZE -le 8 ]]; then
@@ -27,6 +29,7 @@ elif [[ $WORLD_SIZE -gt 1 && $WORLD_SIZE -le 8 ]]; then
             --root ${DATASET_ROOT} \
             --model ${MODEL} \
             --batch_size ${BATCH_SIZE} \
+            --grad_accumulate ${GRAD_ACCUMULATE}\
             --resume ${RESUME} \
             --fp16 \
             --sybn

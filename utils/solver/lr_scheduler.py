@@ -1,29 +1,28 @@
-import math
+import numpy as np
 import torch
 
 
 # ------------------------- WarmUp LR Scheduler -------------------------
 ## Warmup LR Scheduler
 class LinearWarmUpLrScheduler(object):
-    def __init__(self, base_lr=0.01, wp_iter=500):
-        self.base_lr = base_lr
+    def __init__(self, wp_iter=500, base_lr=0.01, warmup_bias_lr=0.1, warmup_momentum=0.8):
         self.wp_iter = wp_iter
-        self.warmup_factor = 0.00066667
+        self.warmup_momentum = warmup_momentum
+        self.base_lr = base_lr
+        self.warmup_bias_lr = warmup_bias_lr
 
     def set_lr(self, optimizer, cur_lr):
         for param_group in optimizer.param_groups:
-            init_lr = param_group['initial_lr']
-            ratio = init_lr / self.base_lr
-            param_group['lr'] = cur_lr * ratio
+            param_group['lr'] = cur_lr
 
     def __call__(self, iter, optimizer):
         # warmup
-        assert iter < self.wp_iter
-        alpha = iter / self.wp_iter
-        warmup_factor = self.warmup_factor * (1 - alpha) + alpha
-        tmp_lr = self.base_lr * warmup_factor
-        self.set_lr(optimizer, tmp_lr)
-        
+        xi = [0, self.wp_iter]
+        for j, x in enumerate(optimizer.param_groups):
+            # bias lr falls from 0.1 to lr0, all other lrs rise from 0.0 to lr0
+            x['lr'] = np.interp(
+                iter, xi, [self.warmup_bias_lr if j == 0 else 0.0, x['initial_lr']])
+     
                            
 # ------------------------- LR Scheduler -------------------------
 def build_lr_scheduler(cfg, optimizer, resume=None):
