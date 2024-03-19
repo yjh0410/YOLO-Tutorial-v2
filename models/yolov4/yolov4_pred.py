@@ -118,8 +118,8 @@ class Yolov4DetPredLayer(nn.Module):
         # ----------- Network Parameters -----------
         ## pred layers
         self.multi_level_preds = nn.ModuleList(
-            [DetPredLayer(cls_dim      = cfg.head_dim,
-                          reg_dim      = cfg.head_dim,
+            [DetPredLayer(cls_dim      = round(cfg.head_dim * cfg.width),
+                          reg_dim      = round(cfg.head_dim * cfg.width),
                           stride       = cfg.out_stride[level],
                           anchor_sizes = cfg.anchor_size[level],
                           num_classes  = cfg.num_classes,)

@@ -21,7 +21,6 @@ class Yolov4BaseConfig(object):
         self.bk_act   = 'silu'
         self.bk_norm  = 'BN'
         self.bk_depthwise = False
-        self.use_pretrained = False
         ## Neck
         self.neck_act       = 'silu'
         self.neck_norm      = 'BN'
@@ -123,7 +122,6 @@ class Yolov4SConfig(Yolov4BaseConfig):
         self.width = 0.50
         self.depth = 0.34
         self.scale = "s"
-        self.use_pretrained = True
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0

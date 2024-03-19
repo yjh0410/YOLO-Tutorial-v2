@@ -97,8 +97,8 @@ class Yolov4DetHead(nn.Module):
         ## ----------- Network Parameters -----------
         self.multi_level_heads = nn.ModuleList(
             [DetHead(in_dim       = in_dims[level],
-                     cls_head_dim = cfg.head_dim,
-                     reg_head_dim = cfg.head_dim,
+                     cls_head_dim = round(cfg.head_dim * cfg.width),
+                     reg_head_dim = round(cfg.head_dim * cfg.width),
                      num_cls_head = cfg.num_cls_head,
                      num_reg_head = cfg.num_reg_head,
                      act_type     = cfg.head_act,
