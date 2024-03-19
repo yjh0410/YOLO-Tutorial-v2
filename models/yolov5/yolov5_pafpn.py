@@ -8,8 +8,7 @@ from .yolov5_basic import BasicConv, CSPBlock
 
 # Yolov5FPN
 class Yolov5PaFPN(nn.Module):
-    def __init__(self, cfg, in_dims: List = [256, 512, 1024],
-                 ):
+    def __init__(self, cfg, in_dims: List = [256, 512, 1024]):
         super(Yolov5PaFPN, self).__init__()
         self.in_dims = in_dims
         c3, c4, c5 = in_dims

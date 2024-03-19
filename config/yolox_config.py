@@ -86,8 +86,8 @@ class YoloxBaseConfig(object):
         self.box_format = 'xyxy'
         self.normalize_coords = False
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
-        self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
+        self.mixup_prob  = 0.0
+        self.copy_paste  = 1.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
         self.pixel_mean = [0., 0., 0.]
@@ -98,7 +98,7 @@ class YoloxBaseConfig(object):
         self.use_ablu = True
         self.affine_params = {
             'degrees': 0.0,
-            'translate': 0.1,
+            'translate': 0.2,
             'scale': [0.1, 2.0],
             'shear': 0.0,
             'perspective': 0.0,
@@ -124,4 +124,4 @@ class YoloxSConfig(YoloxBaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.0
+        self.copy_paste  = 1.0

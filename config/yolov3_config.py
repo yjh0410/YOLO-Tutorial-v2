@@ -100,7 +100,7 @@ class Yolov3BaseConfig(object):
         self.use_ablu = True
         self.affine_params = {
             'degrees': 0.0,
-            'translate': 0.1,
+            'translate': 0.2,
             'scale': [0.1, 2.0],
             'shear': 0.0,
             'perspective': 0.0,

@@ -37,7 +37,7 @@ class VOCAPIEvaluator():
         self.transform = transform
 
         # path
-        time_stamp = time.strftime('%Y-%m-%d_%H:%M:%S',time.localtime(time.time()))
+        time_stamp = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
         self.devkit_path = os.path.join(data_dir, 'VOC' + year)
         self.annopath = os.path.join(data_dir, 'VOC2007', 'Annotations', '%s.xml')
         self.imgpath = os.path.join(data_dir, 'VOC2007', 'JPEGImages', '%s.jpg')
