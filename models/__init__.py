@@ -29,7 +29,7 @@ def build_model(args, cfg, is_val=False):
     ## YOLOX
     elif 'yolox' in args.model:
         model, criterion = build_yolox(cfg, is_val)
-    ## YOLOv7
+    ## Modified Anchor-free YOLOv7
     elif 'yolov7' in args.model:
         model, criterion = build_yolov7(cfg, is_val)
     ## YOLOv8
