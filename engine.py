@@ -357,12 +357,6 @@ class RTDetrTrainer(object):
         self.wp_lr_scheduler = LinearWarmUpLrScheduler(cfg.base_lr, wp_iter=cfg.warmup_iters)
         self.lr_scheduler    = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
-        # ---------------------------- Build Model-EMA ----------------------------
-        if self.model_ema is not None:
-            update_init = self.start_epoch * len(self.train_loader) // cfg.grad_accumulate
-            print("Initialize ModelEMA's updates: {}".format(update_init))
-            self.model_ema.updates = update_init            
-
     def train(self, model):
         for epoch in range(self.start_epoch, self.cfg.max_epoch):
             if self.args.distributed:
