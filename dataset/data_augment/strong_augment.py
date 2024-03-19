@@ -24,7 +24,7 @@ class MosaicAugment(object):
 
         mosaic_bboxes = []
         mosaic_labels = []
-        mosaic_img = np.zeros([self.img_size*2, self.img_size*2, image_list[0].shape[2]], dtype=np.uint8)
+        mosaic_img = np.ones([self.img_size*2, self.img_size*2, image_list[0].shape[2]], dtype=np.uint8) * 114
         for i in range(4):
             img_i, target_i = image_list[i], target_list[i]
             bboxes_i = target_i["boxes"]
@@ -195,7 +195,7 @@ class MixupAugment(object):
                 origin_image = cv2.resize(origin_image, resize_size, interpolation=interp)
 
             # pad new image
-            pad_origin_image = np.zeros([img_size, img_size, origin_image.shape[2]], dtype=np.uint8)
+            pad_origin_image = np.ones([img_size, img_size, origin_image.shape[2]], dtype=np.uint8) * 114
             pad_origin_image[:resize_size[1], :resize_size[0]] = origin_image
             origin_image = pad_origin_image.copy()
             del pad_origin_image

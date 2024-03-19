@@ -56,9 +56,9 @@ def random_perspective(image,
     M = T @ S @ R @ P @ C  # order of operations (right to left) is IMPORTANT
     if (border[0] != 0) or (border[1] != 0) or (M != np.eye(3)).any():  # image changed
         if perspective:
-            image = cv2.warpPerspective(image, M, dsize=(width, height), borderValue=(0, 0, 0))
+            image = cv2.warpPerspective(image, M, dsize=(width, height), borderValue=(114, 114, 114))
         else:  # affine
-            image = cv2.warpAffine(image, M[:2], dsize=(width, height), borderValue=(0, 0, 0))
+            image = cv2.warpAffine(image, M[:2], dsize=(width, height), borderValue=(114, 114, 114))
 
     # Transform label coordinates
     n = len(targets)
