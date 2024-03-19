@@ -50,17 +50,14 @@ class DetPredLayer(nn.Module):
         """
             fmp_size: (List) [H, W]
         """
-        # 特征图的宽和高
         fmp_h, fmp_w = fmp_size
-
-        # 生成网格的x坐标和y坐标
         anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
 
-        # 将xy两部分的坐标拼起来：[H, W, 2] -> [HW, 2]
+        # [H, W, 2] -> [HW, 2]
         anchor_xy = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2)
+
         # [HW, 2] -> [HW, A, 2] -> [M, 2], M=HWA
-        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1)
-        anchor_xy = anchor_xy.view(-1, 2)
+        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1).view(-1, 2)
 
         # [A, 2] -> [1, A, 2] -> [HW, A, 2] -> [M, 2], M=HWA
         anchor_wh = self.anchor_size.unsqueeze(0).repeat(fmp_h*fmp_w, 1, 1)
@@ -127,7 +124,6 @@ class Yolov5DetPredLayer(nn.Module):
 
     def forward(self, cls_feats, reg_feats):
         all_anchors = []
-        all_strides = []
         all_fmp_sizes = []
         all_obj_preds = []
         all_cls_preds = []
