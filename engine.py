@@ -214,8 +214,8 @@ class YoloTrainer(object):
                 # Compute loss
                 loss_dict = self.criterion(outputs=outputs, targets=targets)
                 losses = loss_dict['losses']
-                losses /= self.cfg.grad_accumulate
                 loss_dict_reduced = distributed_utils.reduce_dict(loss_dict)
+                losses /= self.cfg.grad_accumulate
 
             # Backward
             self.scaler.scale(losses).backward()

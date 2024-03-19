@@ -19,6 +19,7 @@ class Yolov3FPN(nn.Module):
         self.top_down_layer_1 = ResBlock(in_dim     = c5,
                                          out_dim    = round(512*cfg.width),
                                          num_blocks = round(3*cfg.depth),
+                                         expansion  = 0.5,
                                          shortcut   = False,
                                          act_type   = cfg.fpn_act,
                                          norm_type  = cfg.fpn_norm,
@@ -29,6 +30,7 @@ class Yolov3FPN(nn.Module):
         self.top_down_layer_2 = ResBlock(in_dim     = c4 + round(256*cfg.width),
                                          out_dim    = round(256*cfg.width),
                                          num_blocks = round(3*cfg.depth),
+                                         expansion  = 0.5,
                                          shortcut   = False,
                                          act_type   = cfg.fpn_act,
                                          norm_type  = cfg.fpn_norm,
@@ -39,6 +41,7 @@ class Yolov3FPN(nn.Module):
         self.top_down_layer_3 = ResBlock(in_dim     = c3 + round(128*cfg.width),
                                          out_dim    = round(128*cfg.width),
                                          num_blocks = round(3*cfg.depth),
+                                         expansion  = 0.5,
                                          shortcut   = False,
                                          act_type   = cfg.fpn_act,
                                          norm_type  = cfg.fpn_norm,
@@ -72,4 +75,5 @@ class Yolov3FPN(nn.Module):
         out_feats_proj = []
         for feat, layer in zip(out_feats, self.out_layers):
             out_feats_proj.append(layer(feat))
+
         return out_feats_proj
