@@ -13,7 +13,7 @@ from .yolov7_pred     import Yolov7DetPredLayer
 from utils.misc import multiclass_nms
 
 
-# YOLOv7
+# Anchor-free YOLOv7
 class Yolov7(nn.Module):
     def __init__(self,
                  cfg,
