@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov3_basic import BasicConv, ResBlock
+    from .yolov4_basic import BasicConv, CSPBlock
 except:
-    from  yolov3_basic import BasicConv, ResBlock
+    from  yolov4_basic import BasicConv, CSPBlock
 
 # IN1K pretrained weight
 pretrained_urls = {
@@ -17,9 +17,9 @@ pretrained_urls = {
 
 # --------------------- Yolov3's Backbone -----------------------
 ## Modified DarkNet
-class Yolov3Backbone(nn.Module):
+class Yolov4Backbone(nn.Module):
     def __init__(self, cfg):
-        super(Yolov3Backbone, self).__init__()
+        super(Yolov4Backbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.model_scale = cfg.scale
         self.feat_dims = [round(64   * cfg.width),
@@ -38,7 +38,7 @@ class Yolov3Backbone(nn.Module):
             BasicConv(self.feat_dims[0], self.feat_dims[1],
                       kernel_size=3, padding=1, stride=2,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ResBlock(in_dim     = self.feat_dims[1],
+            CSPBlock(in_dim     = self.feat_dims[1],
                      out_dim    = self.feat_dims[1],
                      num_blocks = round(3*cfg.depth),
                      expansion  = 0.5,
@@ -52,7 +52,7 @@ class Yolov3Backbone(nn.Module):
             BasicConv(self.feat_dims[1], self.feat_dims[2],
                       kernel_size=3, padding=1, stride=2,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ResBlock(in_dim     = self.feat_dims[2],
+            CSPBlock(in_dim     = self.feat_dims[2],
                      out_dim    = self.feat_dims[2],
                      num_blocks = round(9*cfg.depth),
                      expansion  = 0.5,
@@ -66,7 +66,7 @@ class Yolov3Backbone(nn.Module):
             BasicConv(self.feat_dims[2], self.feat_dims[3],
                       kernel_size=3, padding=1, stride=2,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ResBlock(in_dim     = self.feat_dims[3],
+            CSPBlock(in_dim     = self.feat_dims[3],
                      out_dim    = self.feat_dims[3],
                      num_blocks = round(9*cfg.depth),
                      expansion  = 0.5,
@@ -80,7 +80,7 @@ class Yolov3Backbone(nn.Module):
             BasicConv(self.feat_dims[3], self.feat_dims[4],
                       kernel_size=3, padding=1, stride=2,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ResBlock(in_dim     = self.feat_dims[4],
+            CSPBlock(in_dim     = self.feat_dims[4],
                      out_dim    = self.feat_dims[4],
                      num_blocks = round(3*cfg.depth),
                      expansion  = 0.5,
@@ -155,7 +155,7 @@ if __name__ == '__main__':
             self.use_pretrained = True
 
     cfg = BaseConfig()
-    model = Yolov3Backbone(cfg)
+    model = Yolov4Backbone(cfg)
     x = torch.randn(1, 3, 640, 640)
     t0 = time.time()
     outputs = model(x)

@@ -7,7 +7,7 @@ def build_yolov2_config(args):
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
-# YOLOv8-Base config
+# YOLOv2-Base config
 class Yolov2BaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
@@ -92,8 +92,14 @@ class Yolov2BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
-# YOLOv8-S
+# YOLOv2-R18
 class Yolov2R18Config(Yolov2BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         self.backbone = 'resnet18'
+
+# YOLOv2-R50
+class Yolov2R50Config(Yolov2BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # TODO: Try your best.

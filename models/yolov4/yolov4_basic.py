@@ -96,49 +96,42 @@ class YoloBottleneck(nn.Module):
 
         return x + h if self.shortcut else h
 
-class ResBlock(nn.Module):
+class CSPBlock(nn.Module):
     def __init__(self,
                  in_dim,
                  out_dim,
-                 num_blocks :int   = 1,
-                 expansion  :float = 0.5,
-                 shortcut   :bool  = False,
-                 act_type   :str   = 'silu',
-                 norm_type  :str   = 'BN',
-                 depthwise  :bool  = False,
+                 num_blocks   :int   = 1,
+                 expansion    :float = 0.5,
+                 shortcut     :bool  = False,
+                 act_type     :str   = 'silu',
+                 norm_type    :str   = 'BN',
+                 depthwise    :bool  = False,
                  ):
-        super(ResBlock, self).__init__()
+        super(CSPBlock, self).__init__()
         # ---------- Basic parameters ----------
         self.num_blocks = num_blocks
         self.expansion = expansion
         self.shortcut = shortcut
+        inter_dim = round(out_dim * expansion)
         # ---------- Model parameters ----------
-        module = []
-        for i in range(num_blocks):
-            if i == 0:
-                module.append(YoloBottleneck(in_dim       = in_dim,
-                                             out_dim      = out_dim,
-                                             kernel_size  = [1, 3],
-                                             expansion    = expansion,
-                                             shortcut     = shortcut,
-                                             act_type     = act_type,
-                                             norm_type    = norm_type,
-                                             depthwise    = depthwise))
-            else:
-                module.append(YoloBottleneck(in_dim       = out_dim,
-                                             out_dim      = out_dim,
-                                             kernel_size  = [1, 3],
-                                             expansion    = expansion,
-                                             shortcut     = shortcut,
-                                             act_type     = act_type,
-                                             norm_type    = norm_type,
-                                             depthwise    = depthwise))
-
-
-        self.module = nn.Sequential(*module)
+        self.conv_layer_1 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        self.conv_layer_2 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        self.conv_layer_3 = BasicConv(inter_dim * 2, out_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        self.module       = nn.Sequential(*[YoloBottleneck(inter_dim,
+                                                           inter_dim,
+                                                           kernel_size  = [1, 3],
+                                                           expansion    = 1.0,
+                                                           shortcut     = shortcut,
+                                                           act_type     = act_type,
+                                                           norm_type    = norm_type,
+                                                           depthwise    = depthwise)
+                                                           for _ in range(num_blocks)
+                                                           ])
 
     def forward(self, x):
-        out = self.module(x)
+        x1 = self.conv_layer_1(x)
+        x2 = self.module(self.conv_layer_2(x))
+        out = self.conv_layer_3(torch.cat([x1, x2], dim=1))
 
         return out
     
