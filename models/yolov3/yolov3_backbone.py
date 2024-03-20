@@ -128,7 +128,6 @@ if __name__ == '__main__':
         print(out.shape)
 
     x = torch.randn(1, 3, 640, 640)
-    print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))

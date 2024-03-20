@@ -137,7 +137,9 @@ if __name__=='__main__':
     class Yolov3BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.out_stride = 32
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.out_stride = [8, 16, 32]
             self.max_stride = 32
             self.num_levels = 3
             ## Head
@@ -161,10 +163,10 @@ if __name__=='__main__':
     cls_feats, reg_feats = head(pyramid_feats)
     t1 = time.time()
     print('Time: ', t1 - t0)
-    for cls_f, reg_f in zip(cls_feats, reg_feats):
-        print(cls_f.shape, reg_f.shape)
+    print("====== Yolov3 Head output ======")
+    for level, (cls_f, reg_f) in enumerate(zip(cls_feats, reg_feats)):
+        print("- Level-{} : ".format(level), cls_f.shape, reg_f.shape)
 
-    print('==============================')
     flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))

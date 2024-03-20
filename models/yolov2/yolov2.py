@@ -32,7 +32,7 @@ class Yolov2(nn.Module):
         self.backbone = Yolov2Backbone(cfg)
         self.neck     = SPPF(cfg, self.backbone.feat_dim, cfg.head_dim)
         self.head     = Yolov2DetHead(cfg, self.neck.out_dim)
-        self.pred     = Yolov2DetPredLayer(cfg, self.num_classes)
+        self.pred     = Yolov2DetPredLayer(cfg)
 
     def post_process(self, obj_preds, cls_preds, box_preds):
         """

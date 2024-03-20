@@ -88,7 +88,7 @@ if __name__=='__main__':
     # Model config
     
     # YOLOv8-Base config
-    class Yolov1BaseConfig(object):
+    class Yolov2BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
             self.out_stride = 32
@@ -101,7 +101,7 @@ if __name__=='__main__':
             self.num_cls_head   = 2
             self.num_reg_head   = 2
 
-    cfg = Yolov1BaseConfig()
+    cfg = Yolov2BaseConfig()
     # Build a head
     head = Yolov2DetHead(cfg, 512)
 

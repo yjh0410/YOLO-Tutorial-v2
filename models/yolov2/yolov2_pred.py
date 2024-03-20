@@ -5,7 +5,7 @@ import torch.nn as nn
 # -------------------- Detection Pred Layer --------------------
 ## Single-level pred layer
 class Yolov2DetPredLayer(nn.Module):
-    def __init__(self, cfg, num_classes):
+    def __init__(self, cfg):
         super().__init__()
         # --------- Basic Parameters ----------
         self.stride  = cfg.out_stride
@@ -18,7 +18,7 @@ class Yolov2DetPredLayer(nn.Module):
 
         # --------- Network Parameters ----------
         self.obj_pred = nn.Conv2d(self.cls_dim, 1 * self.num_anchors, kernel_size=1)
-        self.cls_pred = nn.Conv2d(self.cls_dim, num_classes * self.num_anchors, kernel_size=1)
+        self.cls_pred = nn.Conv2d(self.cls_dim, self.num_classes * self.num_anchors, kernel_size=1)
         self.reg_pred = nn.Conv2d(self.reg_dim, 4 * self.num_anchors, kernel_size=1)                
 
         self.init_bias()
@@ -100,3 +100,43 @@ class Yolov2DetPredLayer(nn.Module):
                    }
 
         return outputs
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv8-Base config
+    class Yolov2BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.out_stride = 32
+            self.max_stride = 32
+            ## Head
+            self.head_dim  = 512
+            self.anchor_sizes = [[17, 25], [55, 75], [92, 206], [202, 21], [289, 311]]
+
+    cfg = Yolov2BaseConfig()
+    cfg.num_classes = 20
+    # Build a pred layer
+    pred = Yolov2DetPredLayer(cfg)
+
+    # Inference
+    cls_feat = torch.randn(1, cfg.head_dim, 20, 20)
+    reg_feat = torch.randn(1, cfg.head_dim, 20, 20)
+    t0 = time.time()
+    output = pred(cls_feat, reg_feat)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== Pred output ======= ')
+    for k in output:
+        if isinstance(output[k], torch.Tensor):
+            print("-{}: ".format(k), output[k].shape)
+        else:
+            print("-{}: ".format(k), output[k])
+
+    flops, params = profile(pred, inputs=(cls_feat, reg_feat, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))

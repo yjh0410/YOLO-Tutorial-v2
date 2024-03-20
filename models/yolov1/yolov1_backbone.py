@@ -44,7 +44,6 @@ if __name__=='__main__':
     print('Time: ', t1 - t0)
     print(output.shape)
 
-    print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))

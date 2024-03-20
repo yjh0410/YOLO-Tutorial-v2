@@ -114,7 +114,6 @@ if __name__=='__main__':
     print('Time: ', t1 - t0)
     print(cls_feat.shape, reg_feat.shape)
 
-    print('==============================')
     flops, params = profile(head, inputs=(x, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
