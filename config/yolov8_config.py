@@ -52,13 +52,13 @@ class Yolov8BaseConfig(object):
 
         # ---------------- Assignment config ----------------
         ## Matcher
-        self.tal_topk_candidates = 13
-        self.tal_alpha = 1.0
+        self.tal_topk_candidates = 10
+        self.tal_alpha = 0.5
         self.tal_beta  = 6.0
         ## Loss weight
-        self.loss_cls = 1.0
-        self.loss_box = 2.5
-        self.loss_dfl = 0.5
+        self.loss_cls = 0.5
+        self.loss_box = 7.5
+        self.loss_dfl = 1.5
 
         # ---------------- ModelEMA config ----------------
         self.use_ema = True
@@ -101,7 +101,7 @@ class Yolov8BaseConfig(object):
         self.use_ablu = True
         self.affine_params = {
             'degrees': 0.0,
-            'translate': 0.1,
+            'translate': 0.2,
             'scale': [0.1, 2.0],
             'shear': 0.0,
             'perspective': 0.0,
@@ -128,4 +128,4 @@ class Yolov8SConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.0
+        self.copy_paste  = 1.0

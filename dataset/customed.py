@@ -90,8 +90,12 @@ class CustomedDataset(Dataset):
 
     def load_mixup(self, origin_image, origin_target, yolox_style=False):
         # ------------ Load a new image & target ------------
-        new_index = np.random.randint(0, len(self.ids))
-        new_image, new_target = self.load_mosaic(new_index)
+        if yolox_style:
+            new_index = np.random.randint(0, len(self.ids))
+            new_image, new_target = self.load_image_target(new_index)
+        else:
+            new_index = np.random.randint(0, len(self.ids))
+            new_image, new_target = self.load_mosaic(new_index)
             
         # ------------ Mixup augmentation ------------
         image, target = self.mixup_augment(origin_image, origin_target, new_image, new_target, yolox_style)
