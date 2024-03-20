@@ -38,7 +38,6 @@ class Yolov8BaseConfig(object):
         self.head_act  = 'silu'
         self.head_norm = 'BN'
         self.head_depthwise = False
-        self.head_dim       = 256
         self.num_cls_head   = 2
         self.num_reg_head   = 2
 

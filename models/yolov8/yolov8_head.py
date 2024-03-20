@@ -95,7 +95,7 @@ class Yolov8DetHead(nn.Module):
         ## ----------- Network Parameters -----------
         self.multi_level_heads = nn.ModuleList(
             [DetHead(in_dim       = in_dims[level],
-                     cls_head_dim = max(in_dims[0], min(cfg.num_classes, 100)),
+                     cls_head_dim = max(in_dims[0], min(cfg.num_classes, 128)),
                      reg_head_dim = max(in_dims[0]//4, 16, 4*cfg.reg_max),
                      num_cls_head = cfg.num_cls_head,
                      num_reg_head = cfg.num_reg_head,

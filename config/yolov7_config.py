@@ -4,6 +4,8 @@
 def build_yolov7_config(args):
     if args.model == 'yolov7_s':
         return Yolov7SConfig()
+    elif args.model == 'yolov7_l':
+        return Yolov7LConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
@@ -12,7 +14,6 @@ class Yolov7BaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
         self.width    = 1.0
-        self.depth    = 1.0
         self.reg_max  = 16
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
@@ -33,6 +34,9 @@ class Yolov7BaseConfig(object):
         self.fpn_act  = 'silu'
         self.fpn_norm = 'BN'
         self.fpn_depthwise = False
+        self.fpn_expansions = [0.5, 0.5]
+        self.fpn_block_bw = 4
+        self.fpn_block_dw = 1
         ## Head
         self.head_act  = 'silu'
         self.head_norm = 'BN'
@@ -121,10 +125,28 @@ class Yolov7SConfig(Yolov7BaseConfig):
         super().__init__()
         # ---------------- Model config ----------------
         self.width = 0.50
-        self.depth = 0.34
         self.scale = "s"
+        self.fpn_expansions = [0.5, 1.0]
+        self.fpn_block_bw = 2
+        self.fpn_block_dw = 1
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
+        self.copy_paste  = 0.0
+
+# YOLOv7-L
+class Yolov7LConfig(Yolov7BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 1.0
+        self.scale = "l"
+        self.fpn_expansions = [0.5, 0.5]
+        self.fpn_block_bw = 4
+        self.fpn_block_dw = 1
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.15
         self.copy_paste  = 0.0

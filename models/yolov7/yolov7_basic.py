@@ -136,3 +136,55 @@ class ELANLayer(nn.Module):
         out = self.conv_layer_3(torch.cat([x1, x2, x3, x4], dim=1))
 
         return out
+
+## PaFPN's ELAN-Block proposed by YOLOv7
+class ELANLayerFPN(nn.Module):
+    def __init__(self,
+                 in_dim,
+                 out_dim,
+                 expansions   :List = [0.5, 0.5],
+                 branch_width :int  = 4,
+                 branch_depth :int  = 1,
+                 act_type     :str  = 'silu',
+                 norm_type    :str  = 'BN',
+                 depthwise=False):
+        super(ELANLayerFPN, self).__init__()
+        # Basic parameters
+        inter_dim  = round(in_dim * expansions[0])
+        inter_dim2 = round(inter_dim * expansions[1]) 
+        # Network structure
+        self.cv1 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        self.cv2 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        self.cv3 = nn.ModuleList()
+        for idx in range(round(branch_width)):
+            if idx == 0:
+                cvs = [BasicConv(inter_dim, inter_dim2,
+                                 kernel_size=3, padding=1,
+                                 act_type=act_type, norm_type=norm_type, depthwise=depthwise)]
+            else:
+                cvs = [BasicConv(inter_dim2, inter_dim2,
+                                 kernel_size=3, padding=1,
+                                 act_type=act_type, norm_type=norm_type, depthwise=depthwise)]
+            # deeper
+            if round(branch_depth) > 1:
+                for _ in range(1, round(branch_depth)):
+                    cvs.append(BasicConv(inter_dim2, inter_dim2, kernel_size=3, padding=1, act_type=act_type, norm_type=norm_type, depthwise=depthwise))
+                self.cv3.append(nn.Sequential(*cvs))
+            else:
+                self.cv3.append(cvs[0])
+
+        self.output_proj = BasicConv(inter_dim*2+inter_dim2*len(self.cv3), out_dim,
+                                     kernel_size=1, act_type=act_type, norm_type=norm_type)
+
+
+    def forward(self, x):
+        x1 = self.cv1(x)
+        x2 = self.cv2(x)
+        inter_outs = [x1, x2]
+        for m in self.cv3:
+            y1 = inter_outs[-1]
+            y2 = m(y1)
+            inter_outs.append(y2)
+        out = self.output_proj(torch.cat(inter_outs, dim=1))
+
+        return out

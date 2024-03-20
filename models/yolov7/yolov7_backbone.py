@@ -14,10 +14,12 @@ class Yolov7Backbone(nn.Module):
         # ---------------- Basic parameters ----------------
         self.model_scale = cfg.scale
         if self.model_scale in ["l", "x"]:
+            self.elan_depth = 2
             self.feat_dims = [round(64   * cfg.width), round(128  * cfg.width), round(256  * cfg.width),
                               round(512  * cfg.width), round(1024 * cfg.width), round(1024 * cfg.width)]
             self.last_stage_eratio = 0.25
         if self.model_scale in ["n", "s"]:
+            self.elan_depth = 1
             self.feat_dims = [round(64   * cfg.width), round(64  * cfg.width), round(128  * cfg.width),
                               round(256  * cfg.width), round(512 * cfg.width), round(1024 * cfg.width)]
             self.last_stage_eratio = 0.5
@@ -33,28 +35,28 @@ class Yolov7Backbone(nn.Module):
                       kernel_size=3, padding=1, stride=2,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),      
             ELANLayer(self.feat_dims[1], self.feat_dims[2],
-                      expansion=0.5, num_blocks=round(3*cfg.depth),
+                      expansion=0.5, num_blocks=self.elan_depth,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),      
         )
         self.layer_3 = nn.Sequential(
             MDown(self.feat_dims[2], self.feat_dims[2],
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),             
             ELANLayer(self.feat_dims[2], self.feat_dims[3],
-                      expansion=0.5, num_blocks=round(3*cfg.depth),
+                      expansion=0.5, num_blocks=self.elan_depth,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),      
         )
         self.layer_4 = nn.Sequential(
             MDown(self.feat_dims[3], self.feat_dims[3],
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),             
             ELANLayer(self.feat_dims[3], self.feat_dims[4],
-                      expansion=0.5, num_blocks=round(3*cfg.depth),
+                      expansion=0.5, num_blocks=self.elan_depth,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),      
         )
         self.layer_5 = nn.Sequential(
             MDown(self.feat_dims[4], self.feat_dims[4],
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),             
             ELANLayer(self.feat_dims[4], self.feat_dims[5],
-                      expansion=self.last_stage_eratio, num_blocks=round(3*cfg.depth),
+                      expansion=self.last_stage_eratio, num_blocks=self.elan_depth,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),      
         )
 
