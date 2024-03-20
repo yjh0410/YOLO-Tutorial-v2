@@ -378,7 +378,7 @@ class ModelEMA(object):
     def __init__(self, model, ema_decay=0.9999, ema_tau=2000, resume=None):
         # Create EMA
         self.ema = deepcopy(self.de_parallel(model)).eval()  # FP32 EMA
-        self.updates = 16802  # number of EMA updates
+        self.updates = 0  # number of EMA updates
         self.decay = lambda x: ema_decay * (1 - math.exp(-x / ema_tau))  # decay exponential ramp (to help early epochs)
         for p in self.ema.parameters():
             p.requires_grad_(False)
