@@ -80,7 +80,7 @@ class Yolov8BaseConfig(object):
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
         self.lr_scheduler = "cosine"
-        self.max_epoch    = 300
+        self.max_epoch    = 500
         self.eval_epoch   = 10
         self.no_aug_epoch = 20
 
