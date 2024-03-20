@@ -2,9 +2,9 @@
 
 - VOC
 
-| Model  |  Backbone  | Batch | Scale | AP<sup>val<br>0.5 | Weight |
-|--------|------------|-------|-------|-------------------|--------|
-| YOLOv2 | ResNet-18  | 1xb16 |  640  |                   |  |
+| Model  |  Backbone  | Batch | Scale | AP<sup>val<br>0.5 | Weight |  Logs  |
+|--------|------------|-------|-------|-------------------|--------|--------|
+| YOLOv2 | ResNet-18  | 1xb16 |  640  |       75.7        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov2_r18_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv2-R18-VOC.txt) |
 
 - COCO
 
