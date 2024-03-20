@@ -35,6 +35,7 @@ class Yolov3(nn.Module):
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
         self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
+        self.pyramid_feat_dims[-1] = self.neck.out_dim
         ## Neck: FPN
         self.fpn      = Yolov3FPN(cfg, self.pyramid_feat_dims)
         ## Head
