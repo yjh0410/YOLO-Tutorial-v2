@@ -140,7 +140,7 @@ class MixupAugment(object):
         target_h, target_w = origin_image.shape[:2]
         padded_img = np.ones(
             (max(origin_h, target_h), max(origin_w, target_w), 3), dtype=np.uint8
-        ) * 114.
+        ) * 114
         padded_img[:origin_h, :origin_w] = cp_img
 
         # crop padded image
