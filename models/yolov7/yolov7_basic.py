@@ -78,7 +78,7 @@ class MDown(nn.Module):
                  depthwise :bool  = False,
                  ) -> None:
         super().__init__()
-        inter_dim = in_dim // 2
+        inter_dim = out_dim // 2
         self.downsample_1 = nn.Sequential(
             nn.MaxPool2d((2, 2), stride=2),
             BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)

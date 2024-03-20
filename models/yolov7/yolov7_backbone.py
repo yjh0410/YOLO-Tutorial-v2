@@ -27,9 +27,14 @@ class Yolov7Backbone(nn.Module):
         # ---------------- Model parameters ----------------
         
         # large backbone
-        self.layer_1 = BasicConv(3, self.feat_dims[0], 
-                      kernel_size=6, padding=2, stride=2,
+        self.layer_1 = nn.Sequential(
+            BasicConv(3, self.feat_dims[0]//2, kernel_size=3, padding=1, stride=1,
+                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            BasicConv(self.feat_dims[0]//2, self.feat_dims[0], kernel_size=3, padding=1, stride=2,
+                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            BasicConv(self.feat_dims[0], self.feat_dims[0], kernel_size=3, padding=1, stride=1,
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise)
+        )
         self.layer_2 = nn.Sequential(   
             BasicConv(self.feat_dims[0], self.feat_dims[1],
                       kernel_size=3, padding=1, stride=2,
