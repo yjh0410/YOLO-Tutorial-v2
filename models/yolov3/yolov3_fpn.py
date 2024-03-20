@@ -27,7 +27,9 @@ class Yolov3FPN(nn.Module):
                                          act_type   = cfg.fpn_act,
                                          norm_type  = cfg.fpn_norm,
                                          depthwise  = cfg.fpn_depthwise)
-        self.reduce_layer_1   = BasicConv(round(512*cfg.width), round(256*cfg.width), kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_1   = BasicConv(round(512*cfg.width), round(256*cfg.width),
+                                          kernel_size=1, padding=0, stride=1,
+                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
 
         ## P4 -> P3
         self.top_down_layer_2 = ResBlock(in_dim     = c4 + round(256*cfg.width),
@@ -38,7 +40,9 @@ class Yolov3FPN(nn.Module):
                                          act_type   = cfg.fpn_act,
                                          norm_type  = cfg.fpn_norm,
                                          depthwise  = cfg.fpn_depthwise)
-        self.reduce_layer_2   = BasicConv(round(256*cfg.width), round(128*cfg.width), kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_2   = BasicConv(round(256*cfg.width), round(128*cfg.width),
+                                          kernel_size=1, padding=0, stride=1,
+                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
         
         ## P3
         self.top_down_layer_3 = ResBlock(in_dim     = c3 + round(128*cfg.width),

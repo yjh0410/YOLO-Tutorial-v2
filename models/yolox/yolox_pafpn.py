@@ -16,7 +16,9 @@ class YoloxPaFPN(nn.Module):
 
         # ---------------------- Yolox's Top down FPN ----------------------
         ## P5 -> P4
-        self.reduce_layer_1   = BasicConv(c5, round(512*cfg.width), kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_1   = BasicConv(c5, round(512*cfg.width),
+                                          kernel_size=1, padding=0, stride=1,
+                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
         self.top_down_layer_1 = CSPBlock(in_dim     = c4 + round(512*cfg.width),
                                          out_dim    = round(512*cfg.width),
                                          num_blocks = round(3*cfg.depth),
@@ -27,7 +29,9 @@ class YoloxPaFPN(nn.Module):
                                          depthwise  = cfg.fpn_depthwise)
 
         ## P4 -> P3
-        self.reduce_layer_2   = BasicConv(round(512*cfg.width), round(256*cfg.width), kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_2   = BasicConv(round(512*cfg.width), round(256*cfg.width),
+                                          kernel_size=1, padding=0, stride=1,
+                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
         self.top_down_layer_2 = CSPBlock(in_dim     = c3 + round(256*cfg.width),
                                          out_dim    = round(256*cfg.width),
                                          num_blocks = round(3*cfg.depth),
@@ -74,21 +78,23 @@ class YoloxPaFPN(nn.Module):
     def forward(self, features):
         c3, c4, c5 = features
         
-        # P5 -> P4
+        # ------------------ Top down FPN ------------------
+        ## P5 -> P4
         p5 = self.reduce_layer_1(c5)
         p5_up = F.interpolate(p5, scale_factor=2.0)
         p4 = self.top_down_layer_1(torch.cat([c4, p5_up], dim=1))
 
-        # P4 -> P3
+        ## P4 -> P3
         p4 = self.reduce_layer_2(p4)
         p4_up = F.interpolate(p4, scale_factor=2.0)
         p3 = self.top_down_layer_2(torch.cat([c3, p4_up], dim=1))
 
-        # P3 -> P4
+        # ------------------ Bottom up PAN ------------------
+        ## P3 -> P4
         p3_ds = self.downsample_layer_1(p3)
         p4 = self.bottom_up_layer_1(torch.cat([p4, p3_ds], dim=1))
 
-        # P4 -> P5
+        ## P4 -> P5
         p4_ds = self.downsample_layer_2(p4)
         p5 = self.bottom_up_layer_2(torch.cat([p5, p4_ds], dim=1))
 

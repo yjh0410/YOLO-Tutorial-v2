@@ -15,7 +15,7 @@ class Yolov7PaFPN(nn.Module):
         self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(1024*cfg.width)]
         c3, c4, c5 = in_dims
 
-        # ----------------------------- Top-down FPN -----------------------------
+        # ----------------------------- Yolov7's Top-down FPN -----------------------------
         ## P5 -> P4
         self.reduce_layer_1 = BasicConv(c5, round(256*cfg.width),
                                         kernel_size=1, act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
@@ -44,7 +44,7 @@ class Yolov7PaFPN(nn.Module):
                                              norm_type  = cfg.fpn_norm,
                                              depthwise  = cfg.fpn_depthwise,
                                              )
-        # ----------------------------- Bottom-up FPN -----------------------------
+        # ----------------------------- Yolov7's Bottom-up PAN -----------------------------
         ## P3 -> P4
         self.downsample_layer_1 = MDown(round(128*cfg.width), round(256*cfg.width),
                                         act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
@@ -85,6 +85,7 @@ class Yolov7PaFPN(nn.Module):
     def forward(self, features):
         c3, c4, c5 = features
 
+        # ------------------ Top down FPN ------------------
         ## P5 -> P4
         p5 = self.reduce_layer_1(c5)
         p5_up = F.interpolate(p5, scale_factor=2.0)
@@ -97,6 +98,7 @@ class Yolov7PaFPN(nn.Module):
         p3 = self.reduce_layer_4(c3)
         p3 = self.top_down_layer_2(torch.cat([p4_up, p3], dim=1))
 
+        # ------------------ Bottom up PAN ------------------
         ## P3 -> P4
         p3_ds = self.downsample_layer_1(p3)
         p4 = torch.cat([p3_ds, p4], dim=1)

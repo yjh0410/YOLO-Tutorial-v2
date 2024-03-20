@@ -19,7 +19,7 @@ class Yolov8PaFPN(nn.Module):
         self.in_dims = in_dims[::-1]
         self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
 
-        # ---------------- Top dwon ----------------
+        # ----------------------------- Yolov8's Top-down FPN -----------------------------
         ## P5 -> P4
         self.top_down_layer_1 = ELANLayer(in_dim     = self.in_dims[0] + self.in_dims[1],
                                           out_dim    = round(512*cfg.width),
@@ -40,7 +40,7 @@ class Yolov8PaFPN(nn.Module):
                                           norm_type  = cfg.fpn_norm,
                                           depthwise  = cfg.fpn_depthwise,
                                           )
-        # ---------------- Bottom up ----------------
+        # ----------------------------- Yolov8's Bottom-up PAN -----------------------------
         ## P3 -> P4
         self.dowmsample_layer_1 = BasicConv(round(256*cfg.width), round(256*cfg.width),
                                             kernel_size=3, padding=1, stride=2,
