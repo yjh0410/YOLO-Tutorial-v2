@@ -498,7 +498,7 @@ class SSDAugmentation(object):
 
         # ----------------- Transforms -----------------
         self.augment = Compose([
-            RandomDistort(prob=0.8),
+            RandomDistort(prob=0.5),
             RandomExpand(fill_value=self.pixel_mean[::-1]),
             RandomIoUCrop(p=0.8),
             RandomHorizontalFlip(p=0.5),
