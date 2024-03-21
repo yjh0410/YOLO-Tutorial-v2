@@ -3,14 +3,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .yolox_basic import BasicConv, CSPBlock
+from .yolov5_af_basic import BasicConv, CSPBlock
 
 
-# YoloxFPN
-class YoloxPaFPN(nn.Module):
+# Yolov5FPN
+class Yolov5PaFPN(nn.Module):
     def __init__(self, cfg, in_dims: List = [256, 512, 1024],
                  ):
-        super(YoloxPaFPN, self).__init__()
+        super(Yolov5PaFPN, self).__init__()
         self.in_dims = in_dims
         c3, c4, c5 = in_dims
 

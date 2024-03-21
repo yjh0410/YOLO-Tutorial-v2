@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov7_basic import BasicConv, MDown, ELANLayer
+    from .yolov7_af_basic import BasicConv, MDown, ELANLayer
 except:
-    from  yolov7_basic import BasicConv, MDown, ELANLayer
+    from  yolov7_af_basic import BasicConv, MDown, ELANLayer
 
 
 # ELANNet

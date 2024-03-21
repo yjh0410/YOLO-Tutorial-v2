@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
 
-try:
-    from .yolox_basic import BasicConv
-except:
-    from  yolox_basic import BasicConv
+from .yolov7_af_basic import BasicConv
 
 
+# -------------------- Detection Head --------------------
 ## Single-level Detection Head
 class DetHead(nn.Module):
     def __init__(self,
@@ -91,14 +89,14 @@ class DetHead(nn.Module):
         return cls_feats, reg_feats
     
 ## Multi-level Detection Head
-class YoloxDetHead(nn.Module):
+class Yolov7DetHead(nn.Module):
     def __init__(self, cfg, in_dims):
         super().__init__()
         ## ----------- Network Parameters -----------
         self.multi_level_heads = nn.ModuleList(
             [DetHead(in_dim       = in_dims[level],
-                     cls_head_dim = round(cfg.head_dim * cfg.width),
-                     reg_head_dim = round(cfg.head_dim * cfg.width),
+                     cls_head_dim = max(in_dims[0], min(cfg.num_classes, 128)),
+                     reg_head_dim = max(in_dims[0]//4, 16, 4*cfg.reg_max),
                      num_cls_head = cfg.num_cls_head,
                      num_reg_head = cfg.num_reg_head,
                      act_type     = cfg.head_act,
@@ -108,8 +106,8 @@ class YoloxDetHead(nn.Module):
                      ])
         # --------- Basic Parameters ----------
         self.in_dims = in_dims
-        self.cls_head_dim = cfg.head_dim
-        self.reg_head_dim = cfg.head_dim
+        self.cls_head_dim = self.multi_level_heads[0].cls_head_dim
+        self.reg_head_dim = self.multi_level_heads[0].reg_head_dim
 
 
     def forward(self, feats):
@@ -126,46 +124,3 @@ class YoloxDetHead(nn.Module):
             reg_feats.append(reg_feat)
 
         return cls_feats, reg_feats
-
-
-if __name__=='__main__':
-    import time
-    from thop import profile
-    # Model config
-    
-    # YOLOv3-Base config
-    class YoloxBaseConfig(object):
-        def __init__(self) -> None:
-            # ---------------- Model config ----------------
-            self.out_stride = 32
-            self.max_stride = 32
-            self.num_levels = 3
-            ## Head
-            self.head_act  = 'lrelu'
-            self.head_norm = 'BN'
-            self.head_depthwise = False
-            self.head_dim  = 256
-            self.num_cls_head   = 2
-            self.num_reg_head   = 2
-
-    cfg = YoloxBaseConfig()
-    # Build a head
-    pyramid_feats = [torch.randn(1, cfg.head_dim, 80, 80),
-                     torch.randn(1, cfg.head_dim, 40, 40),
-                     torch.randn(1, cfg.head_dim, 20, 20)]
-    head = YoloxDetHead(cfg, [cfg.head_dim]*3)
-
-
-    # Inference
-    t0 = time.time()
-    cls_feats, reg_feats = head(pyramid_feats)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    for cls_f, reg_f in zip(cls_feats, reg_feats):
-        print(cls_f.shape, reg_f.shape)
-
-    print('==============================')
-    flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    

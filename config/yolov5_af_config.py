@@ -1,20 +1,18 @@
 # yolo Config
 
 
-def build_yolov7_config(args):
-    if args.model == 'yolov7_s':
-        return Yolov7SConfig()
-    elif args.model == 'yolov7_l':
-        return Yolov7LConfig()
+def build_yolov5af_config(args):
+    if args.model == 'yolov5_af_s':
+        return Yolov5AFSConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
-# YOLOv7-Base config
-class Yolov7BaseConfig(object):
+# YOLOv5AF-Base config
+class Yolov5AFBaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
         self.width    = 1.0
-        self.reg_max  = 16
+        self.depth    = 1.0
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
         self.num_levels = 3
@@ -23,7 +21,6 @@ class Yolov7BaseConfig(object):
         self.bk_act   = 'silu'
         self.bk_norm  = 'BN'
         self.bk_depthwise = False
-        self.use_pretrained = False
         ## Neck
         self.neck_act       = 'silu'
         self.neck_norm      = 'BN'
@@ -34,9 +31,6 @@ class Yolov7BaseConfig(object):
         self.fpn_act  = 'silu'
         self.fpn_norm = 'BN'
         self.fpn_depthwise = False
-        self.fpn_expansions = [0.5, 0.5]
-        self.fpn_block_bw = 4
-        self.fpn_block_dw = 1
         ## Head
         self.head_act  = 'silu'
         self.head_norm = 'BN'
@@ -56,13 +50,12 @@ class Yolov7BaseConfig(object):
 
         # ---------------- Assignment config ----------------
         ## Matcher
-        self.tal_topk_candidates = 10
-        self.tal_alpha = 0.5
-        self.tal_beta  = 6.0
+        self.ota_center_sampling_radius = 2.5
+        self.ota_topk_candidate = 10
         ## Loss weight
-        self.loss_cls = 0.5
-        self.loss_box = 7.5
-        self.loss_dfl = 1.5
+        self.loss_obj = 1.0
+        self.loss_cls = 1.0
+        self.loss_box = 5.0
 
         # ---------------- ModelEMA config ----------------
         self.use_ema = True
@@ -84,7 +77,7 @@ class Yolov7BaseConfig(object):
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
         self.lr_scheduler = "cosine"
-        self.max_epoch    = 500
+        self.max_epoch    = 300
         self.eval_epoch   = 10
         self.no_aug_epoch = 20
 
@@ -93,7 +86,7 @@ class Yolov7BaseConfig(object):
         self.box_format = 'xyxy'
         self.normalize_coords = False
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
+        self.mixup_prob  = 0.0
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
@@ -119,34 +112,16 @@ class Yolov7BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
-# YOLOv7-S
-class Yolov7SConfig(Yolov7BaseConfig):
+# YOLOv5AF-S
+class Yolov5AFSConfig(Yolov5AFBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
         self.width = 0.50
+        self.depth = 0.34
         self.scale = "s"
-        self.fpn_expansions = [0.5, 1.0]
-        self.fpn_block_bw = 2
-        self.fpn_block_dw = 1
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 1.0
-
-# YOLOv7-L
-class Yolov7LConfig(Yolov7BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.0
-        self.scale = "l"
-        self.fpn_expansions = [0.5, 0.5]
-        self.fpn_block_bw = 4
-        self.fpn_block_dw = 1
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
-        self.copy_paste  = 0.0
+        self.copy_paste  = 0.5

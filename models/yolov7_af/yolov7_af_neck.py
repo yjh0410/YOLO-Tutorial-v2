@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .yolov7_basic import BasicConv
+from .yolov7_af_basic import BasicConv
 
 
 # Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher

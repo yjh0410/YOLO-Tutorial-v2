@@ -3,23 +3,23 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .yolov7_backbone import Yolov7Backbone
-from .yolov7_neck     import SPPFBlockCSP
-from .yolov7_pafpn    import Yolov7PaFPN
-from .yolov7_head     import Yolov7DetHead
-from .yolov7_pred     import Yolov7DetPredLayer
+from .yolov7_af_backbone import Yolov7Backbone
+from .yolov7_af_neck     import SPPFBlockCSP
+from .yolov7_af_pafpn    import Yolov7PaFPN
+from .yolov7_af_head     import Yolov7DetHead
+from .yolov7_af_pred     import Yolov7AFDetPredLayer
 
 # --------------- External components ---------------
 from utils.misc import multiclass_nms
 
 
 # Anchor-free YOLOv7
-class Yolov7(nn.Module):
+class Yolov7AF(nn.Module):
     def __init__(self,
                  cfg,
                  is_val = False,
                  ) -> None:
-        super(Yolov7, self).__init__()
+        super(Yolov7AF, self).__init__()
         # ---------------------- Basic setting ----------------------
         self.cfg = cfg
         self.num_classes = cfg.num_classes
@@ -41,7 +41,7 @@ class Yolov7(nn.Module):
         ## Head
         self.head     = Yolov7DetHead(cfg, self.fpn.out_dims)
         ## Pred
-        self.pred     = Yolov7DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+        self.pred     = Yolov7AFDetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
 
     def post_process(self, cls_preds, box_preds):
         """

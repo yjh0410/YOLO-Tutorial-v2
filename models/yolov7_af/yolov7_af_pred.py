@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 # -------------------- Detection Pred Layer --------------------
 ## Single-level pred layer
-class DetPredLayer(nn.Module):
+class AFDetPredLayer(nn.Module):
     def __init__(self,
                  cls_dim     :int = 256,
                  reg_dim     :int = 256,
@@ -81,7 +81,7 @@ class DetPredLayer(nn.Module):
         return outputs
 
 ## Multi-level pred layer
-class Yolov7DetPredLayer(nn.Module):
+class Yolov7AFDetPredLayer(nn.Module):
     def __init__(self,
                  cfg,
                  cls_dim,
@@ -96,14 +96,14 @@ class Yolov7DetPredLayer(nn.Module):
         # ----------- Network Parameters -----------
         ## pred layers
         self.multi_level_preds = nn.ModuleList(
-            [DetPredLayer(cls_dim     = cls_dim,
-                          reg_dim     = reg_dim,
-                          stride      = cfg.out_stride[level],
-                          reg_max     = cfg.reg_max,
-                          num_classes = cfg.num_classes,
-                          num_coords  = 4 * cfg.reg_max)
-                          for level in range(cfg.num_levels)
-                          ])
+            [AFDetPredLayer(cls_dim     = cls_dim,
+                            reg_dim     = reg_dim,
+                            stride      = cfg.out_stride[level],
+                            reg_max     = cfg.reg_max,
+                            num_classes = cfg.num_classes,
+                            num_coords  = 4 * cfg.reg_max)
+                            for level in range(cfg.num_levels)
+                            ])
         ## proj conv
         proj_init = torch.arange(cfg.reg_max, dtype=torch.float)
         self.proj_conv = nn.Conv2d(cfg.reg_max, 1, kernel_size=1, bias=False).requires_grad_(False)

@@ -3,23 +3,23 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .yolox_backbone import YoloxBackbone
-from .yolox_neck     import SPPF
-from .yolox_pafpn    import YoloxPaFPN
-from .yolox_head     import YoloxDetHead
-from .yolox_pred     import YoloxDetPredLayer
+from .yolov5_af_backbone import Yolov5Backbone
+from .yolov5_af_neck     import SPPF
+from .yolov5_af_pafpn    import Yolov5PaFPN
+from .yolov5_af_head     import Yolov5DetHead
+from .yolov5_af_pred     import Yolov5AFDetPredLayer
 
 # --------------- External components ---------------
 from utils.misc import multiclass_nms
 
 
-# YOLOx
-class Yolox(nn.Module):
+# Yolov5AF
+class Yolov5AF(nn.Module):
     def __init__(self,
                  cfg,
                  is_val = False,
                  ) -> None:
-        super(Yolox, self).__init__()
+        super(Yolov5AF, self).__init__()
         # ---------------------- Basic setting ----------------------
         self.cfg = cfg
         self.num_classes = cfg.num_classes
@@ -31,17 +31,17 @@ class Yolox(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = YoloxBackbone(cfg)
+        self.backbone = Yolov5Backbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
         self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
         self.pyramid_feat_dims[-1] = self.neck.out_dim
         ## Neck: FPN
-        self.fpn      = YoloxPaFPN(cfg, self.pyramid_feat_dims)
+        self.fpn      = Yolov5PaFPN(cfg, self.pyramid_feat_dims)
         ## Head
-        self.head     = YoloxDetHead(cfg, self.fpn.out_dims)
+        self.head     = Yolov5DetHead(cfg, self.fpn.out_dims)
         ## Pred
-        self.pred     = YoloxDetPredLayer(cfg)
+        self.pred     = Yolov5AFDetPredLayer(cfg)
 
     def post_process(self, obj_preds, cls_preds, box_preds):
         """

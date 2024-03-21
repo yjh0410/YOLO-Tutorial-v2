@@ -2,16 +2,16 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolox_basic import BasicConv, CSPBlock
+    from .yolov5_af_basic import BasicConv, CSPBlock
 except:
-    from  yolox_basic import BasicConv, CSPBlock
+    from  yolov5_af_basic import BasicConv, CSPBlock
 
 
 # --------------------- Yolov3's Backbone -----------------------
 ## Modified DarkNet
-class YoloxBackbone(nn.Module):
+class Yolov5Backbone(nn.Module):
     def __init__(self, cfg):
-        super(YoloxBackbone, self).__init__()
+        super(Yolov5Backbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.model_scale = cfg.scale
         self.feat_dims = [round(64   * cfg.width),
@@ -118,7 +118,7 @@ if __name__ == '__main__':
             self.use_pretrained = True
 
     cfg = BaseConfig()
-    model = YoloxBackbone(cfg)
+    model = Yolov5Backbone(cfg)
     x = torch.randn(1, 3, 640, 640)
     t0 = time.time()
     outputs = model(x)

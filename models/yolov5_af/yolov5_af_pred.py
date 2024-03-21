@@ -4,7 +4,7 @@ from typing import List
 
 # -------------------- Detection Pred Layer --------------------
 ## Single-level pred layer
-class DetPredLayer(nn.Module):
+class AFDetPredLayer(nn.Module):
     def __init__(self,
                  cls_dim      :int,
                  reg_dim      :int,
@@ -94,7 +94,7 @@ class DetPredLayer(nn.Module):
         return outputs
 
 ## Multi-level pred layer
-class YoloxDetPredLayer(nn.Module):
+class Yolov5AFDetPredLayer(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         # --------- Basic Parameters ----------
@@ -103,12 +103,12 @@ class YoloxDetPredLayer(nn.Module):
         # ----------- Network Parameters -----------
         ## pred layers
         self.multi_level_preds = nn.ModuleList(
-            [DetPredLayer(cls_dim      = round(cfg.head_dim * cfg.width),
-                          reg_dim      = round(cfg.head_dim * cfg.width),
-                          stride       = cfg.out_stride[level],
-                          num_classes  = cfg.num_classes,)
-                          for level in range(cfg.num_levels)
-                          ])
+            [AFDetPredLayer(cls_dim      = round(cfg.head_dim * cfg.width),
+                            reg_dim      = round(cfg.head_dim * cfg.width),
+                            stride       = cfg.out_stride[level],
+                            num_classes  = cfg.num_classes,)
+                            for level in range(cfg.num_levels)
+                            ])
 
     def forward(self, cls_feats, reg_feats):
         all_anchors = []

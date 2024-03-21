@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .yolov7_basic import BasicConv, ELANLayerFPN, MDown
+from .yolov7_af_basic import BasicConv, ELANLayerFPN, MDown
 
 
 # PaFPN-ELAN (YOLOv7's)
