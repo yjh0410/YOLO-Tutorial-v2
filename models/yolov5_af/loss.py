@@ -33,19 +33,6 @@ class SetCriterion(object):
 
         return loss_box
 
-    def loss_bboxes_aux(self, pred_reg, gt_box, anchors, stride_tensors):
-        # xyxy -> cxcy&bwbh
-        gt_cxcy = (gt_box[..., :2] + gt_box[..., 2:]) * 0.5
-        gt_bwbh = gt_box[..., 2:] - gt_box[..., :2]
-        # encode gt box
-        gt_cxcy_encode = (gt_cxcy - anchors) / stride_tensors
-        gt_bwbh_encode = torch.log(gt_bwbh / stride_tensors)
-        gt_box_encode = torch.cat([gt_cxcy_encode, gt_bwbh_encode], dim=-1)
-        # l1 loss
-        loss_box_aux = F.l1_loss(pred_reg, gt_box_encode, reduction='none')
-
-        return loss_box_aux
-
     def __call__(self, outputs, targets):        
         """
             outputs['pred_obj']: List(Tensor) [B, M, 1]
