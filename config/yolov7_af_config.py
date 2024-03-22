@@ -148,5 +148,5 @@ class Yolov7AFLConfig(Yolov7AFBaseConfig):
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
-        self.copy_paste  = 0.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.5

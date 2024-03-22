@@ -127,5 +127,5 @@ class Yolov8SConfig(Yolov8BaseConfig):
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.0
-        self.copy_paste  = 1.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.5
