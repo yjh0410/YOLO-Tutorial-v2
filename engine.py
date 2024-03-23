@@ -354,7 +354,7 @@ class RTDetrTrainer(object):
         self.optimizer, self.start_epoch = build_rtdetr_optimizer(cfg, model, args.resume)
 
         # ---------------------------- Build LR Scheduler ----------------------------
-        self.wp_lr_scheduler = LinearWarmUpLrScheduler(cfg.base_lr, wp_iter=cfg.warmup_iters)
+        self.wp_lr_scheduler = LinearWarmUpLrScheduler(cfg.warmup_iters, cfg.base_lr)
         self.lr_scheduler    = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
     def train(self, model):
@@ -386,43 +386,43 @@ class RTDetrTrainer(object):
         # set eval mode
         model.eval()
         model_eval = model if self.model_ema is None else self.model_ema.ema
+        cur_map = -1.
+        to_save = False
 
         if distributed_utils.is_main_process():
-            # check evaluator
             if self.evaluator is None:
                 print('No evaluator ... save model and go on training.')
-                print('Saving state, epoch: {}'.format(self.epoch))
+                to_save = True
                 weight_name = '{}_no_eval.pth'.format(self.args.model)
                 checkpoint_path = os.path.join(self.path_to_save, weight_name)
-                torch.save({'model': model_eval.state_dict(),
-                            'mAP': -1.,
-                            'optimizer': self.optimizer.state_dict(),
-                            'lr_scheduler': self.lr_scheduler.state_dict(),
-                            'epoch': self.epoch,
-                            'args': self.args}, 
-                            checkpoint_path)               
             else:
-                print('eval ...')
-                # evaluate
+                print('Eval ...')
+                # Evaluate
                 with torch.no_grad():
                     self.evaluator.evaluate(model_eval)
 
-                # save model
                 cur_map = self.evaluator.map
                 if cur_map > self.best_map:
                     # update best-map
                     self.best_map = cur_map
-                    # save model
-                    print('Saving state, epoch:', self.epoch)
-                    weight_name = '{}_best.pth'.format(self.args.model)
-                    checkpoint_path = os.path.join(self.path_to_save, weight_name)
-                    torch.save({'model': model_eval.state_dict(),
-                                'mAP': round(self.best_map*100, 1),
-                                'optimizer': self.optimizer.state_dict(),
-                                'lr_scheduler': self.lr_scheduler.state_dict(),
-                                'epoch': self.epoch,
-                                'args': self.args}, 
-                                checkpoint_path)                      
+                    to_save = True
+
+            # Save model
+            if to_save:
+                print('Saving state, epoch:', self.epoch)
+                weight_name = '{}_best.pth'.format(self.args.model)
+                checkpoint_path = os.path.join(self.path_to_save, weight_name)
+                state_dicts = {
+                    'model': model_eval.state_dict(),
+                    'mAP': round(cur_map*100, 1),
+                    'optimizer':  self.optimizer.state_dict(),
+                    'lr_scheduler': self.lr_scheduler.state_dict(),
+                    'epoch': self.epoch,
+                    'args': self.args,
+                    }
+                if self.model_ema is not None:
+                    state_dicts["ema_updates"] = self.model_ema.updates
+                torch.save(state_dicts, checkpoint_path)                      
 
         if self.args.distributed:
             # wait for all processes to synchronize
@@ -506,8 +506,8 @@ class RTDetrTrainer(object):
                     self.model_ema.update(model)
 
             # Update log
-            metric_logger.update(loss=losses.item(), **loss_dict_reduced)
-            metric_logger.update(lr=self.optimizer.param_groups[0]["lr"])
+            metric_logger.update(**loss_dict_reduced)
+            metric_logger.update(lr=self.optimizer.param_groups[2]["lr"])
             metric_logger.update(grad_norm=grad_norm)
             metric_logger.update(size=img_size)
 

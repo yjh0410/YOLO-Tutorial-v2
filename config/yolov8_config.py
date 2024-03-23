@@ -2,7 +2,9 @@
 
 
 def build_yolov8_config(args):
-    if args.model == 'yolov8_s':
+    if   args.model == 'yolov8_n':
+        return Yolov8NConfig()
+    elif args.model == 'yolov8_s':
         return Yolov8SConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
@@ -88,8 +90,8 @@ class Yolov8BaseConfig(object):
         self.aug_type = 'yolo'
         self.box_format = 'xyxy'
         self.normalize_coords = False
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
+        self.mosaic_prob = 0.0
+        self.mixup_prob  = 0.0
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
@@ -115,6 +117,21 @@ class Yolov8BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
+# YOLOv8-N
+class Yolov8NConfig(Yolov8BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 0.25
+        self.depth = 0.34
+        self.ratio = 2.0
+        self.scale = "n"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.0
+        self.copy_paste  = 0.5
+
 # YOLOv8-S
 class Yolov8SConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
@@ -124,6 +141,51 @@ class Yolov8SConfig(Yolov8BaseConfig):
         self.depth = 0.34
         self.ratio = 2.0
         self.scale = "s"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.0
+        self.copy_paste  = 0.5
+
+# YOLOv8-M
+class Yolov8MConfig(Yolov8BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 0.75
+        self.depth = 0.67
+        self.ratio = 1.5
+        self.scale = "m"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.5
+
+# YOLOv8-L
+class Yolov8MConfig(Yolov8BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 1.0
+        self.depth = 1.0
+        self.ratio = 1.0
+        self.scale = "l"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.5
+
+# YOLOv8-X
+class Yolov8MConfig(Yolov8BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 1.25
+        self.depth = 1.0
+        self.ratio = 1.0
+        self.scale = "x"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0

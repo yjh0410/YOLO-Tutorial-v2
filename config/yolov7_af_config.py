@@ -2,7 +2,7 @@
 
 
 def build_yolov7af_config(args):
-    if args.model == 'yolov7_af_s':
+    if   args.model == 'yolov7_af_s':
         return Yolov7AFSConfig()
     elif args.model == 'yolov7_af_l':
         return Yolov7AFLConfig()

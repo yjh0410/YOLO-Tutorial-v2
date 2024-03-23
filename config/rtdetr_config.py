@@ -97,7 +97,7 @@ class RTDetrBaseConfig(object):
         self.normalize_coords = True
         self.mosaic_prob = 0.0
         self.mixup_prob  = 0.0
-        self.copt_paste  = 0.0
+        self.copy_paste  = 0.0
         self.multi_scale = [0.75, 1.25]
         ## Pixel mean & std
         self.pixel_mean = [123.675, 116.28, 103.53]   # RGB format
