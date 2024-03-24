@@ -6,6 +6,12 @@ def build_yolov8_config(args):
         return Yolov8NConfig()
     elif args.model == 'yolov8_s':
         return Yolov8SConfig()
+    elif args.model == 'yolov8_m':
+        return Yolov8MConfig()
+    elif args.model == 'yolov8_l':
+        return Yolov8LConfig()
+    elif args.model == 'yolov8_x':
+        return Yolov8XConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
@@ -163,7 +169,7 @@ class Yolov8MConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-L
-class Yolov8MConfig(Yolov8BaseConfig):
+class Yolov8LConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -178,7 +184,7 @@ class Yolov8MConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-X
-class Yolov8MConfig(Yolov8BaseConfig):
+class Yolov8XConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------

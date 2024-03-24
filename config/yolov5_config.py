@@ -2,8 +2,16 @@
 
 
 def build_yolov5_config(args):
-    if args.model == 'yolov5_s':
-        return Yolov5SConfig()
+    if   args.model == 'yolov5_n':
+        return Yolov5NConfig()
+    elif args.model == 'yolov5_x':
+        return Yolov5XConfig()
+    elif args.model == 'yolov5_m':
+        return Yolov5MConfig()
+    elif args.model == 'yolov5_l':
+        return Yolov5LConfig()
+    elif args.model == 'yolov5_x':
+        return Yolov5XConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
@@ -114,6 +122,20 @@ class Yolov5BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
+# YOLOv5-N
+class Yolov5NConfig(Yolov5BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 0.25
+        self.depth = 0.34
+        self.scale = "n"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.0
+        self.copy_paste  = 0.0
+
 # YOLOv5-S
 class Yolov5SConfig(Yolov5BaseConfig):
     def __init__(self) -> None:
@@ -126,4 +148,46 @@ class Yolov5SConfig(Yolov5BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
+        self.copy_paste  = 0.0
+
+# YOLOv5-M
+class Yolov5MConfig(Yolov5BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 0.75
+        self.depth = 0.67
+        self.scale = "m"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.0
+
+# YOLOv5-L
+class Yolov5LConfig(Yolov5BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 1.0
+        self.depth = 1.0
+        self.scale = "l"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.1
+        self.copy_paste  = 0.0
+
+# YOLOv5-X
+class Yolov5XConfig(Yolov5BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # ---------------- Model config ----------------
+        self.width = 1.25
+        self.depth = 1.34
+        self.scale = "x"
+
+        # ---------------- Data process config ----------------
+        self.mosaic_prob = 1.0
+        self.mixup_prob  = 0.1
         self.copy_paste  = 0.0
