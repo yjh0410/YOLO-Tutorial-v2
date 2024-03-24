@@ -23,7 +23,6 @@ class CustomedEvaluator():
         # ----------------- Dataset -----------------
         self.dataset = CustomedDataset(cfg, data_dir=data_dir, image_set=image_set, transform=None, is_train=False)
 
-
     @torch.no_grad()
     def evaluate(self, model):
         """
@@ -41,31 +40,32 @@ class CustomedEvaluator():
         num_images = len(self.dataset)
         print('total number of images: %d' % (num_images))
 
-        # start testing
-        for index in range(num_images): # all the data in val2017
+        # --------------- COCO-style evaluation ---------------
+        for index in range(num_images):
             if index % 500 == 0:
                 print('[Eval: %d / %d]'%(index, num_images))
 
-            # load an image
-            img, id_ = self.dataset.pull_image(index)
+            # ----------- Load an image -----------
+            img, img_id = self.dataset.pull_image(index)
             orig_h, orig_w, _ = img.shape
 
-            # preprocess
+            # ----------- Data preprocess -----------
             x, _, ratio = self.transform(img)
             x = x.unsqueeze(0).to(self.device)
             
-            id_ = int(id_)
-            ids.append(id_)
+            img_id = int(img_id)
+            ids.append(img_id)
 
-            # inference
+            # ----------- Model inference -----------
             outputs = model(x)
             scores = outputs['scores']
             labels = outputs['labels']
             bboxes = outputs['bboxes']
 
-            # rescale bboxes
+            # ----------- Rescale bboxes -----------
             bboxes = rescale_bboxes(bboxes, [orig_w, orig_h], ratio)
 
+            # ----------- Process results -----------
             for i, box in enumerate(bboxes):
                 x1 = float(box[0])
                 y1 = float(box[1])
@@ -73,19 +73,22 @@ class CustomedEvaluator():
                 y2 = float(box[3])
                 label = self.dataset.class_ids[int(labels[i])]
                 
+                # COCO box format: x1, y1, bw, bh
                 bbox = [x1, y1, x2 - x1, y2 - y1]
-                score = float(scores[i]) # object score * class score
-                A = {"image_id": id_, "category_id": label, "bbox": bbox,
-                     "score": score} # COCO json format
+                score = float(scores[i])
+                 # COCO json format
+                A = {"image_id":    img_id,
+                     "category_id": label,
+                     "bbox":        bbox,
+                     "score":       score}
                 data_dict.append(A)
 
         annType = ['segm', 'bbox', 'keypoints']
 
-        # Evaluate the Dt (detection) json comparing with the ground truth
+        # ------------- COCO Box detection evaluation -------------
         if len(data_dict) > 0:
             print('evaluating ......')
             cocoGt = self.dataset.coco
-            # workaround: temporarily write data to json file because pycocotools can't process dict in py36.
             _, tmp = tempfile.mkstemp()
             json.dump(data_dict, open(tmp, 'w'))
             cocoDt = cocoGt.loadRes(tmp)

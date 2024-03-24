@@ -51,7 +51,6 @@ class VOCAPIEvaluator():
             image_set=[('2007', set_type)],
             is_train=False)
         
-
     def evaluate(self, net):
         net.eval()
         num_images = len(self.dataset)
@@ -106,7 +105,6 @@ class VOCAPIEvaluator():
 
         print('Mean AP: ', self.map)
   
-
     def parse_rec(self, filename):
         """ Parse a PASCAL VOC xml file """
         tree = ET.parse(filename)
@@ -126,7 +124,6 @@ class VOCAPIEvaluator():
 
         return objects
 
-
     def get_output_dir(self, name, phase):
         """Return the directory where experimental artifacts are placed.
         If the directory does not exist, it is created.
@@ -138,7 +135,6 @@ class VOCAPIEvaluator():
             os.makedirs(filedir, exist_ok=True)
         return filedir
 
-
     def get_voc_results_file_template(self, cls):
         # VOCdevkit/VOC2007/results/det_test_aeroplane.txt
         filename = 'det_' + self.set_type + '_%s.txt' % (cls)
@@ -147,7 +143,6 @@ class VOCAPIEvaluator():
             os.makedirs(filedir)
         path = os.path.join(filedir, filename)
         return path
-
 
     def write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(self.labelmap):
@@ -165,7 +160,6 @@ class VOCAPIEvaluator():
                                 format(index[1], dets[k, -1],
                                     dets[k, 0] + 1, dets[k, 1] + 1,
                                     dets[k, 2] + 1, dets[k, 3] + 1))
-
 
     def do_python_eval(self, use_07=True):
         cachedir = os.path.join(self.devkit_path, 'annotations_cache')
@@ -205,7 +199,6 @@ class VOCAPIEvaluator():
             self.map = np.mean(aps)
             print('Mean AP = {:.4f}'.format(np.mean(aps)))
 
-
     def voc_ap(self, rec, prec, use_07_metric=True):
         """ ap = voc_ap(rec, prec, [use_07_metric])
         Compute VOC AP given precision and recall.
@@ -238,7 +231,6 @@ class VOCAPIEvaluator():
             # and sum (\Delta recall) * prec
             ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
         return ap
-
 
     def voc_eval(self, detpath, classname, cachedir, ovthresh=0.5, use_07_metric=True):
         if not os.path.isdir(cachedir):
@@ -346,7 +338,6 @@ class VOCAPIEvaluator():
             ap = -1.
 
         return rec, prec, ap
-
 
     def evaluate_detections(self, box_list):
         self.write_voc_results_file(box_list)
