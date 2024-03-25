@@ -8,9 +8,9 @@
 
 - COCO
 
-| Model  |  Backbone  | Batch | Scale | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight |
-|--------|------------|-------|-------|------------------------|-------------------|-------------------|--------------------|--------|
-| YOLOv1 | ResNet-18  | 1xb16 |  640  |                    |               |   37.8            |   21.3             | [ckpt](https://github.com/yjh0410/RT-ODLab/releases/download/yolo_tutorial_ckpt/yolov1_coco.pth) |
+| Model  |  Backbone  | Batch | Scale | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight | Logs |
+|--------|------------|-------|-------|------------------------|-------------------|-------------------|--------------------|--------|------|
+| YOLOv1 | ResNet-18  | 1xb16 |  640  |          27.6          |        46.8       |   37.8            |   21.3             | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov1_r18_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv1-R18-COCO.txt) |
 
 - For training, we train redesigned YOLOv1 with 150 epochs on COCO.
 - For data augmentation, we use the SSD's augmentation, including the RandomCrop, RandomDistort, RandomExpand, RandomHFlip and so on.
