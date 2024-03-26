@@ -155,9 +155,6 @@ def train():
     model, criterion = build_model(args, cfg, is_val=True)
     model = model.to(device).train()
     model_without_ddp = model
-    for m in model.modules():
-        if hasattr(m, "switch_to_deploy"):
-            m.switch_to_deploy()
 
     # ---------------------------- Build Model-EMA ----------------------------
     if cfg.use_ema and distributed_utils.get_rank() in [-1, 0]:

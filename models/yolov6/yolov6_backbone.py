@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov6_basic import RepBlock, RepVGGBlock
+    from .yolov6_basic import RepBlock, RepVGGBlock, RepCSPBlock
 except:
-    from  yolov6_basic import RepBlock, RepVGGBlock
+    from  yolov6_basic import RepBlock, RepVGGBlock, RepCSPBlock
 
 
 # --------------------- Yolov3's Backbone -----------------------
@@ -25,41 +25,41 @@ class Yolov6Backbone(nn.Module):
         self.layer_1 = RepVGGBlock(3, self.feat_dims[0],
                                    kernel_size=3, padding=1, stride=2)
         # P2/4
-        self.layer_2 = nn.Sequential(
-            RepVGGBlock(self.feat_dims[0], self.feat_dims[1],
-                        kernel_size=3, padding=1, stride=2),
-            RepBlock(in_channels  = self.feat_dims[1],
-                     out_channels = self.feat_dims[1],
-                     num_blocks   = round(6*cfg.depth))
-        )
+        self.layer_2 = self.make_block(self.feat_dims[0], self.feat_dims[1], round(6*cfg.depth)) 
         # P3/8
-        self.layer_3 = nn.Sequential(
-            RepVGGBlock(self.feat_dims[1], self.feat_dims[2],
-                        kernel_size=3, padding=1, stride=2),
-            RepBlock(in_channels  = self.feat_dims[2],
-                     out_channels = self.feat_dims[2],
-                     num_blocks   = round(12*cfg.depth))
-        )
+        self.layer_3 = self.make_block(self.feat_dims[1], self.feat_dims[2], round(12*cfg.depth)) 
         # P4/16
-        self.layer_4 = nn.Sequential(
-            RepVGGBlock(self.feat_dims[2], self.feat_dims[3],
-                        kernel_size=3, padding=1, stride=2),
-            RepBlock(in_channels  = self.feat_dims[3],
-                     out_channels = self.feat_dims[3],
-                     num_blocks   = round(18*cfg.depth))
-        )
+        self.layer_4 = self.make_block(self.feat_dims[2], self.feat_dims[3], round(18*cfg.depth)) 
         # P5/32
-        self.layer_5 = nn.Sequential(
-            RepVGGBlock(self.feat_dims[3], self.feat_dims[4],
-                        kernel_size=3, padding=1, stride=2),
-            RepBlock(in_channels  = self.feat_dims[4],
-                     out_channels = self.feat_dims[4],
-                     num_blocks   = round(6*cfg.depth))
-        )
+        self.layer_5 = self.make_block(self.feat_dims[3], self.feat_dims[4], round(6*cfg.depth)) 
 
         # Initialize all layers
         self.init_weights()
-        
+    
+    def make_block(self, in_dim, out_dim, num_blocks=1):
+        if self.model_scale in ["s", "t", "n"]:
+            block = nn.Sequential(
+                RepVGGBlock(in_dim, out_dim,
+                            kernel_size=3, padding=1, stride=2),
+                RepBlock(in_channels  = out_dim,
+                         out_channels = out_dim,
+                         num_blocks   = num_blocks,
+                         block        = RepVGGBlock)
+                         )
+        elif self.model_scale in ["m", "l", "x"]:
+            block = nn.Sequential(
+                RepVGGBlock(in_dim, out_dim,
+                            kernel_size=3, padding=1, stride=2),
+                RepCSPBlock(in_channels  = out_dim,
+                            out_channels = out_dim,
+                            num_blocks   = num_blocks,
+                            expansion    = 0.5)
+                            )
+        else:
+            raise NotImplementedError("Unknown model scale: {}".format(self.model_scale))
+            
+        return block
+
     def init_weights(self):
         """Initialize the parameters."""
         for m in self.modules():

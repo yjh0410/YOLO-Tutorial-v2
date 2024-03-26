@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:
-    from .yolov6_basic import BasicConv, RepBlock
+    from .yolov6_basic import BasicConv, RepBlock, RepCSPBlock
 except:
-    from  yolov6_basic import BasicConv, RepBlock
+    from  yolov6_basic import BasicConv, RepBlock, RepCSPBlock
 
 
 # Yolov6FPN
@@ -14,6 +14,7 @@ class Yolov6PaFPN(nn.Module):
     def __init__(self, cfg, in_dims: List = [256, 512, 1024]):
         super(Yolov6PaFPN, self).__init__()
         self.in_dims = in_dims
+        self.model_scale = cfg.scale
         c3, c4, c5 = in_dims
 
         # ---------------------- Yolov6's Top down FPN ----------------------
@@ -21,33 +22,34 @@ class Yolov6PaFPN(nn.Module):
         self.reduce_layer_1   = BasicConv(c5, round(256*cfg.width),
                                           kernel_size=1, padding=0, stride=1,
                                           act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
-        self.top_down_layer_1 = RepBlock(in_channels  = c4 + round(256*cfg.width),
-                                         out_channels = round(256*cfg.width),
-                                         num_blocks   = round(12*cfg.depth))
+        self.top_down_layer_1 = self.make_block(in_dim     = c4 + round(256*cfg.width),
+                                                out_dim    = round(256*cfg.width),
+                                                num_blocks = round(12*cfg.depth))
 
         ## P4 -> P3
         self.reduce_layer_2   = BasicConv(round(256*cfg.width), round(128*cfg.width),
                                           kernel_size=1, padding=0, stride=1,
                                           act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
-        self.top_down_layer_2 = RepBlock(in_channels  = c3 + round(128*cfg.width),
-                                         out_channels = round(128*cfg.width),
-                                         num_blocks   = round(12*cfg.depth))
+        self.top_down_layer_2 = self.make_block(in_dim     = c3 + round(128*cfg.width),
+                                                out_dim    = round(128*cfg.width),
+                                                num_blocks = round(12*cfg.depth))
         
         # ---------------------- Yolov6's Bottom up PAN ----------------------
         ## P3 -> P4
         self.downsample_layer_1 = BasicConv(round(128*cfg.width), round(128*cfg.width),
                                             kernel_size=3, padding=1, stride=2,
                                             act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_1  = RepBlock(in_channels  = round(128*cfg.width) + round(128*cfg.width),
-                                           out_channels = round(256*cfg.width),
-                                           num_blocks   = round(12*cfg.depth))
+        self.bottom_up_layer_1  = self.make_block(in_dim     = round(128*cfg.width) + round(128*cfg.width),
+                                                  out_dim    = round(256*cfg.width),
+                                                  num_blocks = round(12*cfg.depth))
+
         ## P4 -> P5
         self.downsample_layer_2 = BasicConv(round(256*cfg.width), round(256*cfg.width),
                                             kernel_size=3, padding=1, stride=2,
                                             act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_2  = RepBlock(in_channels  = round(256*cfg.width) + round(256*cfg.width),
-                                           out_channels = round(512*cfg.width),
-                                           num_blocks   = round(12*cfg.depth))
+        self.bottom_up_layer_2  = self.make_block(in_dim     = round(256*cfg.width) + round(256*cfg.width),
+                                                  out_dim    = round(512*cfg.width),
+                                                  num_blocks = round(12*cfg.depth))
 
         # ---------------------- Yolov6's output projection ----------------------
         self.out_layers = nn.ModuleList([
@@ -57,6 +59,20 @@ class Yolov6PaFPN(nn.Module):
                       ])
         self.out_dims = [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
 
+    def make_block(self, in_dim, out_dim, num_blocks=1):
+        if self.model_scale in ["s", "t", "n"]:
+            block = RepBlock(in_channels  = in_dim,
+                             out_channels = out_dim,
+                             num_blocks   = num_blocks)
+        elif self.model_scale in ["m", "l", "x"]:
+            block = RepCSPBlock(in_channels  = in_dim,
+                                out_channels = out_dim,
+                                num_blocks   = num_blocks,
+                                expansion    = 0.5)
+        else:
+            raise NotImplementedError("Unknown model scale: {}".format(self.model_scale))
+            
+        return block        
     def forward(self, features):
         c3, c4, c5 = features
         

@@ -175,81 +175,60 @@ class RepVGGBlock(nn.Module):
 
 
 # ---------------------------- Basic Modules ----------------------------
-class YoloBottleneck(nn.Module):
-    def __init__(self,
-                 in_dim       :int,
-                 out_dim      :int,
-                 kernel_size  :List  = [1, 3],
-                 expansion    :float = 0.5,
-                 shortcut     :bool  = False,
-                 act_type     :str   = 'silu',
-                 norm_type    :str   = 'BN',
-                 depthwise    :bool  = False,
-                 ) -> None:
-        super(YoloBottleneck, self).__init__()
-        inter_dim = int(out_dim * expansion)
-        # ----------------- Network setting -----------------
-        self.conv_layer1 = BasicConv(in_dim, inter_dim,
-                                     kernel_size=kernel_size[0], padding=kernel_size[0]//2, stride=1,
-                                     act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        self.conv_layer2 = BasicConv(inter_dim, out_dim,
-                                     kernel_size=kernel_size[1], padding=kernel_size[1]//2, stride=1,
-                                     act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        self.shortcut = shortcut and in_dim == out_dim
-
-    def forward(self, x):
-        h = self.conv_layer2(self.conv_layer1(x))
-
-        return x + h if self.shortcut else h
-
-class CSPBlock(nn.Module):
-    def __init__(self,
-                 in_dim,
-                 out_dim,
-                 num_blocks   :int   = 1,
-                 expansion    :float = 0.5,
-                 shortcut     :bool  = False,
-                 act_type     :str   = 'silu',
-                 norm_type    :str   = 'BN',
-                 depthwise    :bool  = False,
-                 ):
-        super(CSPBlock, self).__init__()
-        # ---------- Basic parameters ----------
-        self.num_blocks = num_blocks
-        self.expansion = expansion
-        self.shortcut = shortcut
-        inter_dim = round(out_dim * expansion)
-        # ---------- Model parameters ----------
-        self.conv_layer_1 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
-        self.conv_layer_2 = BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
-        self.conv_layer_3 = BasicConv(inter_dim * 2, out_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
-        self.module       = nn.Sequential(*[YoloBottleneck(inter_dim,
-                                                           inter_dim,
-                                                           kernel_size  = [1, 3],
-                                                           expansion    = 1.0,
-                                                           shortcut     = shortcut,
-                                                           act_type     = act_type,
-                                                           norm_type    = norm_type,
-                                                           depthwise    = depthwise)
-                                                           for _ in range(num_blocks)
-                                                           ])
-
-    def forward(self, x):
-        x1 = self.conv_layer_1(x)
-        x2 = self.module(self.conv_layer_2(x))
-        out = self.conv_layer_3(torch.cat([x1, x2], dim=1))
-
-        return out
-
 class RepBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, num_blocks=1):
+    def __init__(self, in_channels, out_channels, num_blocks=1, block=RepVGGBlock):
         super().__init__()
-        self.conv1 = RepVGGBlock(in_channels, out_channels, kernel_size=3, padding=1, stride=1)
-        self.block = nn.Sequential(*(RepVGGBlock(out_channels, out_channels, kernel_size=3, padding=1, stride=1)
+        self.conv1 = block(in_channels, out_channels)
+        self.block = nn.Sequential(*(block(out_channels, out_channels)
                                      for _ in range(num_blocks - 1))) if num_blocks > 1 else nn.Identity()
+        if block == BottleRep:
+            self.conv1 = BottleRep(in_channels, out_channels, weight=True)
+            num_blocks = num_blocks // 2
+            self.block = nn.Sequential(*(BottleRep(out_channels, out_channels, weight=True)
+                                         for _ in range(num_blocks - 1))) if num_blocks > 1 else None
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.block(x)
+        if self.block is not None:
+            x = self.block(x)
 
         return x
+
+class BottleRep(nn.Module):
+
+    def __init__(self, in_channels, out_channels, weight=False):
+        super().__init__()
+        self.conv1 = RepVGGBlock(in_channels, out_channels, kernel_size=3, padding=1, stride=1)
+        self.conv2 = RepVGGBlock(out_channels, out_channels, kernel_size=3, padding=1, stride=1)
+        if in_channels != out_channels:
+            self.shortcut = False
+        else:
+            self.shortcut = True
+        if weight:
+            self.alpha = nn.Parameter(torch.ones(1))
+        else:
+            self.alpha = 1.0
+
+    def forward(self, x):
+        outputs = self.conv1(x)
+        outputs = self.conv2(outputs)
+
+        return outputs + self.alpha * x if self.shortcut else outputs
+
+class RepCSPBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, num_blocks=1, expansion=0.5):
+        super().__init__()
+        inter_dim = round(out_channels * expansion)  # hidden channels
+        self.cv1 = BasicConv(in_channels, inter_dim, kernel_size=1, act_type='relu')
+        self.cv2 = BasicConv(in_channels, inter_dim, kernel_size=1, act_type='relu')
+        self.cv3 = BasicConv(2 * inter_dim, out_channels, kernel_size=1, act_type='relu')
+
+        self.module = RepBlock(inter_dim, inter_dim, num_blocks, block=BottleRep)
+
+    def forward(self, x):
+        x1 = self.cv1(x)
+        x2 = self.module(self.cv2(x))
+        out = self.cv3(torch.cat((x1, x2), dim=1))
+
+        return out
+
