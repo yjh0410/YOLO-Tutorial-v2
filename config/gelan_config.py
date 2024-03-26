@@ -1,47 +1,62 @@
-# yolo Config
+# Gelan (proposed by yolov9) config
 
 
-def build_yolov6_config(args):
-    if   args.model == 'yolov6_n':
-        return Yolov6NConfig()
-    elif args.model == 'yolov6_s':
-        return Yolov6SConfig()
-    elif args.model == 'yolov6_m':
-        return Yolov6MConfig()
-    elif args.model == 'yolov6_l':
-        return Yolov6LConfig()
-    elif args.model == 'yolov6_x':
-        return Yolov6XConfig()
+def build_gelan_config(args):
+    if   args.model == 'gelan_c':
+        return GElanCConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
-# YOLOv6-Base config
-class Yolov6BaseConfig(object):
+# GELAN-Base config
+class GElanBaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
-        self.width    = 1.0
-        self.depth    = 1.0
         self.reg_max  = 16
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
         self.num_levels = 3
-        self.scale      = "b"
+        ## Backbone
+        self.bk_act = 'silu'
+        self.bk_norm = 'BN'
+        self.bk_depthwise = False
+        self.bk_down_pooling = True
+        self.backbone_feats = {
+            "c1": [64],
+            "c2": [128, [128, 64],  256],
+            "c3": [256, [256, 128], 512],
+            "c4": [512, [512, 256], 512],
+            "c5": [512, [512, 256], 512],
+        }
+        self.backbone_depth = 1
         ## Neck
+        self.neck           = 'spp_elan'
         self.neck_act       = 'silu'
         self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
         self.spp_pooling_size  = 5
+        self.spp_inter_dim     = 256
+        self.spp_out_dim       = 512
         ## FPN
+        self.fpn      = 'gelan_pafpn'
         self.fpn_act  = 'silu'
         self.fpn_norm = 'BN'
         self.fpn_depthwise = False
+        self.fpn_down_pooling = True
+        self.fpn_depth    = 1
+        self.fpn_feats_td = {
+            "p4": [[512, 256], 512],
+            "p3": [[256, 128], 256],
+        }
+        self.fpn_feats_bu = {
+            "p4": [[512, 256], 512],
+            "p5": [[512, 256], 512],
+        }
         ## Head
+        self.head      = 'gelan_head'
         self.head_act  = 'silu'
         self.head_norm = 'BN'
         self.head_depthwise = False
-        self.num_cls_head   = 1
-        self.num_reg_head   = 1
+        self.num_cls_head   = 2
+        self.num_reg_head   = 2
 
         # ---------------- Post-process config ----------------
         ## Post process
@@ -54,12 +69,13 @@ class Yolov6BaseConfig(object):
 
         # ---------------- Assignment config ----------------
         ## Matcher
-        self.tal_topk_candidates = 13
-        self.tal_alpha = 1.0
+        self.tal_topk_candidates = 10
+        self.tal_alpha = 0.5
         self.tal_beta  = 6.0
         ## Loss weight
-        self.loss_cls = 1.0
-        self.loss_box = 2.0
+        self.loss_cls = 0.5
+        self.loss_box = 7.5
+        self.loss_dfl = 1.5
 
         # ---------------- ModelEMA config ----------------
         self.use_ema = True
@@ -81,7 +97,7 @@ class Yolov6BaseConfig(object):
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
         self.lr_scheduler = "cosine"
-        self.max_epoch    = 300
+        self.max_epoch    = 500
         self.eval_epoch   = 10
         self.no_aug_epoch = 20
 
@@ -89,7 +105,7 @@ class Yolov6BaseConfig(object):
         self.aug_type = 'yolo'
         self.box_format = 'xyxy'
         self.normalize_coords = False
-        self.mosaic_prob = 1.0
+        self.mosaic_prob = 0.0
         self.mixup_prob  = 0.0
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
@@ -116,71 +132,10 @@ class Yolov6BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
-# YOLOv6-N
-class Yolov6NConfig(Yolov6BaseConfig):
+# GELAN-C
+class GElanCConfig(GElanBaseConfig):
     def __init__(self) -> None:
         super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.25
-        self.depth = 0.34
-        self.scale = "n"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
-
-# YOLOv6-S
-class Yolov6SConfig(Yolov6BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.50
-        self.depth = 0.34
-        self.scale = "s"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
-
-# YOLOv6-M
-class Yolov6MConfig(Yolov6BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.75
-        self.depth = 0.67
-        self.scale = "m"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
-
-# YOLOv6-L
-class Yolov6LConfig(Yolov6BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.0
-        self.depth = 1.0
-        self.scale = "l"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
-
-# YOLOv6-X
-class Yolov6XConfig(Yolov6BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.25
-        self.depth = 1.34
-        self.scale = "x"
-
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1

@@ -3,56 +3,52 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .yolov6_backbone import Yolov6Backbone
-from .yolov6_neck     import SPPF
-from .yolov6_pafpn    import Yolov6PaFPN
-from .yolov6_head     import Yolov6DetHead
-from .yolov6_pred     import Yolov6DetPredLayer
+from .gelan_backbone import GElanBackbone
+from .gelan_neck     import SPPElan
+from .gelan_pafpn    import GElanPaFPN
+from .gelan_head     import GElanDetHead
+from .gelan_pred     import GElanPredLayer
 
 # --------------- External components ---------------
 from utils.misc import multiclass_nms
 
 
-# YOLOv6
-class Yolov6(nn.Module):
+# G-ELAN proposed by YOLOv9
+class GElan(nn.Module):
     def __init__(self,
                  cfg,
                  is_val = False,
+                 deploy = False,
                  ) -> None:
-        super(Yolov6, self).__init__()
+        super(GElan, self).__init__()
         # ---------------------- Basic setting ----------------------
         self.cfg = cfg
+        self.deploy = deploy
         self.num_classes = cfg.num_classes
         ## Post-process parameters
-        self.topk_candidates  = cfg.val_topk        if is_val else cfg.test_topk
-        self.conf_thresh      = cfg.val_conf_thresh if is_val else cfg.test_conf_thresh
-        self.nms_thresh       = cfg.val_nms_thresh  if is_val else cfg.test_nms_thresh
-        self.no_multi_labels  = False if is_val else True
+        self.topk_candidates = cfg.val_topk        if is_val else cfg.test_topk
+        self.conf_thresh     = cfg.val_conf_thresh if is_val else cfg.test_conf_thresh
+        self.nms_thresh      = cfg.val_nms_thresh  if is_val else cfg.test_nms_thresh
+        self.no_multi_labels = False if is_val else True
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = Yolov6Backbone(cfg)
-        self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
-        ## Neck: SPP
-        self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
-        self.pyramid_feat_dims[-1] = self.neck.out_dim
-        ## Neck: FPN
-        self.fpn      = Yolov6PaFPN(cfg, self.pyramid_feat_dims)
-        ## Head
-        self.head     = Yolov6DetHead(cfg, self.fpn.out_dims)
-        ## Pred
-        self.pred     = Yolov6DetPredLayer(cfg, self.fpn.out_dims)
+        self.backbone = GElanBackbone(cfg)
+        self.neck     = SPPElan(cfg, self.backbone.feat_dims[-1])
+        self.backbone.feat_dims[-1] = self.neck.out_dim
+        ## PaFPN
+        self.fpn      = GElanPaFPN(cfg, self.backbone.feat_dims)
+        ## Detection head
+        self.head     = GElanDetHead(cfg, self.fpn.out_dims)
+        self.pred     = GElanPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
 
-        self.switch_deploy()
-
-    def switch_deploy(self,):
+    def switch_to_deploy(self,):
         for m in self.modules():
-            if hasattr(m, "switch_to_deploy"):
-                m.switch_to_deploy()
+            if hasattr(m, "fuse_convs"):
+                m.fuse_convs()
 
     def post_process(self, cls_preds, box_preds):
         """
-        We process predictions at each scale hierarchically
         Input:
             cls_preds: List[torch.Tensor] -> [[B, M, C], ...], B=1
             box_preds: List[torch.Tensor] -> [[B, M, 4], ...], B=1
@@ -125,7 +121,7 @@ class Yolov6(nn.Module):
         # nms
         scores, labels, bboxes = multiclass_nms(
             scores, labels, bboxes, self.nms_thresh, self.num_classes)
-        
+
         return bboxes, scores, labels
     
     def forward(self, x):
@@ -148,12 +144,22 @@ class Yolov6(nn.Module):
             all_cls_preds = outputs['pred_cls']
             all_box_preds = outputs['pred_box']
 
-            # post process
-            bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
-            outputs = {
-                "scores": scores,
-                "labels": labels,
-                "bboxes": bboxes
-            }
+            if self.deploy:
+                cls_preds = torch.cat(all_cls_preds, dim=1)[0]
+                box_preds = torch.cat(all_box_preds, dim=1)[0]
+                scores = cls_preds.sigmoid()
+                bboxes = box_preds
+                # [n_anchors_all, 4 + C]
+                outputs = torch.cat([bboxes, scores], dim=-1)
+
+            else:
+                # post process
+                bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
+                outputs = {
+                    "scores": scores,
+                    "labels": labels,
+                    "bboxes": bboxes
+                }
         
-        return outputs 
+        return outputs
+    
