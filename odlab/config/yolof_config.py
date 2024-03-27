@@ -1,6 +1,15 @@
 # Fully Convolutional One-Stage object detector
 
 
+class YolofBaseConfig(object):
+    def __init__(self):
+        pass
+
+    def print_config(self):
+        config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}
+        for k, v in config_dict.items():
+            print("{} : {}".format(k, v))
+
 yolof_cfg = {
     # --------------- C5 level ---------------
     'yolof_r18_c5_1x':{

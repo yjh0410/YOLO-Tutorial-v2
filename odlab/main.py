@@ -11,7 +11,6 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from utils import distributed_utils
 from utils.misc import compute_flops, collate_fn
-from utils.misc import get_param_dict, ModelEMA
 from utils.optimizer import build_optimizer
 from utils.lr_scheduler import build_wp_lr_scheduler, build_lr_scheduler
 
@@ -36,12 +35,8 @@ def parse_args():
     # Model
     parser.add_argument('-m', '--model', default='yolof_r18_c5_1x',
                         help='build object detector')
-    parser.add_argument('-p', '--pretrained', default=None, type=str,
-                        help='load pretrained weight')
     parser.add_argument('-r', '--resume', default=None, type=str,
                         help='keep training')
-    parser.add_argument('--ema', default=None, type=str,
-                        help='use Model EMA trick.')
     # Dataset
     parser.add_argument('--root', default='/Users/liuhaoran/Desktop/python_work/object-detection/dataset/COCO/',
                         help='data root')
@@ -53,8 +48,6 @@ def parse_args():
     parser.add_argument('--num_workers', default=2, type=int, 
                         help='Number of workers used in dataloading')
     # Epoch
-    parser.add_argument('--eval_epoch', default=2, type=int,
-                        help='interval between evaluations')
     parser.add_argument('--save_folder', default='weights/', type=str, 
                         help='path to save weight')
     parser.add_argument('--eval_first', action="store_true", default=False,
@@ -68,8 +61,6 @@ def parse_args():
                         help='number of distributed processes')
     parser.add_argument('--sybn', action='store_true', default=False, 
                         help='use sybn.')
-    parser.add_argument('--find_unused_parameters', action='store_true', default=False, 
-                        help='set find_unused_parameters as True.')
     # Debug setting
     parser.add_argument('--debug', action='store_true', default=False, 
                         help='debug codes.')
@@ -93,14 +84,12 @@ def main():
     path_to_save = os.path.join(args.save_folder, args.dataset, args.model)
     os.makedirs(path_to_save, exist_ok=True)
 
-
     # ---------------------------- Build DDP ----------------------------
     distributed_utils.init_distributed_mode(args)
     print("git:\n  {}\n".format(distributed_utils.get_sha()))
     world_size = distributed_utils.get_world_size()
     print('World size: {}'.format(world_size))
     per_gpu_batch = args.batch_size // world_size
-
 
     # ---------------------------- Build CUDA ----------------------------
     if args.cuda and torch.cuda.is_available():
@@ -109,28 +98,23 @@ def main():
     else:
         device = torch.device("cpu")
 
-
     # ---------------------------- Fix random seed ----------------------------
     fix_random_seed(args)
-
 
     # ---------------------------- Build config ----------------------------
     cfg = build_config(args)
     print('Model config: ', cfg)
 
-
     # ---------------------------- Build Dataset ----------------------------
     transforms = build_transform(cfg, is_train=True)
-    dataset, dataset_info = build_dataset(args, transforms, is_train=True)
-
+    dataset = build_dataset(args, cfg, transforms, is_train=True)
 
     # ---------------------------- Build Dataloader ----------------------------
     train_loader = build_dataloader(args, dataset, per_gpu_batch, collate_fn, is_train=True)
 
-
     # ---------------------------- Build model ----------------------------
     ## Build model
-    model, criterion = build_model(args, cfg, dataset_info['num_classes'], is_val=True)
+    model, criterion = build_model(args, cfg, cfg.num_classes, is_val=True)
     model.to(device)
     model_without_ddp = model
     ## Calcute Params & GFLOPs
@@ -139,50 +123,34 @@ def main():
         model_copy.trainable = False
         model_copy.eval()
         compute_flops(model=model_copy,
-                      min_size=cfg['test_min_size'],
-                      max_size=cfg['test_max_size'],
+                      min_size=cfg.test_min_size,
+                      max_size=cfg.test_max_size,
                       device=device)
         del model_copy
     if args.distributed:
         dist.barrier()
 
-
     # ---------------------------- Build Optimizer ----------------------------
-    cfg['base_lr'] = cfg['base_lr'] * args.batch_size
-    param_dicts = None
-    if 'param_dict_type' in cfg.keys() and cfg['param_dict_type'] != 'default':
-        print("- Param dict type: {}".format(cfg['param_dict_type']))
-        param_dicts = get_param_dict(model_without_ddp, cfg)
-    optimizer, start_epoch = build_optimizer(cfg, model_without_ddp, param_dicts, args.resume)
-
+    cfg.grad_accumulate = max(16 // args.batch_size, 1)
+    cfg.base_lr = cfg.per_image_lr * args.batch_size * cfg.grad_accumulate
+    optimizer, start_epoch = build_optimizer(cfg, model_without_ddp, args.resume)
 
     # ---------------------------- Build LR Scheduler ----------------------------
-    wp_lr_scheduler = build_wp_lr_scheduler(cfg, cfg['base_lr'])
+    wp_lr_scheduler = build_wp_lr_scheduler(cfg, cfg.base_lr)
     lr_scheduler    = build_lr_scheduler(cfg, optimizer, args.resume)
-
-
-    # ---------------------------- Build Model EMA ----------------------------
-    model_ema = None
-    if 'use_ema' in cfg.keys() and cfg['use_ema']:
-        print("Build Model EMA for {}".format(args.model))
-        model_ema = ModelEMA(cfg, model, start_epoch * len(train_loader))
-
 
     # ---------------------------- Build DDP model ----------------------------
     if args.distributed:
-        model = DDP(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_parameters)
+        model = DDP(model, device_ids=[args.gpu])
         model_without_ddp = model.module
-
 
     # ---------------------------- Build Evaluator ----------------------------
     evaluator = build_evluator(args, cfg, device)
-
 
     # ----------------------- Eval before training -----------------------
     if args.eval_first and distributed_utils.is_main_process():
         evaluator.evaluate(model_without_ddp)
         return
-
 
     # ----------------------- Training -----------------------
     print("Start training")
@@ -201,8 +169,6 @@ def main():
                         epoch,
                         args.vis_tgt,
                         wp_lr_scheduler,
-                        dataset_info['class_labels'],
-                        model_ema=model_ema,
                         debug=args.debug)
         
         # LR Scheduler
@@ -210,23 +176,25 @@ def main():
 
         # Evaluate
         if distributed_utils.is_main_process():
-            model_eval = model_ema.ema if model_ema is not None else model_without_ddp
+            model_eval = model_without_ddp
+            to_save = False
             if (epoch % args.eval_epoch) == 0 or (epoch == cfg['max_epoch'] - 1):
                 if evaluator is None:
-                    cur_map = 0.
+                    to_save = True
                 else:
                     evaluator.evaluate(model_eval)
-                    cur_map = evaluator.map
-                # Save model
-                if cur_map > best_map:
-                    # update best-map
-                    best_map = cur_map
+                    # Save model
+                    if evaluator.map >= best_map:
+                        best_map = evaluator.map
+                        to_save = True
+
+                if to_save:
                     # save model
-                    print('Saving state, epoch:', epoch + 1)
+                    print('Saving state, epoch:', epoch)
                     torch.save({'model':        model_eval.state_dict(),
                                 'optimizer':    optimizer.state_dict(),
                                 'lr_scheduler': lr_scheduler.state_dict(),
-                                'mAP':          round(cur_map*100, 1),
+                                'mAP':          round(best_map*100, 1),
                                 'epoch':        epoch,
                                 'args':         args}, 
                                 os.path.join(path_to_save, '{}_best.pth'.format(args.model)))

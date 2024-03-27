@@ -51,7 +51,7 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
         pass
         
     if resume is not None:
-        print('keep training: ', resume)
+        print('Load lr scheduler from the checkpoint: ', resume)
         checkpoint = torch.load(resume)
         # checkpoint state dict
         checkpoint_state_dict = checkpoint.pop("lr_scheduler")

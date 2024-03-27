@@ -4,23 +4,21 @@ import contextlib
 import torch
 from pycocotools.cocoeval import COCOeval
 
-from datasets import build_dataset, build_transform
-
+from datasets import build_transform
+from datasets.coco import build_coco
 
 class COCOAPIEvaluator():
-    def __init__(self, args, cfg, device, testset=False):
+    def __init__(self, args, cfg, device):
         # ----------------- Basic parameters -----------------
-        self.ddp_mode = True if args.distributed else False
-        self.image_set = 'test2017' if testset else 'val2017'
+        self.image_set = 'val2017'
         self.device = device
-        self.testset = testset
         # ----------------- Metrics -----------------
         self.map = 0.
         self.ap50_95 = 0.
         self.ap50 = 0.
         # ----------------- Dataset -----------------
         self.transform = build_transform(cfg, is_train=False)
-        self.dataset, self.dataset_info = build_dataset(args, self.transform, is_train=False)
+        self.dataset = build_coco(args, self.transform, is_train=False)
 
 
     @torch.no_grad()

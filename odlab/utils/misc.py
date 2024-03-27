@@ -2,13 +2,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # ---------------------------------------------------------------------------
 import time
-import math
 import datetime
 import numpy as np
-from typing import List
-from thop import profile
-from copy import deepcopy
-from collections import defaultdict, deque
+from   typing import List
+from   thop import profile
+from   collections import defaultdict, deque
 
 import torch
 import torch.nn as nn
@@ -243,14 +241,6 @@ def collate_fn(batch):
 
 
 # ---------------------------- For Model ----------------------------
-def match_name_keywords(n, name_keywords):
-    out = False
-    for b in name_keywords:
-        if b in n:
-            out = True
-            break
-    return out
-
 ## fuse Conv & BN layer
 def fuse_conv_bn(module):
     """Recursively fuse conv and bn in a module.
@@ -345,133 +335,6 @@ def get_total_grad_norm(parameters, norm_type=2):
     total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]),
                             norm_type)
     return total_norm
-
-## param Dict
-def get_param_dict(model, cfg, return_name=False):
-    # sanity check: a variable could not match backbone_names and linear_proj_names at the same time
-    cfg['lr_backbone'] = cfg['base_lr'] * cfg['backbone_lr_ratio']
-    for n, p in model.named_parameters():
-        if match_name_keywords(n, cfg['lr_backbone_names']) and match_name_keywords(n, cfg['lr_linear_proj_names']):
-            raise ValueError
-
-    param_dicts = [
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if not match_name_keywords(n, cfg['lr_backbone_names'])
-                and not match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and not match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['base_lr'],
-            "weight_decay": cfg['weight_decay'],
-        },
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if match_name_keywords(n, cfg['lr_backbone_names'])
-                and not match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and not match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['lr_backbone'],
-            "weight_decay": cfg['weight_decay'],
-        },
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if not match_name_keywords(n, cfg['lr_backbone_names'])
-                and match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and not match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['base_lr'] * cfg['lr_linear_proj_mult'],
-            "weight_decay": cfg['weight_decay'],
-        },
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if not match_name_keywords(n, cfg['lr_backbone_names'])
-                and not match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['base_lr'],
-            "weight_decay": cfg['weight_decay'] * cfg['wd_norm_mult'],
-        },
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if match_name_keywords(n, cfg['lr_backbone_names'])
-                and not match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['lr_backbone'],
-            "weight_decay": cfg['weight_decay'] * cfg['wd_norm_mult'],
-        },
-        {
-            "params": [
-                p if not return_name else n
-                for n, p in model.named_parameters()
-                if not match_name_keywords(n, cfg['lr_backbone_names'])
-                and match_name_keywords(n, cfg['lr_linear_proj_names'])
-                and match_name_keywords(n, cfg['wd_norm_names'])
-                and p.requires_grad
-            ],
-            "lr": cfg['base_lr'] * cfg['lr_linear_proj_mult'],
-            "weight_decay": cfg['weight_decay'] * cfg['wd_norm_mult'],
-        },
-    ]
-
-    return param_dicts
-
-## Model EMA
-class ModelEMA(object):
-    def __init__(self, cfg, model, updates=0):
-        # Create EMA
-        self.ema = deepcopy(self.de_parallel(model)).eval()  # FP32 EMA
-        self.updates = updates  # number of EMA updates
-        self.decay = lambda x: cfg['ema_decay'] * (1 - math.exp(-x / cfg['ema_tau']))  # decay exponential ramp (to help early epochs)
-        for p in self.ema.parameters():
-            p.requires_grad_(False)
-
-    def is_parallel(self, model):
-        # Returns True if model is of type DP or DDP
-        return type(model) in (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel)
-
-    def de_parallel(self, model):
-        # De-parallelize a model: returns single-GPU model if model is of type DP or DDP
-        return model.module if self.is_parallel(model) else model
-
-    def copy_attr(self, a, b, include=(), exclude=()):
-        # Copy attributes from b to a, options to only include [...] and to exclude [...]
-        for k, v in b.__dict__.items():
-            if (len(include) and k not in include) or k.startswith('_') or k in exclude:
-                continue
-            else:
-                setattr(a, k, v)
-
-    def update(self, model):
-        # Update EMA parameters
-        self.updates += 1
-        d = self.decay(self.updates)
-
-        msd = self.de_parallel(model).state_dict()  # model state_dict
-        for k, v in self.ema.state_dict().items():
-            if v.dtype.is_floating_point:  # true for FP16 and FP32
-                v *= d
-                v += (1 - d) * msd[k].detach()
-        # assert v.dtype == msd[k].dtype == torch.float32, f'{k}: EMA {v.dtype} and model {msd[k].dtype} must be FP32'
-
-    def update_attr(self, model, include=(), exclude=('process_group', 'reducer')):
-        # Update EMA attributes
-        self.copy_attr(self.ema, model, include, exclude)
 
 
 # ---------------------------- For Loss ----------------------------

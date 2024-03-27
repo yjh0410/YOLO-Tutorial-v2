@@ -25,7 +25,7 @@ class Scale(nn.Module):
         return x * self.scale
 
 
-class FCOSHead(nn.Module):
+class FcosHead(nn.Module):
     def __init__(self, cfg, in_dim, out_dim, num_classes, num_cls_head=1, num_reg_head=1, act_type='relu', norm_type='BN'):
         super().__init__()
         self.fmp_size = None

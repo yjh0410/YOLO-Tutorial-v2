@@ -96,7 +96,7 @@ class FCOS(nn.Module):
 
         return bboxes, scores, labels
 
-    def forward(self, src, src_mask=None, targets=None):
+    def forward(self, src, src_mask=None):
         # ---------------- Backbone ----------------
         pyramid_feats = self.backbone(src)
 

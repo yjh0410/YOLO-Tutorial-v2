@@ -1,19 +1,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
 
-from .retinanet.build import build_retinanet
-from .fcos.build      import build_fcos
-from .yolof.build     import build_yolof
-from .detr.build      import build_detr
+from .fcos.build  import build_fcos
+from .yolof.build import build_yolof
+from .detr.build  import build_detr
 
 
 def build_model(args, cfg, num_classes=80, is_val=False):
     # ------------ build object detector ------------
-    ## RetinaNet    
-    if 'retinanet' in args.model:
-        model, criterion = build_retinanet(cfg, num_classes, is_val)
     ## FCOS    
-    elif 'fcos' in args.model:
+    if 'fcos' in args.model:
         model, criterion = build_fcos(cfg, num_classes, is_val)
     ## YOLOF    
     elif 'yolof' in args.model:
