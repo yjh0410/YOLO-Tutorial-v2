@@ -9,7 +9,7 @@ class YolofHead(nn.Module):
     def __init__(self, cfg, in_dim, out_dim, num_classes, num_cls_head=1, num_reg_head=1, act_type='relu', norm_type='BN'):
         super().__init__()
         self.fmp_size = None
-        self.ctr_clamp = cfg['center_clamp']
+        self.ctr_clamp = cfg.center_clamp
         self.DEFAULT_EXP_CLAMP = math.log(1e8)
         self.DEFAULT_SCALE_CLAMP = math.log(1000.0 / 16)
         # ------------------ Basic parameters -------------------
@@ -20,10 +20,10 @@ class YolofHead(nn.Module):
         self.num_reg_head=num_reg_head
         self.act_type=act_type
         self.norm_type=norm_type
-        self.stride = cfg['out_stride']
+        self.stride = cfg.out_stride
         # Anchor config
-        self.anchor_size = torch.as_tensor(cfg['anchor_size'])
-        self.num_anchors = len(cfg['anchor_size'])
+        self.anchor_size = torch.as_tensor(cfg.anchor_size)
+        self.num_anchors = len(cfg.anchor_size)
 
         # ------------------ Network parameters -------------------
         ## cls head

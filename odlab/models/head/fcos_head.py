@@ -37,7 +37,7 @@ class FcosHead(nn.Module):
         self.num_reg_head = num_reg_head
         self.act_type = act_type
         self.norm_type = norm_type
-        self.stride = cfg['out_stride']
+        self.stride = cfg.out_stride
 
         # ------------------ Network parameters -------------------
         ## cls head
