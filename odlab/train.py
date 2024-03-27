@@ -131,7 +131,7 @@ def main():
         dist.barrier()
 
     # ---------------------------- Build Optimizer ----------------------------
-    cfg.grad_accumulate = max(16 // args.batch_size, 1)
+    cfg.grad_accumulate = max(cfg.batch_size_base // args.batch_size, 1)
     cfg.base_lr = cfg.per_image_lr * args.batch_size * cfg.grad_accumulate
     optimizer, start_epoch = build_optimizer(cfg, model_without_ddp, args.resume)
 

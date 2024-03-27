@@ -65,6 +65,7 @@ class FcosBaseConfig(object):
 
         # --------- Optimizer ---------
         self.optimizer = 'sgd'
+        self.batch_size_base = 16
         self.per_image_lr  = 0.01 / 16
         self.bk_lr_ratio   = 1.0 / 1.0
         self.momentum      = 0.9
@@ -131,12 +132,16 @@ class FcosRT_R18_1x_Config(FcosBaseConfig):
         self.fpn_p6_from_c5  = False
 
         # --------- Label Assignment ---------
-        self.matcher = 'fcos_matcher'
-        self.matcher_hpy = {'center_sampling_radius': 1.5,
-                            'object_sizes_of_interest': [[-1, 64],
-                                                         [64, 128],
-                                                         [128, float('inf')]]
-                                                         },
+        self.matcher = 'simota'
+        self.matcher_hpy = {'soft_center_radius': 2.5,
+                            'topk_candidates': 13},
+
+        # --------- Loss weight ---------
+        self.focal_loss_alpha = 0.25
+        self.focal_loss_gamma = 2.0
+        self.loss_cls_weight  = 1.0
+        self.loss_reg_weight  = 2.0
+        self.loss_ctn_weight  = 0.5
 
         # --------- Train epoch ---------
         self.max_epoch = 36,        # 3x
@@ -175,12 +180,16 @@ class FcosRT_R50_1x_Config(FcosBaseConfig):
         self.fpn_p6_from_c5  = False
 
         # --------- Label Assignment ---------
-        self.matcher = 'fcos_matcher'
-        self.matcher_hpy = {'center_sampling_radius': 1.5,
-                            'object_sizes_of_interest': [[-1, 64],
-                                                         [64, 128],
-                                                         [128, float('inf')]]
-                                                         },
+        self.matcher = 'simota'
+        self.matcher_hpy = {'soft_center_radius': 2.5,
+                            'topk_candidates': 13},
+
+        # --------- Loss weight ---------
+        self.focal_loss_alpha = 0.25
+        self.focal_loss_gamma = 2.0
+        self.loss_cls_weight  = 1.0
+        self.loss_reg_weight  = 2.0
+        self.loss_ctn_weight  = 0.5
 
         # --------- Train epoch ---------
         self.max_epoch = 36,        # 3x

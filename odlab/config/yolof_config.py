@@ -66,6 +66,7 @@ class YolofBaseConfig(object):
 
         # --------- Optimizer ---------
         self.optimizer = 'sgd'
+        self.batch_size_base = 64
         self.per_image_lr  = 0.12 / 64
         self.bk_lr_ratio   = 1.0 / 3.0
         self.momentum      = 0.9
