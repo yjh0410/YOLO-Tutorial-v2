@@ -13,6 +13,7 @@ class Yolov6Backbone(nn.Module):
     def __init__(self, cfg):
         super(Yolov6Backbone, self).__init__()
         # ------------------ Basic setting ------------------
+        self.cfg = cfg
         self.model_scale = cfg.scale
         self.feat_dims = [round(64   * cfg.width),
                           round(128  * cfg.width),
@@ -46,14 +47,14 @@ class Yolov6Backbone(nn.Module):
                          num_blocks   = num_blocks,
                          block        = RepVGGBlock)
                          )
-        elif self.model_scale in ["m", "l", "x"]:
+        elif self.model_scale in ["m", "l"]:
             block = nn.Sequential(
                 RepVGGBlock(in_dim, out_dim,
                             kernel_size=3, padding=1, stride=2),
                 RepCSPBlock(in_channels  = out_dim,
                             out_channels = out_dim,
                             num_blocks   = num_blocks,
-                            expansion    = 0.5)
+                            expansion    = self.cfg.bk_csp_expansion)
                             )
         else:
             raise NotImplementedError("Unknown model scale: {}".format(self.model_scale))

@@ -43,8 +43,6 @@ class Yolov6(nn.Module):
         ## Pred
         self.pred     = Yolov6DetPredLayer(cfg, self.fpn.out_dims)
 
-        self.switch_deploy()
-
     def switch_deploy(self,):
         for m in self.modules():
             if hasattr(m, "switch_to_deploy"):

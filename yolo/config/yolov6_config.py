@@ -10,8 +10,6 @@ def build_yolov6_config(args):
         return Yolov6MConfig()
     elif args.model == 'yolov6_l':
         return Yolov6LConfig()
-    elif args.model == 'yolov6_x':
-        return Yolov6XConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
@@ -152,6 +150,7 @@ class Yolov6MConfig(Yolov6BaseConfig):
         self.width = 0.75
         self.depth = 0.67
         self.scale = "m"
+        self.bk_csp_expansion = 0.67
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -166,20 +165,7 @@ class Yolov6LConfig(Yolov6BaseConfig):
         self.width = 1.0
         self.depth = 1.0
         self.scale = "l"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
-
-# YOLOv6-X
-class Yolov6XConfig(Yolov6BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.25
-        self.depth = 1.34
-        self.scale = "x"
+        self.bk_csp_expansion = 0.5
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
