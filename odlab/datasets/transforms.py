@@ -12,12 +12,6 @@ import torchvision.transforms.functional as F
 
 
 # ----------------- Basic transform functions -----------------
-def box_xyxy_to_cxcywh(x):
-    x0, y0, x1, y1 = x.unbind(-1)
-    b = [(x0 + x1) / 2, (y0 + y1) / 2,
-         (x1 - x0), (y1 - y0)]
-    return torch.stack(b, dim=-1)
-
 def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None):
     return torchvision.ops.misc.interpolate(input, size, scale_factor, mode, align_corners)
 
@@ -311,14 +305,14 @@ def build_transform(cfg=None, is_train=False):
     # ---------------- Transform for Training ----------------
     if is_train:
         transforms = []
-        trans_config = cfg['trans_config']
+        trans_config = cfg.trans_config
         # build transform
-        if not cfg['detr_style']:
+        if not cfg.detr_style:
             for t in trans_config:
                 if t['name'] == 'RandomHFlip':
                     transforms.append(RandomHorizontalFlip())
                 if t['name'] == 'RandomResize':
-                    transforms.append(RandomResize(cfg['train_min_size'], max_size=cfg['train_max_size']))
+                    transforms.append(RandomResize(cfg.train_min_size, max_size=cfg.train_max_size))
                 if t['name'] == 'RandomSizeCrop':
                     transforms.append(RandomSizeCrop(t['min_crop_size'], max_size=t['max_crop_size']))
                 if t['name'] == 'RandomShift':
@@ -327,33 +321,33 @@ def build_transform(cfg=None, is_train=False):
                     transforms.append(RefineBBox(min_box_size=t['min_box_size']))
             transforms.extend([
                 ToTensor(),
-                Normalize(cfg['pixel_mean'], cfg['pixel_std'], cfg['normalize_coords']),
-                ConvertBoxFormat(cfg['box_format'])
+                Normalize(cfg.pixel_mean, cfg.pixel_std, cfg.normalize_coords),
+                ConvertBoxFormat(cfg.box_format)
             ])
         # build transform for DETR-style detector
         else:
             transforms = [
                 RandomHorizontalFlip(),
                 RandomSelect(
-                    RandomResize(cfg['train_min_size'], max_size=cfg['train_max_size']),
+                    RandomResize(cfg.train_min_size, max_size=cfg.train_max_size),
                     Compose([
-                        RandomResize(cfg['train_min_size2']),
-                        RandomSizeCrop(*cfg['random_crop_size']),
-                        RandomResize(cfg['train_min_size'], max_size=cfg['train_max_size']),
+                        RandomResize(cfg.train_min_size2),
+                        RandomSizeCrop(*cfg.random_crop_size),
+                        RandomResize(cfg.train_min_size, max_size=cfg.train_max_size),
                     ])
                 ),
                 ToTensor(),
-                Normalize(cfg['pixel_mean'], cfg['pixel_std'], cfg['normalize_coords']),
-                ConvertBoxFormat(cfg['box_format'])
+                Normalize(cfg.pixel_mean, cfg.pixel_std, cfg.normalize_coords),
+                ConvertBoxFormat(cfg.box_format)
             ]
 
     # ---------------- Transform for Evaluating ----------------
     else:
         transforms = [
-            RandomResize(cfg['test_min_size'], max_size=cfg['test_max_size']),
+            RandomResize(cfg.test_min_size, max_size=cfg.test_max_size),
             ToTensor(),
-            Normalize(cfg['pixel_mean'], cfg['pixel_std'], cfg['normalize_coords']),
-            ConvertBoxFormat(cfg['box_format'])
+            Normalize(cfg.pixel_mean, cfg.pixel_std, cfg.normalize_coords),
+            ConvertBoxFormat(cfg.box_format)
         ]
     
     return Compose(transforms)

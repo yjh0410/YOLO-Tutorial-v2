@@ -6,17 +6,17 @@ from .yolof.build import build_yolof
 from .detr.build  import build_detr
 
 
-def build_model(args, cfg, num_classes=80, is_val=False):
+def build_model(args, cfg, is_val=False):
     # ------------ build object detector ------------
     ## FCOS    
     if 'fcos' in args.model:
-        model, criterion = build_fcos(cfg, num_classes, is_val)
+        model, criterion = build_fcos(cfg, is_val)
     ## YOLOF    
     elif 'yolof' in args.model:
-        model, criterion = build_yolof(cfg, num_classes, is_val)
+        model, criterion = build_yolof(cfg, is_val)
     ## DETR    
     elif 'detr' in args.model:
-        model, criterion = build_detr(cfg, num_classes, is_val)
+        model, criterion = build_detr(cfg, is_val)
     else:
         raise NotImplementedError("Unknown detector: {}".args.model)
     

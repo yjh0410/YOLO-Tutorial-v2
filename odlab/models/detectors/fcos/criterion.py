@@ -9,33 +9,33 @@ from utils.distributed_utils import get_world_size, is_dist_avail_and_initialize
 from .matcher import FcosMatcher, SimOtaMatcher
 
 
-class Criterion(nn.Module):
-    def __init__(self, cfg, num_classes=90):
+class SetCriterion(nn.Module):
+    def __init__(self, cfg):
         super().__init__()
         # ------------- Basic parameters -------------
         self.cfg = cfg
-        self.num_classes = num_classes
+        self.num_classes = cfg.num_classes
         # ------------- Focal loss -------------
-        self.alpha = cfg['focal_loss_alpha']
-        self.gamma = cfg['focal_loss_gamma']
+        self.alpha = cfg.focal_loss_alpha
+        self.gamma = cfg.focal_loss_gamma
         # ------------- Loss weight -------------
-        self.weight_dict = {'loss_cls': cfg['loss_cls_weight'],
-                            'loss_reg': cfg['loss_reg_weight'],
-                            'loss_ctn': cfg['loss_ctn_weight']}
+        self.weight_dict = {'loss_cls': cfg.loss_cls_weight,
+                            'loss_reg': cfg.loss_reg_weight,
+                            'loss_ctn': cfg.loss_ctn_weight}
         # ------------- Matcher -------------
-        self.matcher_cfg = cfg['matcher_hpy']
-        if cfg['matcher'] == 'fcos_matcher':
-            self.matcher = FcosMatcher(num_classes,
+        self.matcher_cfg = cfg.matcher_hpy
+        if cfg.matcher == 'fcos_matcher':
+            self.matcher = FcosMatcher(cfg.num_classes,
                                        self.matcher_cfg['center_sampling_radius'],
                                        self.matcher_cfg['object_sizes_of_interest'],
                                        [1., 1., 1., 1.]
                                        )
-        elif cfg['matcher'] == 'simota':
-            self.matcher = SimOtaMatcher(num_classes,
+        elif cfg.matcher == 'simota':
+            self.matcher = SimOtaMatcher(cfg.num_classes,
                                          self.matcher_cfg['soft_center_radius'],
                                          self.matcher_cfg['topk_candidates'])
         else:
-            raise NotImplementedError("Unknown matcher: {}.".format(cfg['matcher']))
+            raise NotImplementedError("Unknown matcher: {}.".format(cfg.matcher))
 
     def loss_labels(self, pred_cls, tgt_cls, num_boxes=1.0):
         """
@@ -249,18 +249,12 @@ class Criterion(nn.Module):
                                  'labels': [...], 
                                  'orig_size': ...}, ...]
         """
-        if self.cfg['matcher'] == "fcos_matcher":
+        if self.cfg.matcher == "fcos_matcher":
             return self.fcos_loss(outputs, targets)
-        elif self.cfg['matcher'] == "simota":
+        elif self.cfg.matcher == "simota":
             return self.ota_loss(outputs, targets)
         else:
             raise NotImplementedError
-            
-
-# build criterion
-def build_criterion(cfg, num_classes=80):
-    criterion = Criterion(cfg=cfg, num_classes=num_classes)
-    return criterion
 
 
 if __name__ == "__main__":

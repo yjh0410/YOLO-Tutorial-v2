@@ -13,23 +13,23 @@ from utils.distributed_utils import get_world_size, is_dist_avail_and_initialize
 from .matcher import UniformMatcher
 
 
-class Criterion(nn.Module):
+class SetCriterion(nn.Module):
     """
         This code referenced to https://github.com/megvii-model/YOLOF/blob/main/playground/detection/coco/yolof/yolof_base/yolof.py
     """
-    def __init__(self, cfg, num_classes=80):
+    def __init__(self, cfg):
         super().__init__()
         # ------------- Basic parameters -------------
         self.cfg = cfg
-        self.num_classes = num_classes
+        self.num_classes = cfg.num_classes
         # ------------- Focal loss -------------
-        self.alpha = cfg['focal_loss_alpha']
-        self.gamma = cfg['focal_loss_gamma']
+        self.alpha = cfg.focal_loss_alpha
+        self.gamma = cfg.focal_loss_gamma
         # ------------- Loss weight -------------
-        self.weight_dict = {'loss_cls': cfg['loss_cls_weight'],
-                            'loss_reg': cfg['loss_reg_weight']}
+        self.weight_dict = {'loss_cls': cfg.loss_cls_weight,
+                            'loss_reg': cfg.loss_reg_weight}
         # ------------- Matcher -------------
-        self.matcher_cfg = cfg['matcher_hpy']
+        self.matcher_cfg = cfg.matcher_hpy
         self.matcher = UniformMatcher(self.matcher_cfg['topk_candidates'])
 
     def loss_labels(self, pred_cls, tgt_cls, num_boxes):
@@ -142,10 +142,5 @@ class Criterion(nn.Module):
         return loss_dict
 
 
-def build_criterion(cfg, num_classes=80):
-    criterion = Criterion(cfg=cfg, num_classes=num_classes)
-    return criterion
-
-    
 if __name__ == "__main__":
     pass

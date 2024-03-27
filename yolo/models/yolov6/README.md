@@ -4,7 +4,7 @@
 
 |   Model  | Batch | Scale | AP<sup>val<br>0.5 | Weight |  Logs  |
 |----------|-------|-------|-------------------|--------|--------|
-| YOLOv6-S | 1xb16 |  640  |       79.0        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v6/releases/download/yolo_tutorial_ckpt/yolov6_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v6/releases/download/yolo_tutorial_ckpt/YOLOv6-S-VOC.txt) |
+| YOLOv6-S | 1xb16 |  640  |               | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v6/releases/download/yolo_tutorial_ckpt/yolov6_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v6/releases/download/yolo_tutorial_ckpt/YOLOv6-S-VOC.txt) |
 
 - COCO
 

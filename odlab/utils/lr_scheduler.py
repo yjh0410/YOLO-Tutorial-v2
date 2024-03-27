@@ -9,13 +9,11 @@ class LinearWarmUpScheduler(object):
         self.wp_iter = wp_iter
         self.warmup_factor = warmup_factor
 
-
     def set_lr(self, optimizer, lr):
         for param_group in optimizer.param_groups:
             init_lr = param_group['initial_lr']
             ratio = init_lr / self.base_lr
             param_group['lr'] = lr * ratio
-
 
     def __call__(self, iter, optimizer):
         # warmup
@@ -27,13 +25,13 @@ class LinearWarmUpScheduler(object):
 ## Build WP LR Scheduler
 def build_wp_lr_scheduler(cfg, base_lr=0.01):
     print('==============================')
-    print('WarmUpScheduler: {}'.format(cfg['warmup']))
+    print('WarmUpScheduler: {}'.format(cfg.warmup))
     print('--base_lr: {}'.format(base_lr))
-    print('--warmup_iters: {}'.format(cfg['warmup_iters']))
-    print('--warmup_factor: {}'.format(cfg['warmup_factor']))
+    print('--warmup_iters: {}'.format(cfg.warmup_iters))
+    print('--warmup_factor: {}'.format(cfg.warmup_factor))
 
-    if cfg['warmup'] == 'linear':
-        wp_lr_scheduler = LinearWarmUpScheduler(base_lr, cfg['warmup_iters'], cfg['warmup_factor'])
+    if cfg.warmup == 'linear':
+        wp_lr_scheduler = LinearWarmUpScheduler(base_lr, cfg.warmup_iters, cfg.warmup_factor)
     
     return wp_lr_scheduler
 
@@ -41,13 +39,13 @@ def build_wp_lr_scheduler(cfg, base_lr=0.01):
 # ------------------------- LR Scheduler -------------------------
 def build_lr_scheduler(cfg, optimizer, resume=None):
     print('==============================')
-    print('LR Scheduler: {}'.format(cfg['lr_scheduler']))
+    print('LR Scheduler: {}'.format(cfg.lr_scheduler))
 
-    if cfg['lr_scheduler'] == 'step':
+    if cfg.lr_scheduler == 'step':
         assert 'lr_epoch' in cfg
-        print('--lr_epoch: {}'.format(cfg['lr_epoch']))
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=cfg['lr_epoch'])
-    elif cfg['lr_scheduler'] == 'cosine':
+        print('--lr_epoch: {}'.format(cfg.lr_epoch))
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=cfg.lr_epoch)
+    elif cfg.lr_scheduler == 'cosine':
         pass
         
     if resume is not None:

@@ -107,14 +107,14 @@ def main():
 
     # ---------------------------- Build Dataset ----------------------------
     transforms = build_transform(cfg, is_train=True)
-    dataset = build_dataset(args, cfg, transforms, is_train=True)
+    dataset    = build_dataset(args, cfg, transforms, is_train=True)
 
     # ---------------------------- Build Dataloader ----------------------------
     train_loader = build_dataloader(args, dataset, per_gpu_batch, collate_fn, is_train=True)
 
     # ---------------------------- Build model ----------------------------
     ## Build model
-    model, criterion = build_model(args, cfg, cfg.num_classes, is_val=True)
+    model, criterion = build_model(args, cfg, is_val=True)
     model.to(device)
     model_without_ddp = model
     ## Calcute Params & GFLOPs
@@ -136,6 +136,7 @@ def main():
     optimizer, start_epoch = build_optimizer(cfg, model_without_ddp, args.resume)
 
     # ---------------------------- Build LR Scheduler ----------------------------
+    cfg.warmup_iters = cfg.warmup_iters * cfg.grad_accumulate
     wp_lr_scheduler = build_wp_lr_scheduler(cfg, cfg.base_lr)
     lr_scheduler    = build_lr_scheduler(cfg, optimizer, args.resume)
 
@@ -155,7 +156,7 @@ def main():
     # ----------------------- Training -----------------------
     print("Start training")
     best_map = -1.
-    for epoch in range(start_epoch, cfg['max_epoch']):
+    for epoch in range(start_epoch, cfg.max_epoch):
         if args.distributed:
             train_loader.batch_sampler.sampler.set_epoch(epoch)
 
@@ -178,7 +179,7 @@ def main():
         if distributed_utils.is_main_process():
             model_eval = model_without_ddp
             to_save = False
-            if (epoch % args.eval_epoch) == 0 or (epoch == cfg['max_epoch'] - 1):
+            if (epoch % args.eval_epoch) == 0 or (epoch == cfg.max_epoch - 1):
                 if evaluator is None:
                     to_save = True
                 else:

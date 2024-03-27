@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COCO-Dataset')
 
     # opt
-    parser.add_argument('--root', default='/Users/liuhaoran/Desktop/python_work/object-detection/dataset/COCO/',
+    parser.add_argument('--root', default='D:/python_work/dataset/COCO/',
                         help='data root')
     parser.add_argument('--is_train', action="store_true", default=False,
                         help='mixup augmentation.')    
@@ -118,45 +118,48 @@ if __name__ == "__main__":
                      np.random.randint(255)) for _ in range(80)]
 
     # config
-    cfg = {
-        # input size
-        'train_min_size': [800],
-        'train_max_size': 1333,
-        'test_min_size': 800,
-        'test_max_size': 1333,
-        'pixel_mean': [0.485, 0.456, 0.406],
-        'pixel_std':  [0.229, 0.224, 0.225],
-        # trans config
-        'detr_style': False,
-        'trans_config': [
-            {'name': 'RandomResize', 'random_sizes': [400, 500, 600, 700, 800], 'max_size': 1333},
-            {'name': 'RandomHFlip'},
-            {'name': 'RandomShift', 'max_shift': 100}
-        ],
-        'box_format': 'xywh',
-        'normalize_coords': False,
-    }
+    class BaseConfig(object):
+        def __init__(self):
+            # --------- Data process ---------
+            ## input size
+            self.train_min_size = [512]   # short edge of image
+            self.train_max_size = 736
+            self.test_min_size  = [512]
+            self.test_max_size  = 736
+            ## Pixel mean & std
+            self.pixel_mean = [0.485, 0.456, 0.406]
+            self.pixel_std  = [0.229, 0.224, 0.225]
+            ## Transforms
+            self.box_format = 'xyxy'
+            self.normalize_coords = False
+            self.detr_style = False
+            self.trans_config = [
+                {'name': 'RandomHFlip'},
+                {'name': 'RandomResize'},
+                {'name': 'RandomShift', 'max_shift': 32},
+            ]
     
+    cfg = BaseConfig()
     # build dataset
     transform = build_transform(cfg, is_train=True)
-    dataset = build_coco(args, transform, is_train=args.is_train)
+    dataset   = build_coco(args, transform, is_train=False)
 
     for index, (image, target) in enumerate(dataset):
         print("{} / {}".format(index, len(dataset)))
         # to numpy
         image = image.permute(1, 2, 0).numpy()
         # denormalize
-        image = (image * cfg['pixel_std'] + cfg['pixel_mean']) * 255
+        image = (image * cfg.pixel_std + cfg.pixel_mean) * 255
         image = image.astype(np.uint8)[..., (2, 1, 0)].copy()
         orig_h, orig_w = image.shape[:2]
 
         tgt_bboxes = target["boxes"]
         tgt_labels = target["labels"]
         for box, label in zip(tgt_bboxes, tgt_labels):
-            if cfg['normalize_coords']:
+            if cfg.normalize_coords:
                 box[..., [0, 2]] *= orig_w
                 box[..., [1, 3]] *= orig_h
-            if cfg['box_format'] == 'xywh':
+            if cfg.box_format == 'xywh':
                 box_x1y1 = box[..., :2] - box[..., 2:] * 0.5
                 box_x2y2 = box[..., :2] + box[..., 2:] * 0.5
                 box = torch.cat([box_x1y1, box_x2y2], dim=-1)
