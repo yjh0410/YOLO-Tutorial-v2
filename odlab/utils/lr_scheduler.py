@@ -23,15 +23,15 @@ class LinearWarmUpScheduler(object):
         self.set_lr(optimizer, tmp_lr)
         
 ## Build WP LR Scheduler
-def build_wp_lr_scheduler(cfg, base_lr=0.01):
+def build_wp_lr_scheduler(cfg):
     print('==============================')
     print('WarmUpScheduler: {}'.format(cfg.warmup))
-    print('--base_lr: {}'.format(base_lr))
+    print('--base_lr: {}'.format(cfg.base_lr))
     print('--warmup_iters: {}'.format(cfg.warmup_iters))
     print('--warmup_factor: {}'.format(cfg.warmup_factor))
 
     if cfg.warmup == 'linear':
-        wp_lr_scheduler = LinearWarmUpScheduler(base_lr, cfg.warmup_iters, cfg.warmup_factor)
+        wp_lr_scheduler = LinearWarmUpScheduler(cfg.base_lr, cfg.warmup_iters, cfg.warmup_factor)
     
     return wp_lr_scheduler
 

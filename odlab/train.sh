@@ -12,23 +12,11 @@ elif [[ $MODEL == *"fcos"* ]]; then
     # Epoch setting
     BATCH_SIZE=16
     EVAL_EPOCH=2
-elif [[ $MODEL == *"retinanet"* ]]; then
-    # Epoch setting
-    BATCH_SIZE=16
-    EVAL_EPOCH=2
-elif [[ $MODEL == *"plain_detr"* ]]; then
-    # Epoch setting
-    BATCH_SIZE=16
-    EVAL_EPOCH=2
-elif [[ $MODEL == *"rtdetr"* ]]; then
-    # Epoch setting
-    BATCH_SIZE=16
-    EVAL_EPOCH=1
 fi
 
 # -------------------------- Train Pipeline --------------------------
 if [ $WORLD_SIZE == 1 ]; then
-    python main.py \
+    python train.py \
         --cuda \
         --dataset ${DATASET}  \
         --root ${DATA_ROOT} \
@@ -37,7 +25,7 @@ if [ $WORLD_SIZE == 1 ]; then
         --eval_epoch ${EVAL_EPOCH}
 elif [[ $WORLD_SIZE -gt 1 && $WORLD_SIZE -le 8 ]]; then
     python -m torch.distributed.run --nproc_per_node=$WORLD_SIZE --master_port ${MASTER_PORT}  \
-        main.py \
+        train.py \
         --cuda \
         --distributed \
         --dataset ${DATASET}  \

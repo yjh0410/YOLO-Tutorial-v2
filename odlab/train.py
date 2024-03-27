@@ -137,7 +137,7 @@ def main():
 
     # ---------------------------- Build LR Scheduler ----------------------------
     cfg.warmup_iters = cfg.warmup_iters * cfg.grad_accumulate
-    wp_lr_scheduler = build_wp_lr_scheduler(cfg, cfg.base_lr)
+    wp_lr_scheduler = build_wp_lr_scheduler(cfg)
     lr_scheduler    = build_lr_scheduler(cfg, optimizer, args.resume)
 
     # ---------------------------- Build DDP model ----------------------------
