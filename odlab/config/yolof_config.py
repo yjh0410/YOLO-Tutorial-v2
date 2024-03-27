@@ -1,5 +1,10 @@
 # Fully Convolutional One-Stage object detector
 
+def build_yolof_config(args):
+    if   args.model == 'yolof_r18_c5_1x':
+        return Yolof_R18_C5_1x_Config()
+    else:
+        raise NotImplementedError("No config for model: {}".format(args.model))
 
 class YolofBaseConfig(object):
     def __init__(self):
@@ -9,6 +14,12 @@ class YolofBaseConfig(object):
         config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
+
+class Yolof_R18_C5_1x_Config(YolofBaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        ## Backbone
+        pass
 
 yolof_cfg = {
     # --------------- C5 level ---------------

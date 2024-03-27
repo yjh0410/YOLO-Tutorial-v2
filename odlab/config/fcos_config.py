@@ -1,5 +1,10 @@
 # Fully Convolutional One-Stage object detector
 
+def build_fcos_config(args):
+    if   args.model == 'fcos_r18_1x':
+        return Fcos_R18_1x_Config()
+    else:
+        raise NotImplementedError("No config for model: {}".format(args.model))
 
 class FcosBaseConfig(object):
     def __init__(self):
@@ -9,6 +14,13 @@ class FcosBaseConfig(object):
         config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
+
+class Fcos_R18_1x_Config(FcosBaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        ## Backbone
+        pass
+
 
 fcos_cfg = {
     'fcos_r18_1x':{
