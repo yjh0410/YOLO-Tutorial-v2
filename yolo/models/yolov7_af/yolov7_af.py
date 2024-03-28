@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .yolov7_af_backbone import Yolov7Backbone
+from .yolov7_af_backbone import Yolov7TBackbone, Yolov7LBackbone
 from .yolov7_af_neck     import SPPF
 from .yolov7_af_pafpn    import Yolov7PaFPN
 from .yolov7_af_head     import Yolov7DetHead
@@ -21,6 +21,7 @@ class Yolov7AF(nn.Module):
                  ) -> None:
         super(Yolov7AF, self).__init__()
         # ---------------------- Basic setting ----------------------
+        assert cfg.scale in ["t", "l", "x"]
         self.cfg = cfg
         self.num_classes = cfg.num_classes
         ## Post-process parameters
@@ -31,7 +32,7 @@ class Yolov7AF(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = Yolov7Backbone(cfg)
+        self.backbone = Yolov7TBackbone(cfg) if cfg.scale == "t" else Yolov7LBackbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
         self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1]//2)
