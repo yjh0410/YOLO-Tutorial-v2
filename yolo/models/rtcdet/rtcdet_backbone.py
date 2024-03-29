@@ -13,7 +13,7 @@ class RTCBackbone(nn.Module):
         super(RTCBackbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.model_scale = cfg.scale
-        self.num_blocks  = cfg.num_blocks
+        self.num_blocks = cfg.num_blocks
         self.feat_dims = [round(64  * cfg.channel_width),
                           round(128 * cfg.channel_width),
                           round(256 * cfg.channel_width),
