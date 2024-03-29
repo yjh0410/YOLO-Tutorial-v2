@@ -214,7 +214,7 @@ class RTCDetXConfig(RTCDetBaseConfig):
         self.last_stage_ratio = 1.0
         self.num_blocks = [3, 6, 6, 3]
         self.scale = "x"
-        self.fpn_num_blocks = 4
+        self.fpn_num_blocks = 3
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
