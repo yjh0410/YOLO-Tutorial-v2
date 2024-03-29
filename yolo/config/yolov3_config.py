@@ -80,7 +80,7 @@ class Yolov3BaseConfig(object):
         self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
         self.momentum     = 0.9
         self.weight_decay = 0.05
-        self.clip_max_norm   = -1.
+        self.clip_max_norm   = 35.
         self.warmup_bias_lr  = 0.1
         self.warmup_momentum = 0.8
 
