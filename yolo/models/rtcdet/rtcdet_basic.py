@@ -166,3 +166,59 @@ class ELANLayer(nn.Module):
         out = self.output_proj(torch.cat(out, dim=1))
 
         return out
+
+class ELANLayerFPN(nn.Module):
+    def __init__(self,
+                 in_dim,
+                 out_dim,
+                 num_blocks :int   = 1,
+                 expansion  :float = 0.5,
+                 act_type   :str   = 'silu',
+                 norm_type  :str   = 'BN',
+                 depthwise  :bool  = False,
+                 ) -> None:
+        super(ELANLayerFPN, self).__init__()
+        inter_dim_1 = round(out_dim * expansion)
+        inter_dim_2 = round(inter_dim_1* expansion)
+        # Branch-1
+        self.branch_1 = BasicConv(in_dim, inter_dim_1, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        # Branch-2
+        self.branch_2 = BasicConv(in_dim, inter_dim_1, kernel_size=1, act_type=act_type, norm_type=norm_type)
+        # Branch-3
+        branch_3 = []
+        for i in range(num_blocks):
+            if i == 0:
+                branch_3.append(BasicConv(inter_dim_1, inter_dim_2, kernel_size=3, padding=1,
+                                          act_type=act_type, norm_type=norm_type, depthwise=depthwise))
+            else:
+                branch_3.append(BasicConv(inter_dim_2, inter_dim_2, kernel_size=3, padding=1,
+                                          act_type=act_type, norm_type=norm_type, depthwise=depthwise))
+        self.branch_3 = nn.Sequential(*branch_3)
+        # Branch-4
+        self.branch_4 = nn.Sequential(*[BasicConv(inter_dim_2, inter_dim_2, kernel_size=3, padding=1,
+                                                  act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+                                                     for _ in range(num_blocks)])
+        # Branch-5
+        self.branch_5 = nn.Sequential(*[BasicConv(inter_dim_2, inter_dim_2, kernel_size=3, padding=1,
+                                                  act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+                                                     for _ in range(num_blocks)])
+        # Branch-6
+        self.branch_6 = nn.Sequential(*[BasicConv(inter_dim_2, inter_dim_2, kernel_size=3, padding=1,
+                                                  act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+                                                     for _ in range(num_blocks)])
+        self.output_proj = BasicConv(2*inter_dim_1 + 4*inter_dim_2, out_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+
+    def forward(self, x):
+        # Elan
+        x1 = self.branch_1(x)
+        x2 = self.branch_2(x)
+        x3 = self.branch_3(x2)
+        x4 = self.branch_4(x3)
+        x5 = self.branch_5(x4)
+        x6 = self.branch_6(x5)
+
+        # Output proj
+        out = list([x1, x2, x3, x4, x5, x6])
+        out = self.output_proj(torch.cat(out, dim=1))
+
+        return out

@@ -13,11 +13,12 @@ class RTCBackbone(nn.Module):
         super(RTCBackbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.model_scale = cfg.scale
-        self.feat_dims = [round(64  * cfg.width),
-                          round(128 * cfg.width),
-                          round(256 * cfg.width),
-                          round(512 * cfg.width),
-                          round(512 * cfg.width * cfg.ratio)]
+        self.num_blocks  = cfg.num_blocks
+        self.feat_dims = [round(64  * cfg.channel_width),
+                          round(128 * cfg.channel_width),
+                          round(256 * cfg.channel_width),
+                          round(512 * cfg.channel_width),
+                          round(512 * cfg.channel_width * cfg.last_stage_ratio)]
         
         # ------------------ Network setting ------------------
         ## P1/2
@@ -31,7 +32,7 @@ class RTCBackbone(nn.Module):
                       act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             ELANLayer(in_dim     = self.feat_dims[1],
                       out_dim    = self.feat_dims[1],
-                      num_blocks = round(3*cfg.depth),
+                      num_blocks = self.num_blocks[0],
                       expansion  = 0.5,
                       shortcut   = True,
                       act_type   = cfg.bk_act,
@@ -44,7 +45,7 @@ class RTCBackbone(nn.Module):
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             ELANLayer(in_dim     = self.feat_dims[2],
                       out_dim    = self.feat_dims[2],
-                      num_blocks = round(6*cfg.depth),
+                      num_blocks = self.num_blocks[1],
                       expansion  = 0.5,
                       shortcut   = True,
                       act_type   = cfg.bk_act,
@@ -57,7 +58,7 @@ class RTCBackbone(nn.Module):
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             ELANLayer(in_dim     = self.feat_dims[3],
                       out_dim    = self.feat_dims[3],
-                      num_blocks = round(6*cfg.depth),
+                      num_blocks = self.num_blocks[2],
                       expansion  = 0.5,
                       shortcut   = True,
                       act_type   = cfg.bk_act,
@@ -70,7 +71,7 @@ class RTCBackbone(nn.Module):
                   act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             ELANLayer(in_dim     = self.feat_dims[4],
                       out_dim    = self.feat_dims[4],
-                      num_blocks = round(3*cfg.depth),
+                      num_blocks = self.num_blocks[3],
                       expansion  = 0.5,
                       shortcut   = True,
                       act_type   = cfg.bk_act,

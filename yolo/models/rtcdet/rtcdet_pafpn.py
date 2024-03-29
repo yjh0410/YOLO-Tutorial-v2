@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List
 
-from .rtcdet_basic import ELANLayer, MDown
+from .rtcdet_basic import ELANLayerFPN, MDown, BasicConv
 
 
 # Modified YOLOv8's PaFPN
@@ -14,57 +14,53 @@ class RTCPaFPN(nn.Module):
                  ) -> None:
         super(RTCPaFPN, self).__init__()
         print('==============================')
-        print('FPN: {}'.format("Yolo PaFPN"))
+        print('FPN: {}'.format("RTC-PaFPN"))
         # --------------------------- Basic Parameters ---------------------------
         self.in_dims = in_dims[::-1]
-        self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
+        self.out_dims = [round(256*cfg.channel_width), round(512*cfg.channel_width), round(1024*cfg.channel_width)]
 
         # ----------------------------- Yolov8's Top-down FPN -----------------------------
         ## P5 -> P4
-        self.top_down_layer_1 = ELANLayer(in_dim     = self.in_dims[0] + self.in_dims[1],
-                                          out_dim    = round(512*cfg.width),
-                                          expansion  = 0.5,
-                                          num_blocks = round(3 * cfg.depth),
-                                          shortcut   = False,
-                                          act_type   = cfg.fpn_act,
-                                          norm_type  = cfg.fpn_norm,
-                                          depthwise  = cfg.fpn_depthwise,
-                                          )
+        self.top_down_layer_1 = ELANLayerFPN(in_dim     = self.in_dims[0] + self.in_dims[1],
+                                             out_dim    = round(512*cfg.channel_width),
+                                             expansion  = 0.5,
+                                             num_blocks = cfg.fpn_num_blocks,
+                                             act_type   = cfg.fpn_act,
+                                             norm_type  = cfg.fpn_norm,
+                                             depthwise  = cfg.fpn_depthwise,
+                                             )
         ## P4 -> P3
-        self.top_down_layer_2 = ELANLayer(in_dim     = self.in_dims[2] + round(512*cfg.width),
-                                          out_dim    = round(256*cfg.width),
-                                          expansion  = 0.5,
-                                          num_blocks = round(3 * cfg.depth),
-                                          shortcut   = False,
-                                          act_type   = cfg.fpn_act,
-                                          norm_type  = cfg.fpn_norm,
-                                          depthwise  = cfg.fpn_depthwise,
-                                          )
+        self.top_down_layer_2 = ELANLayerFPN(in_dim     = self.in_dims[2] + round(512*cfg.channel_width),
+                                             out_dim    = round(256*cfg.channel_width),
+                                             expansion  = 0.5,
+                                             num_blocks = cfg.fpn_num_blocks,
+                                             act_type   = cfg.fpn_act,
+                                             norm_type  = cfg.fpn_norm,
+                                             depthwise  = cfg.fpn_depthwise,
+                                             )
         # ----------------------------- Yolov8's Bottom-up PAN -----------------------------
         ## P3 -> P4
-        self.dowmsample_layer_1 = MDown(round(256*cfg.width), round(256*cfg.width),
+        self.dowmsample_layer_1 = MDown(round(256*cfg.channel_width), round(256*cfg.channel_width),
                                         act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_1 = ELANLayer(in_dim     = round(256*cfg.width) + round(512*cfg.width),
-                                           out_dim    = round(512*cfg.width),
-                                           expansion  = 0.5,
-                                           num_blocks = round(3 * cfg.depth),
-                                           shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise,
-                                           )
+        self.bottom_up_layer_1  = ELANLayerFPN(in_dim     = round(256*cfg.channel_width) + round(512*cfg.channel_width),
+                                               out_dim    = round(512*cfg.channel_width),
+                                               expansion  = 0.5,
+                                               num_blocks = cfg.fpn_num_blocks,
+                                               act_type   = cfg.fpn_act,
+                                               norm_type  = cfg.fpn_norm,
+                                               depthwise  = cfg.fpn_depthwise,
+                                               )
         ## P4 -> P5
-        self.dowmsample_layer_2 = MDown(round(512*cfg.width), round(512*cfg.width),
+        self.dowmsample_layer_2 = MDown(round(512*cfg.channel_width), round(512*cfg.channel_width),
                                         act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_2 = ELANLayer(in_dim     = round(512*cfg.width) + self.in_dims[0],
-                                           out_dim    = round(512*cfg.width*cfg.ratio),
-                                           expansion  = 0.5,
-                                           num_blocks = round(3 * cfg.depth),
-                                           shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise,
-                                           )
+        self.bottom_up_layer_2  = ELANLayerFPN(in_dim     = round(512*cfg.channel_width) + self.in_dims[0],
+                                               out_dim    = round(1024*cfg.channel_width),
+                                               expansion  = 0.5,
+                                               num_blocks = cfg.fpn_num_blocks,
+                                               act_type   = cfg.fpn_act,
+                                               norm_type  = cfg.fpn_norm,
+                                               depthwise  = cfg.fpn_depthwise,
+                                               )
 
         self.init_weights()
         

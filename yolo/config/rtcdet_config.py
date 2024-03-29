@@ -21,13 +21,13 @@ def build_rtcdet_config(args):
 class RTCDetBaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
-        self.width    = 1.0
-        self.depth    = 1.0
-        self.ratio    = 1.0
-        self.reg_max  = 16
+        self.channel_width = 1.0
+        self.last_stage_ratio = 1.0
+        self.num_blocks = [3, 6, 6, 3]
+        self.num_levels = 3
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
-        self.num_levels = 3
+        self.reg_max    = 16
         self.scale      = "b"
         ## Backbone
         self.bk_act   = 'silu'
@@ -41,6 +41,7 @@ class RTCDetBaseConfig(object):
         self.neck_expand_ratio = 0.5
         self.spp_pooling_size  = 5
         ## FPN
+        self.fpn_num_blocks = 3
         self.fpn_act  = 'silu'
         self.fpn_norm = 'BN'
         self.fpn_depthwise = False
@@ -129,10 +130,11 @@ class RTCDetNConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 0.25
-        self.depth = 0.34
-        self.ratio = 2.0
+        self.channel_width = 0.25
+        self.last_stage_ratio = 2.0
+        self.num_blocks = [1, 2, 2, 1]
         self.scale = "n"
+        self.fpn_num_blocks = 1
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -144,10 +146,11 @@ class RTCDetTConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 0.375
-        self.depth = 0.34
-        self.ratio = 2.0
+        self.channel_width = 0.375
+        self.last_stage_ratio = 2.0
+        self.num_blocks = [1, 2, 2, 1]
         self.scale = "t"
+        self.fpn_num_blocks = 1
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -159,10 +162,11 @@ class RTCDetSConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 0.50
-        self.depth = 0.34
-        self.ratio = 2.0
+        self.channel_width = 0.50
+        self.num_blocks = [1, 2, 2, 1]
+        self.last_stage_ratio = 2.0
         self.scale = "s"
+        self.fpn_num_blocks = 1
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -174,10 +178,11 @@ class RTCDetMConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 0.75
-        self.depth = 0.67
-        self.ratio = 1.5
+        self.channel_width = 0.75
+        self.last_stage_ratio = 1.5
+        self.num_blocks = [2, 4, 4, 2]
         self.scale = "m"
+        self.fpn_num_blocks = 2
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -189,10 +194,11 @@ class RTCDetLConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 1.0
-        self.depth = 1.0
-        self.ratio = 1.0
+        self.channel_width = 1.0
+        self.last_stage_ratio = 1.0
+        self.num_blocks = [3, 6, 6, 3]
         self.scale = "l"
+        self.fpn_num_blocks = 3
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -204,10 +210,11 @@ class RTCDetXConfig(RTCDetBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.width = 1.25
-        self.depth = 1.0
-        self.ratio = 1.0
+        self.channel_width = 1.25
+        self.last_stage_ratio = 1.0
+        self.num_blocks = [3, 6, 6, 3]
         self.scale = "x"
+        self.fpn_num_blocks = 4
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
