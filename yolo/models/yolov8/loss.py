@@ -172,7 +172,9 @@ class SetCriterion(object):
         loss_dfl = loss_dfl.sum() / num_fgs
 
         # total loss
-        losses = loss_cls * self.loss_cls_weight + loss_box * self.loss_box_weight + loss_dfl * self.loss_dfl_weight
+        losses = loss_cls * self.loss_cls_weight + \
+                 loss_box * self.loss_box_weight + \
+                 loss_dfl * self.loss_dfl_weight
         loss_dict = dict(
                 loss_cls = loss_cls,
                 loss_box = loss_box,

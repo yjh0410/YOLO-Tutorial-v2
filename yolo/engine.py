@@ -487,14 +487,11 @@ class RTDetrTrainer(object):
             # Backward
             self.scaler.scale(losses).backward()
 
-            # Gradient clip
-            grad_norm = None
-            if self.cfg.clip_max_norm > 0:
-                self.scaler.unscale_(self.optimizer)
-                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
-
             # Optimize
             if (iter_i + 1) % self.grad_accumulate == 0:
+                if self.cfg.clip_max_norm > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
@@ -506,7 +503,6 @@ class RTDetrTrainer(object):
             # Update log
             metric_logger.update(**loss_dict_reduced)
             metric_logger.update(lr=self.optimizer.param_groups[2]["lr"])
-            metric_logger.update(grad_norm=grad_norm)
             metric_logger.update(size=img_size)
 
             if self.args.debug:
