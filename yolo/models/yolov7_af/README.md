@@ -4,13 +4,13 @@
 
 |     Model   | Batch | Scale | AP<sup>val<br>0.5 | Weight |  Logs  |
 |-------------|-------|-------|-------------------|--------|--------|
-| YOLOv7-AF-S | 1xb16 |  640  |       82.7        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v7/releases/download/yolo_tutorial_ckpt/yolov7_af_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v7/releases/download/yolo_tutorial_ckpt/YOLOv7-AF-S-VOC.txt) |
+| YOLOv7-AF-T | 1xb16 |  640  |       80.6        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v7/releases/download/yolo_tutorial_ckpt/yolov7_af_t_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v7/releases/download/yolo_tutorial_ckpt/YOLOv7-AF-T-VOC.txt) |
 
 - COCO
 
 |    Model    | Batch | Scale | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight |  Logs  |
 |-------------|-------|-------|------------------------|-------------------|-------------------|--------------------|--------|--------|
-| YOLOv7-AF-S | 1xb16 |  640  |                    |               |   26.9            |   8.9             |  |  |
+| YOLOv7-AF-T | 1xb16 |  640  |                    |               |   26.9            |   8.9             |  |  |
 
 - For training, we train redesigned YOLOv7-AF with 500 epochs on COCO. We also use the gradient accumulation.
 - For data augmentation, we use the RandomAffine, RandomHSV, Mosaic and YOLOX's Mixup augmentation.
