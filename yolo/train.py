@@ -75,7 +75,7 @@ def parse_args():
                         help='data root')
     parser.add_argument('-d', '--dataset', default='coco',
                         help='coco, voc')
-    parser.add_argument('--num_workers', default=4, type=int, 
+    parser.add_argument('--num_workers', default=16, type=int, 
                         help='Number of workers used in dataloading')
     
     # DDP train
