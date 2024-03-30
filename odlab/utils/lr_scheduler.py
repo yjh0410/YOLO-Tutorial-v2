@@ -11,9 +11,8 @@ class LinearWarmUpScheduler(object):
 
     def set_lr(self, optimizer, lr):
         for param_group in optimizer.param_groups:
-            init_lr = param_group['initial_lr']
-            ratio = init_lr / self.base_lr
-            param_group['lr'] = lr * ratio
+            param_group['lr'] = lr
+
 
     def __call__(self, iter, optimizer):
         # warmup
