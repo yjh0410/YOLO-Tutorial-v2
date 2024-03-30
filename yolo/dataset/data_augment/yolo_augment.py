@@ -156,6 +156,10 @@ class YOLOAugmentation(object):
             image = cv2.resize(image, new_shape)
         img_h, img_w = image.shape[:2]
 
+        # rescale bbox
+        target["boxes"][..., [0, 2]] = target["boxes"][..., [0, 2]] / orig_w * img_w
+        target["boxes"][..., [1, 3]] = target["boxes"][..., [1, 3]] / orig_h * img_h
+
         # --------------- Filter bad targets ---------------
         tgt_boxes_wh = target["boxes"][..., 2:] - target["boxes"][..., :2]
         min_tgt_size = np.min(tgt_boxes_wh, axis=-1)
@@ -176,10 +180,6 @@ class YOLOAugmentation(object):
         # --------------- Spatial augmentations ---------------
         ## Random perspective
         if not mosaic:
-            # rescale bbox
-            target["boxes"][..., [0, 2]] = target["boxes"][..., [0, 2]] / orig_w * img_w
-            target["boxes"][..., [1, 3]] = target["boxes"][..., [1, 3]] / orig_h * img_h
-
             # spatial augment
             target_ = np.concatenate((target['labels'][..., None], target['boxes']), axis=-1)
             image, target_ = random_perspective(image, target_,
