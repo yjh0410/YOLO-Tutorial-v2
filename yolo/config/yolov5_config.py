@@ -4,8 +4,8 @@
 def build_yolov5_config(args):
     if   args.model == 'yolov5_n':
         return Yolov5NConfig()
-    elif args.model == 'yolov5_x':
-        return Yolov5XConfig()
+    elif args.model == 'yolov5_s':
+        return Yolov5SConfig()
     elif args.model == 'yolov5_m':
         return Yolov5MConfig()
     elif args.model == 'yolov5_l':
