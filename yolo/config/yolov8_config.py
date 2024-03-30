@@ -31,7 +31,7 @@ class Yolov8BaseConfig(object):
         self.bk_act   = 'silu'
         self.bk_norm  = 'BN'
         self.bk_depthwise = False
-        self.use_pretrained = False
+        self.use_pretrained = True
         ## Neck
         self.neck_act       = 'silu'
         self.neck_norm      = 'BN'

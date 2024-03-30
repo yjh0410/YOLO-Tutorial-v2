@@ -6,6 +6,14 @@ try:
 except:
     from  yolov8_basic import BasicConv, ELANLayer
 
+# IN1K pretrained weight
+pretrained_urls = {
+    'n': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/rtcnet_n_in1k_62.1.pth",
+    's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/rtcnet_s_in1k_71.3.pth",
+    'm': None,
+    'l': None,
+    'x': None,
+}
 
 # ---------------------------- Basic functions ----------------------------
 class Yolov8Backbone(nn.Module):
@@ -84,6 +92,10 @@ class Yolov8Backbone(nn.Module):
         # Initialize all layers
         self.init_weights()
         
+        # Load imagenet pretrained weight
+        if cfg.use_pretrained:
+            self.load_pretrained()
+        
     def init_weights(self):
         """Initialize the parameters."""
         for m in self.modules():
@@ -91,6 +103,31 @@ class Yolov8Backbone(nn.Module):
                 # In order to be consistent with the source code,
                 # reset the Conv2d initialization parameters
                 m.reset_parameters()
+
+    def load_pretrained(self):
+        url = pretrained_urls[self.model_scale]
+        if url is not None:
+            print('Loading backbone pretrained weight from : {}'.format(url))
+            # checkpoint state dict
+            checkpoint = torch.hub.load_state_dict_from_url(
+                url=url, map_location="cpu", check_hash=True)
+            checkpoint_state_dict = checkpoint.pop("model")
+            # model state dict
+            model_state_dict = self.state_dict()
+            # check
+            for k in list(checkpoint_state_dict.keys()):
+                if k in model_state_dict:
+                    shape_model = tuple(model_state_dict[k].shape)
+                    shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
+                    if shape_model != shape_checkpoint:
+                        checkpoint_state_dict.pop(k)
+                else:
+                    checkpoint_state_dict.pop(k)
+                    print('Unused key: ', k)
+            # load the weight
+            self.load_state_dict(checkpoint_state_dict)
+        else:
+            print('No pretrained weight for model scale: {}.'.format(self.model_scale))
 
     def forward(self, x):
         c1 = self.layer_1(x)
@@ -120,10 +157,11 @@ if __name__ == '__main__':
             self.bk_act = 'silu'
             self.bk_norm = 'BN'
             self.bk_depthwise = False
-            self.width = 1.0
-            self.depth = 1.0
-            self.ratio = 1.0
-            self.scale = "n"
+            self.use_pretrained = True
+            self.width = 0.50
+            self.depth = 0.34
+            self.ratio = 2.0
+            self.scale = "s"
 
     cfg = BaseConfig()
     model = build_backbone(cfg)
