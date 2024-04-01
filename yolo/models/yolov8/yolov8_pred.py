@@ -154,3 +154,57 @@ class Yolov8DetPredLayer(nn.Module):
                    }
 
         return outputs
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv8-Base config
+    class Yolov8BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 1.0
+            self.depth    = 1.0
+            self.ratio    = 1.0
+            self.reg_max  = 16
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.num_levels = 3
+            ## Head
+
+    cfg = Yolov8BaseConfig()
+    cfg.num_classes = 20
+    cls_dim = 128
+    reg_dim = 64
+    # Build a pred layer
+    pred = Yolov8DetPredLayer(cfg, cls_dim, reg_dim)
+
+    # Inference
+    cls_feats = [torch.randn(1, cls_dim, 80, 80),
+                 torch.randn(1, cls_dim, 40, 40),
+                 torch.randn(1, cls_dim, 20, 20),]
+    reg_feats = [torch.randn(1, reg_dim, 80, 80),
+                 torch.randn(1, reg_dim, 40, 40),
+                 torch.randn(1, reg_dim, 20, 20),]
+    t0 = time.time()
+    output = pred(cls_feats, reg_feats)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== Pred output ======= ')
+    pred_cls = output["pred_cls"]
+    pred_reg = output["pred_reg"]
+    pred_box = output["pred_box"]
+    anchors  = output["anchors"]
+    
+    for level in range(cfg.num_levels):
+        print("- Level-{} : classification   -> {}".format(level, pred_cls[level].shape))
+        print("- Level-{} : delta regression -> {}".format(level, pred_reg[level].shape))
+        print("- Level-{} : bbox regression  -> {}".format(level, pred_box[level].shape))
+        print("- Level-{} : anchor boxes     -> {}".format(level, anchors[level].shape))
+
+    flops, params = profile(pred, inputs=(cls_feats, reg_feats, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))

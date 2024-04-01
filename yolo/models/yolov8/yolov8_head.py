@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 
-from .yolov8_basic import BasicConv
+try:
+    from .yolov8_basic import BasicConv
+except:
+    from  yolov8_basic import BasicConv
 
 
 # -------------------- Detection Head --------------------
@@ -124,3 +127,53 @@ class Yolov8DetHead(nn.Module):
             reg_feats.append(reg_feat)
 
         return cls_feats, reg_feats
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv8-Base config
+    class Yolov8BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.ratio    = 2.0
+            self.reg_max  = 16
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.num_levels = 3
+            ## Head
+            self.head_act  = 'lrelu'
+            self.head_norm = 'BN'
+            self.head_depthwise = False
+            self.num_cls_head   = 2
+            self.num_reg_head   = 2
+
+    cfg = Yolov8BaseConfig()
+    cfg.num_classes = 20
+
+    # Build a head
+    fpn_dims = [128, 256, 512]
+    pyramid_feats = [torch.randn(1, fpn_dims[0], 80, 80),
+                     torch.randn(1, fpn_dims[1], 40, 40),
+                     torch.randn(1, fpn_dims[2], 20, 20)]
+    head = Yolov8DetHead(cfg, fpn_dims)
+
+
+    # Inference
+    t0 = time.time()
+    cls_feats, reg_feats = head(pyramid_feats)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print("====== Yolov8 Head output ======")
+    for level, (cls_f, reg_f) in enumerate(zip(cls_feats, reg_feats)):
+        print("- Level-{} : ".format(level), cls_f.shape, reg_f.shape)
+
+    flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))
+    

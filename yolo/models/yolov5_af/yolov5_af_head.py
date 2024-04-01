@@ -133,11 +133,13 @@ if __name__=='__main__':
     from thop import profile
     # Model config
     
-    # YOLOv3-Base config
-    class YoloxBaseConfig(object):
+    # YOLOv5-Base config
+    class Yolov5BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.out_stride = 32
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.out_stride = [8, 16, 32]
             self.max_stride = 32
             self.num_levels = 3
             ## Head
@@ -148,7 +150,7 @@ if __name__=='__main__':
             self.num_cls_head   = 2
             self.num_reg_head   = 2
 
-    cfg = YoloxBaseConfig()
+    cfg = Yolov5BaseConfig()
     # Build a head
     pyramid_feats = [torch.randn(1, cfg.head_dim, 80, 80),
                      torch.randn(1, cfg.head_dim, 40, 40),
@@ -161,11 +163,12 @@ if __name__=='__main__':
     cls_feats, reg_feats = head(pyramid_feats)
     t1 = time.time()
     print('Time: ', t1 - t0)
-    for cls_f, reg_f in zip(cls_feats, reg_feats):
-        print(cls_f.shape, reg_f.shape)
+    print("====== Yolov5 Head output ======")
+    for level, (cls_f, reg_f) in enumerate(zip(cls_feats, reg_feats)):
+        print("- Level-{} : ".format(level), cls_f.shape, reg_f.shape)
 
-    print('==============================')
     flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    
+    print('Params : {:.2f} M'.format(params / 1e6))
+    

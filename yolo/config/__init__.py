@@ -9,7 +9,6 @@ from .yolov8_config    import build_yolov8_config
 from .gelan_config     import build_gelan_config
 from .rtdetr_config    import build_rtdetr_config
 
-from .yolox2_config    import build_yolox2_config
 
 def build_config(args):
     print('==============================')
@@ -34,9 +33,6 @@ def build_config(args):
     # ----------- RT-DETR -----------
     elif 'rtdetr' in args.model:
         cfg = build_rtdetr_config(args)
-
-    elif 'yolox2' in args.model:
-        cfg = build_yolox2_config(args)
 
     else:
         raise NotImplementedError("Unknown model config: {}".format(args.model))

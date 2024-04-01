@@ -3,10 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List
 
-from .yolov8_basic import BasicConv, ELANLayer
+try:
+    from .yolov8_basic import BasicConv, ELANLayer
+except:
+    from  yolov8_basic import BasicConv, ELANLayer
 
 
-# Modified YOLOv8's PaFPN
+# YOLOv8's PaFPN
 class Yolov8PaFPN(nn.Module):
     def __init__(self,
                  cfg,
@@ -102,3 +105,48 @@ class Yolov8PaFPN(nn.Module):
         out_feats = [p3, p4, p5] # [P3, P4, P5]
                 
         return out_feats
+    
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv8-Base config
+    class Yolov8BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.ratio    = 2.0
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.num_levels = 3
+            ## FPN
+            self.fpn_act  = 'silu'
+            self.fpn_norm = 'BN'
+            self.fpn_depthwise = False
+            ## Head
+            self.head_dim = 256
+
+    cfg = Yolov8BaseConfig()
+    # Build a head
+    in_dims  = [128, 256, 512]
+    fpn = Yolov8PaFPN(cfg, in_dims)
+
+    # Inference
+    x = [torch.randn(1, in_dims[0], 80, 80),
+         torch.randn(1, in_dims[1], 40, 40),
+         torch.randn(1, in_dims[2], 20, 20)]
+    t0 = time.time()
+    output = fpn(x)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== FPN output ====== ')
+    for level, feat in enumerate(output):
+        print("- Level-{} : ".format(level), feat.shape)
+
+    flops, params = profile(fpn, inputs=(x, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))
