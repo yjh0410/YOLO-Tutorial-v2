@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -24,12 +25,9 @@ class AFDetPredLayer(nn.Module):
         self.init_bias()
         
     def init_bias(self):
-        # Init bias
-        init_prob = 0.01
-        bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
-        # cls pred
+        # cls pred bias
         b = self.cls_pred.bias.view(1, -1)
-        b.data.fill_(bias_value.item())
+        b.data.fill_(math.log(5 / self.num_classes / (640. / self.stride) ** 2))
         self.cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
         # reg pred
         b = self.reg_pred.bias.view(-1, )
