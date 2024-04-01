@@ -12,6 +12,8 @@ from .yolov8.build    import build_yolov8
 from .gelan.build     import build_gelan
 from .rtdetr.build    import build_rtdetr
 
+from .yolox2.build import build_yolox2
+
 # build object detector
 def build_model(args, cfg, is_val=False):
     # ------------ build object detector ------------
@@ -42,6 +44,9 @@ def build_model(args, cfg, is_val=False):
     ## RT-DETR
     elif 'rtdetr' in args.model:
         model, criterion = build_rtdetr(cfg, is_val)
+
+    elif 'yolox2' in args.model:
+        model, criterion = build_yolox2(cfg, is_val)
 
     if is_val:
         # ------------ Load pretrained weight ------------
