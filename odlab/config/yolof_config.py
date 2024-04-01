@@ -29,18 +29,18 @@ class YolofBaseConfig(object):
         self.neck_norm = 'GN'
 
         # --------- Head ---------
-        self.head = 'yolof_head'
-        self.head_dim = 512
+        self.head         = 'yolof_head'
+        self.head_dim     = 512
         self.num_cls_head = 2
         self.num_reg_head = 4
         self.head_act     = 'relu'
         self.head_norm    = 'GN'
-        self.center_clamp = 32,        
+        self.center_clamp = 32
         self.anchor_size  = [[32, 32],
                              [64, 64],
                              [128, 128],
                              [256, 256],
-                             [512, 512]],
+                             [512, 512]]
 
         # --------- Post-process ---------
         self.train_topk = 1000
@@ -81,7 +81,7 @@ class YolofBaseConfig(object):
         self.warmup_factor = 0.00066667
 
         # --------- Train epoch ---------
-        self.max_epoch = 12,       # 1x
+        self.max_epoch = 12        # 1x
         self.lr_epoch  = [8, 11]   # 1x
 
         # --------- Data process ---------

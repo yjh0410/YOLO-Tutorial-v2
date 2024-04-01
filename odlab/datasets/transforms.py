@@ -301,7 +301,7 @@ class Compose(object):
 
 
 # build transforms
-def build_transform(cfg=None, is_train=False):
+def build_transform(cfg, is_train=False):
     # ---------------- Transform for Training ----------------
     if is_train:
         transforms = []

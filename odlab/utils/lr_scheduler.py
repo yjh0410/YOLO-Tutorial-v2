@@ -42,7 +42,7 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
     print('LR Scheduler: {}'.format(cfg.lr_scheduler))
 
     if cfg.lr_scheduler == 'step':
-        assert 'lr_epoch' in cfg
+        assert hasattr(cfg, 'lr_epoch')
         print('--lr_epoch: {}'.format(cfg.lr_epoch))
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=cfg.lr_epoch)
     elif cfg.lr_scheduler == 'cosine':

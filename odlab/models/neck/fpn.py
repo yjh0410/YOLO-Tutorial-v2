@@ -6,18 +6,15 @@ from utils import weight_init
 
 # ------------------ Basic Feature Pyramid Network ------------------
 class BasicFPN(nn.Module):
-    def __init__(self, 
+    def __init__(self, cfg, 
                  in_dims=[512, 1024, 2048],
                  out_dim=256,
-                 p6_feat=False,
-                 p7_feat=False,
-                 from_c5=False,
                  ):
         super().__init__()
         # ------------------ Basic parameters -------------------
-        self.p6_feat = p6_feat
-        self.p7_feat = p7_feat
-        self.from_c5 = from_c5
+        self.p6_feat = cfg.fpn_p6_feat
+        self.p7_feat = cfg.fpn_p7_feat
+        self.from_c5 = cfg.fpn_p6_from_c5
 
         # ------------------ Network parameters -------------------
         ## latter layers
@@ -28,12 +25,12 @@ class BasicFPN(nn.Module):
             self.smooth_layers.append(nn.Conv2d(out_dim, out_dim, kernel_size=3, padding=1))
 
         ## P6/P7 layers
-        if p6_feat:
-            if from_c5:
+        if self.p6_feat:
+            if self.from_c5:
                 self.p6_conv = nn.Conv2d(in_dims[-1], out_dim, kernel_size=3, stride=2, padding=1)
             else: # from p5
                 self.p6_conv = nn.Conv2d(out_dim, out_dim, kernel_size=3, stride=2, padding=1)
-        if p7_feat:
+        if self.p7_feat:
             self.p7_conv = nn.Sequential(
                 nn.ReLU(inplace=True),
                 nn.Conv2d(out_dim, out_dim, kernel_size=3, stride=2, padding=1)

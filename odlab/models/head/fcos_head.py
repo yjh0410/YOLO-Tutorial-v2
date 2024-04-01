@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ..basic.conv import ConvModule
+from ..basic.conv import BasicConv
 
 
 class Scale(nn.Module):
@@ -24,20 +24,19 @@ class Scale(nn.Module):
         """
         return x * self.scale
 
-
 class FcosHead(nn.Module):
-    def __init__(self, cfg, in_dim, out_dim, num_classes, num_cls_head=1, num_reg_head=1, act_type='relu', norm_type='BN'):
+    def __init__(self, cfg, in_dim, out_dim,):
         super().__init__()
         self.fmp_size = None
         # ------------------ Basic parameters -------------------
         self.cfg = cfg
         self.in_dim = in_dim
-        self.num_classes = num_classes
-        self.num_cls_head = num_cls_head
-        self.num_reg_head = num_reg_head
-        self.act_type = act_type
-        self.norm_type = norm_type
-        self.stride = cfg.out_stride
+        self.stride       = cfg.out_stride
+        self.num_classes  = cfg.num_classes
+        self.num_cls_head = cfg.num_cls_head
+        self.num_reg_head = cfg.num_reg_head
+        self.act_type     = cfg.head_act
+        self.norm_type    = cfg.head_norm
 
         # ------------------ Network parameters -------------------
         ## cls head
@@ -46,16 +45,16 @@ class FcosHead(nn.Module):
         for i in range(self.num_cls_head):
             if i == 0:
                 cls_heads.append(
-                    ConvModule(in_dim, self.cls_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(in_dim, self.cls_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
             else:
                 cls_heads.append(
-                    ConvModule(self.cls_head_dim, self.cls_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(self.cls_head_dim, self.cls_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
         
         ## reg head
         reg_heads = []
@@ -63,21 +62,21 @@ class FcosHead(nn.Module):
         for i in range(self.num_reg_head):
             if i == 0:
                 reg_heads.append(
-                    ConvModule(in_dim, self.reg_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(in_dim, self.reg_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
             else:
                 reg_heads.append(
-                    ConvModule(self.reg_head_dim, self.reg_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(self.reg_head_dim, self.reg_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
         self.cls_heads = nn.Sequential(*cls_heads)
         self.reg_heads = nn.Sequential(*reg_heads)
 
         ## pred layers
-        self.cls_pred = nn.Conv2d(self.cls_head_dim, num_classes, kernel_size=3, padding=1)
+        self.cls_pred = nn.Conv2d(self.cls_head_dim, cfg.num_classes, kernel_size=3, padding=1)
         self.reg_pred = nn.Conv2d(self.reg_head_dim, 4, kernel_size=3, padding=1)
         self.ctn_pred = nn.Conv2d(self.reg_head_dim, 1, kernel_size=3, padding=1)
         
@@ -94,10 +93,12 @@ class FcosHead(nn.Module):
             for layer in module.modules():
                 if isinstance(layer, nn.Conv2d):
                     torch.nn.init.normal_(layer.weight, mean=0, std=0.01)
-                    torch.nn.init.constant_(layer.bias, 0)
+                    if layer.bias is not None:
+                        torch.nn.init.constant_(layer.bias, 0)
                 if isinstance(layer, nn.GroupNorm):
                     torch.nn.init.constant_(layer.weight, 1)
-                    torch.nn.init.constant_(layer.bias, 0)
+                    if layer.bias is not None:
+                        torch.nn.init.constant_(layer.bias, 0)
         # init the bias of cls pred
         init_prob = 0.01
         bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))

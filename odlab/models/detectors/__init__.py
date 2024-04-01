@@ -3,7 +3,6 @@ import torch
 
 from .fcos.build  import build_fcos
 from .yolof.build import build_yolof
-from .detr.build  import build_detr
 
 
 def build_model(args, cfg, is_val=False):
@@ -14,9 +13,6 @@ def build_model(args, cfg, is_val=False):
     ## YOLOF    
     elif 'yolof' in args.model:
         model, criterion = build_yolof(cfg, is_val)
-    ## DETR    
-    elif 'detr' in args.model:
-        model, criterion = build_detr(cfg, is_val)
     else:
         raise NotImplementedError("Unknown detector: {}".args.model)
     

@@ -31,7 +31,7 @@ def train_one_epoch(cfg,
     epoch_size = len(data_loader)
     print_freq = 10
 
-    for iter_i, (samples, targets) in metric_logger.log_every(data_loader, print_freq, header):
+    for iter_i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         ni = iter_i + epoch * epoch_size
         # WarmUp
         if ni < cfg.warmup_iters:
@@ -51,7 +51,7 @@ def train_one_epoch(cfg,
             vis_data(images, targets, masks, cfg.class_labels, cfg.normalize_coords, cfg.box_format)
 
         # Inference
-        outputs = model(images, masks, targets)
+        outputs = model(images, masks)
 
         # Compute loss
         loss_dict = criterion(outputs, targets)

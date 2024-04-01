@@ -2,11 +2,11 @@ import math
 import torch
 import torch.nn as nn
 
-from ..basic.conv import ConvModule
+from ..basic.conv import BasicConv
 
 
 class YolofHead(nn.Module):
-    def __init__(self, cfg, in_dim, out_dim, num_classes, num_cls_head=1, num_reg_head=1, act_type='relu', norm_type='BN'):
+    def __init__(self, cfg, in_dim, out_dim,):
         super().__init__()
         self.fmp_size = None
         self.ctr_clamp = cfg.center_clamp
@@ -15,12 +15,12 @@ class YolofHead(nn.Module):
         # ------------------ Basic parameters -------------------
         self.cfg = cfg
         self.in_dim = in_dim
-        self.num_classes = num_classes
-        self.num_cls_head=num_cls_head
-        self.num_reg_head=num_reg_head
-        self.act_type=act_type
-        self.norm_type=norm_type
-        self.stride = cfg.out_stride
+        self.stride       = cfg.out_stride
+        self.num_classes  = cfg.num_classes
+        self.num_cls_head = cfg.num_cls_head
+        self.num_reg_head = cfg.num_reg_head
+        self.act_type     = cfg.head_act
+        self.norm_type    = cfg.head_norm
         # Anchor config
         self.anchor_size = torch.as_tensor(cfg.anchor_size)
         self.num_anchors = len(cfg.anchor_size)
@@ -32,38 +32,38 @@ class YolofHead(nn.Module):
         for i in range(self.num_cls_head):
             if i == 0:
                 cls_heads.append(
-                    ConvModule(in_dim, self.cls_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(in_dim, self.cls_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
             else:
                 cls_heads.append(
-                    ConvModule(self.cls_head_dim, self.cls_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(self.cls_head_dim, self.cls_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
         ## reg head
         reg_heads = []
         self.reg_head_dim = out_dim
         for i in range(self.num_reg_head):
             if i == 0:
                 reg_heads.append(
-                    ConvModule(in_dim, self.reg_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(in_dim, self.reg_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
             else:
                 reg_heads.append(
-                    ConvModule(self.reg_head_dim, self.reg_head_dim, k=3, p=1, s=1, 
-                               act_type=self.act_type,
-                               norm_type=self.norm_type)
-                               )
+                    BasicConv(self.reg_head_dim, self.reg_head_dim,
+                              kernel_size=3, padding=1, stride=1, 
+                              act_type=self.act_type, norm_type=self.norm_type)
+                              )
         self.cls_heads = nn.Sequential(*cls_heads)
         self.reg_heads = nn.Sequential(*reg_heads)
 
         # pred layer
         self.obj_pred = nn.Conv2d(self.reg_head_dim, 1 * self.num_anchors, kernel_size=3, padding=1)
-        self.cls_pred = nn.Conv2d(self.cls_head_dim, num_classes * self.num_anchors, kernel_size=3, padding=1)
+        self.cls_pred = nn.Conv2d(self.cls_head_dim, self.num_classes * self.num_anchors, kernel_size=3, padding=1)
         self.reg_pred = nn.Conv2d(self.reg_head_dim, 4 * self.num_anchors, kernel_size=3, padding=1)
 
         # init bias

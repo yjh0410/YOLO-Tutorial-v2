@@ -47,11 +47,12 @@ class BasicConv(nn.Module):
                 ):
         super(BasicConv, self).__init__()
         self.depthwise = depthwise
+        use_bias = False if norm_type is not None else True
         if not depthwise:
-            self.conv = get_conv2d(in_dim, out_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=1)
+            self.conv = get_conv2d(in_dim, out_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=1, bias=use_bias)
             self.norm = get_norm(norm_type, out_dim)
         else:
-            self.conv1 = get_conv2d(in_dim, in_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=in_dim)
+            self.conv1 = get_conv2d(in_dim, in_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=in_dim, bias=use_bias)
             self.norm1 = get_norm(norm_type, in_dim)
             self.conv2 = get_conv2d(in_dim, out_dim, k=1, p=0, s=1, d=1, g=1)
             self.norm2 = get_norm(norm_type, out_dim)

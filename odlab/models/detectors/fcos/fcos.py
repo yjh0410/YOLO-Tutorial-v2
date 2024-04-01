@@ -33,10 +33,10 @@ class FCOS(nn.Module):
         self.backbone, feat_dims = build_backbone(cfg)
 
         ## Neck
-        self.fpn = build_neck(cfg, feat_dims, cfg['head_dim'])
+        self.fpn = build_neck(cfg, feat_dims, cfg.head_dim)
         
         ## Heads
-        self.head = build_head(cfg, cfg['head_dim'], cfg['head_dim'], num_classes)
+        self.head = build_head(cfg, cfg.head_dim, cfg.head_dim)
 
     def post_process(self, cls_preds, ctn_preds, box_preds):
         """

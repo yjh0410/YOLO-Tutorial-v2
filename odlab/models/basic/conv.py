@@ -1,15 +1,14 @@
 import torch.nn as nn
 
 
-def get_conv2d(c1, c2, k, p, s, d, g):
-    conv = nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g)
+# --------------------- Basic modules ---------------------
+def get_conv2d(c1, c2, k, p, s, d, g, bias=False):
+    conv = nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=bias)
 
     return conv
 
 def get_activation(act_type=None):
-    if act_type is None:
-        return nn.Identity()
-    elif act_type == 'relu':
+    if act_type == 'relu':
         return nn.ReLU(inplace=True)
     elif act_type == 'lrelu':
         return nn.LeakyReLU(0.1, inplace=True)
@@ -17,11 +16,11 @@ def get_activation(act_type=None):
         return nn.Mish(inplace=True)
     elif act_type == 'silu':
         return nn.SiLU(inplace=True)
-    elif act_type == 'gelu':
-        return nn.GELU()
+    elif act_type is None:
+        return nn.Identity()
     else:
-        raise NotImplementedError(act_type)
-
+        raise NotImplementedError
+        
 def get_norm(norm_type, dim):
     if norm_type == 'BN':
         return nn.BatchNorm2d(dim)
@@ -30,46 +29,39 @@ def get_norm(norm_type, dim):
     elif norm_type is None:
         return nn.Identity()
     else:
-        raise NotImplementedError(norm_type)
+        raise NotImplementedError
 
-
-# ----------------- CNN ops -----------------
-class ConvModule(nn.Module):
-    def __init__(self,
-                 c1,
-                 c2,
-                 k=1,
-                 p=0,
-                 s=1,
-                 d=1,
-                 act_type='relu',
-                 norm_type='BN', 
-                 depthwise=False):
-        super(ConvModule, self).__init__()
-        convs = []
-        if depthwise:
-            convs.append(get_conv2d(c1, c1, k=k, p=p, s=s, d=d, g=c1))
-            # depthwise conv
-            if norm_type:
-                convs.append(get_norm(norm_type, c1))
-            if act_type:
-                convs.append(get_activation(act_type))
-            # pointwise conv
-            convs.append(get_conv2d(c1, c2, k=1, p=0, s=1, d=d, g=1))
-            if norm_type:
-                convs.append(get_norm(norm_type, c2))
-            if act_type:
-                convs.append(get_activation(act_type))
-
+class BasicConv(nn.Module):
+    def __init__(self, 
+                 in_dim,                   # in channels
+                 out_dim,                  # out channels 
+                 kernel_size=1,            # kernel size 
+                 padding=0,                # padding
+                 stride=1,                 # padding
+                 dilation=1,               # dilation
+                 act_type  :str = 'lrelu', # activation
+                 norm_type :str = 'BN',    # normalization
+                 depthwise :bool = False
+                ):
+        super(BasicConv, self).__init__()
+        self.depthwise = depthwise
+        use_bias = False if norm_type is not None else True
+        if not depthwise:
+            self.conv = get_conv2d(in_dim, out_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=1, bias=use_bias)
+            self.norm = get_norm(norm_type, out_dim)
         else:
-            convs.append(get_conv2d(c1, c2, k=k, p=p, s=s, d=d, g=1))
-            if norm_type:
-                convs.append(get_norm(norm_type, c2))
-            if act_type:
-                convs.append(get_activation(act_type))
-            
-        self.convs = nn.Sequential(*convs)
-
+            self.conv1 = get_conv2d(in_dim, in_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=in_dim, bias=use_bias)
+            self.norm1 = get_norm(norm_type, in_dim)
+            self.conv2 = get_conv2d(in_dim, out_dim, k=1, p=0, s=1, d=1, g=1)
+            self.norm2 = get_norm(norm_type, out_dim)
+        self.act  = get_activation(act_type)
 
     def forward(self, x):
-        return self.convs(x)
+        if not self.depthwise:
+            return self.act(self.norm(self.conv(x)))
+        else:
+            # Depthwise conv
+            x = self.norm1(self.conv1(x))
+            # Pointwise conv
+            x = self.norm2(self.conv2(x))
+            return x

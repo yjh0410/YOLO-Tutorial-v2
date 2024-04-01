@@ -54,7 +54,7 @@ class FcosBaseConfig(object):
                                                          [128, 256],
                                                          [256, 512],
                                                          [512, float('inf')]]
-                                                         },
+                                                         }
 
         # --------- Loss weight ---------
         self.focal_loss_alpha = 0.25
@@ -79,7 +79,7 @@ class FcosBaseConfig(object):
         self.warmup_factor = 0.00066667
 
         # --------- Train epoch ---------
-        self.max_epoch = 12,       # 1x
+        self.max_epoch = 12        # 1x
         self.lr_epoch  = [8, 11]   # 1x
 
         # --------- Data process ---------

@@ -2,14 +2,14 @@
 import torch.utils.data
 from torch.utils.data import DataLoader, DistributedSampler
 
-from .coco import build_coco, coco_labels, coco_indexs
+from .coco import build_coco, coco_indexs
 from .transforms import build_transform
 
 
 def build_dataset(args, cfg, transform=None, is_train=False):
     if args.dataset == 'coco':
         dataset = build_coco(args, transform, is_train)
-        class_labels = coco_labels
+        class_labels = dataset.coco_labels
         num_classes  = 80
     cfg.class_labels = class_labels
     cfg.num_classes  = num_classes

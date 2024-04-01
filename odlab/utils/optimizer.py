@@ -6,7 +6,7 @@ def build_optimizer(cfg, model, resume=None):
     print('==============================')
     print('Optimizer: {}'.format(cfg.optimizer))
     print('--base_lr: {}'.format(cfg.base_lr))
-    print('--backbone_lr_ratio: {}'.format(cfg.backbone_lr_ratio))
+    print('--backbone_lr_ratio: {}'.format(cfg.bk_lr_ratio))
     print('--momentum: {}'.format(cfg.momentum))
     print('--weight_decay: {}'.format(cfg.weight_decay))
 
@@ -14,7 +14,7 @@ def build_optimizer(cfg, model, resume=None):
         {"params": [p for n, p in model.named_parameters() if "backbone" not in n and p.requires_grad]},
         {
             "params": [p for n, p in model.named_parameters() if "backbone" in n and p.requires_grad],
-            "lr": cfg.base_lr * cfg.backbone_lr_ratio,
+            "lr": cfg.base_lr * cfg.bk_lr_ratio,
         },
     ]
 

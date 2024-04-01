@@ -85,12 +85,23 @@ def main():
     os.makedirs(path_to_save, exist_ok=True)
 
     # ---------------------------- Build DDP ----------------------------
-    distributed_utils.init_distributed_mode(args)
-    print("git:\n  {}\n".format(distributed_utils.get_sha()))
+    local_rank = local_process_rank = -1
+    if args.distributed:
+        distributed_utils.init_distributed_mode(args)
+        print("git:\n  {}\n".format(distributed_utils.get_sha()))
+        try:
+            # Multiple Mechine & Multiple GPUs (world size > 8)
+            local_rank = torch.distributed.get_rank()
+            local_process_rank = int(os.getenv('LOCAL_PROCESS_RANK', '0'))
+        except:
+            # Single Mechine & Multiple GPUs (world size <= 8)
+            local_rank = local_process_rank = torch.distributed.get_rank()
     world_size = distributed_utils.get_world_size()
-    print('World size: {}'.format(world_size))
     per_gpu_batch = args.batch_size // world_size
-
+    print("LOCAL RANK: ", local_rank)
+    print("LOCAL_PROCESS_RANL: ", local_process_rank)
+    print('WORLD SIZE: {}'.format(world_size))
+    
     # ---------------------------- Build CUDA ----------------------------
     if args.cuda and torch.cuda.is_available():
         print('use cuda')
@@ -103,7 +114,6 @@ def main():
 
     # ---------------------------- Build config ----------------------------
     cfg = build_config(args)
-    print('Model config: ', cfg)
 
     # ---------------------------- Build Dataset ----------------------------
     transforms = build_transform(cfg, is_train=True)

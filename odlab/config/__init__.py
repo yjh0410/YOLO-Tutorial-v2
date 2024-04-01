@@ -9,10 +9,10 @@ def build_config(args):
         return build_fcos_config(args)
     # YOLOF
     elif "yolof" in args.model:
-        return build_yolof_config
+        return build_yolof_config(args)
     # DETR
     elif "detr" in args.model:
-        return build_detr_config
+        return build_detr_config(args)
     
     else:
         raise NotImplementedError('Unknown Model: {}'.format(args.model))
