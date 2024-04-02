@@ -41,7 +41,7 @@ class GElanBackbone(nn.Module):
         # P3/8
         self.layer_3 = nn.Sequential(
             ADown(cfg.backbone_feats["c2"][2], cfg.backbone_feats["c3"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise, use_pooling=cfg.bk_down_pooling),
+                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c3"][0],
                           inter_dims = cfg.backbone_feats["c3"][1],
                           out_dim    = cfg.backbone_feats["c3"][2],
@@ -54,7 +54,7 @@ class GElanBackbone(nn.Module):
         # P4/16
         self.layer_4 = nn.Sequential(
             ADown(cfg.backbone_feats["c3"][2], cfg.backbone_feats["c4"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise, use_pooling=cfg.bk_down_pooling),
+                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c4"][0],
                           inter_dims = cfg.backbone_feats["c4"][1],
                           out_dim    = cfg.backbone_feats["c4"][2],
@@ -67,7 +67,7 @@ class GElanBackbone(nn.Module):
         # P5/32
         self.layer_5 = nn.Sequential(
             ADown(cfg.backbone_feats["c4"][2], cfg.backbone_feats["c5"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise, use_pooling=cfg.bk_down_pooling),
+                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c5"][0],
                           inter_dims = cfg.backbone_feats["c5"][1],
                           out_dim    = cfg.backbone_feats["c5"][2],
