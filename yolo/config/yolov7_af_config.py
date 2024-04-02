@@ -75,13 +75,13 @@ class Yolov7AFBaseConfig(object):
         self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
         self.momentum     = 0.9
         self.weight_decay = 0.05
-        self.clip_max_norm   = 10.0
+        self.clip_max_norm   = 35.0
         self.warmup_bias_lr  = 0.1
         self.warmup_momentum = 0.8
 
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
-        self.lr_scheduler = "cosine"
+        self.lr_scheduler = "linear"
         self.max_epoch    = 300
         self.eval_epoch   = 10
         self.no_aug_epoch = 20

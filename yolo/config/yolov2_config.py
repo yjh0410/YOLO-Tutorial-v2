@@ -67,7 +67,7 @@ class Yolov2BaseConfig(object):
 
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
-        self.lr_scheduler = "cosine"
+        self.lr_scheduler = "linear"
         self.max_epoch    = 150
         self.eval_epoch   = 10
         self.no_aug_epoch = 20
