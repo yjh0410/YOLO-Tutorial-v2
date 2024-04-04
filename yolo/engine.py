@@ -2,7 +2,6 @@ import torch
 import torch.distributed as dist
 
 import os
-import numpy as np
 import random
 
 # ----------------- Extra Components -----------------
@@ -12,7 +11,7 @@ from utils.vis_tools import vis_data
 
 # ----------------- Optimizer & LrScheduler Components -----------------
 from utils.solver.optimizer import build_yolo_optimizer, build_rtdetr_optimizer
-from utils.solver.lr_scheduler import LinearWarmUpLrScheduler, build_lr_scheduler, build_lambda_lr_scheduler
+from utils.solver.lr_scheduler import LinearWarmUpLrScheduler, build_lr_scheduler
 
 
 class YoloTrainer(object):
@@ -63,15 +62,15 @@ class YoloTrainer(object):
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
 
         # ---------------------------- Build Optimizer ----------------------------
-        cfg.base_lr = cfg.per_image_lr * args.batch_size
+        self.grad_accumulate = max(64 // args.batch_size, 1)
+        cfg.base_lr = cfg.per_image_lr * args.batch_size * self.grad_accumulate
         cfg.min_lr  = cfg.base_lr * cfg.min_lr_ratio
         self.optimizer, self.start_epoch = build_yolo_optimizer(cfg, model, args.resume)
 
         # ---------------------------- Build LR Scheduler ----------------------------
-        self.lr_scheduler, self.lf = build_lambda_lr_scheduler(cfg, self.optimizer, cfg.max_epoch)
-        self.lr_scheduler.last_epoch = self.start_epoch - 1  # do not move
-        if self.args.resume and self.args.resume != 'None':
-            self.lr_scheduler.step()
+        warmup_iters = cfg.warmup_epoch * len(self.train_loader)
+        self.lr_scheduler_warmup = LinearWarmUpLrScheduler(warmup_iters, cfg.base_lr, cfg.warmup_bias_lr, cfg.warmup_momentum)
+        self.lr_scheduler = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
     def train(self, model):
         for epoch in range(self.start_epoch, self.cfg.max_epoch):
@@ -97,7 +96,8 @@ class YoloTrainer(object):
             self.train_one_epoch(model)
 
             # LR Schedule
-            self.lr_scheduler.step()
+            if (epoch + 1) > self.cfg.warmup_epoch:
+                self.lr_scheduler.step()
 
             # eval one epoch
             if self.heavy_eval:
@@ -146,6 +146,7 @@ class YoloTrainer(object):
                     'model': model_eval.state_dict(),
                     'mAP': round(cur_map*100, 1),
                     'optimizer':  self.optimizer.state_dict(),
+                    'lr_scheduler': self.lr_scheduler.state_dict(),
                     'epoch': self.epoch,
                     'args': self.args,
                     }
@@ -177,14 +178,11 @@ class YoloTrainer(object):
         for iter_i, (images, targets) in enumerate(metric_logger.log_every(self.train_loader, print_freq, header)):
             ni = iter_i + self.epoch * epoch_size
             # Warmup
-            if ni <= nw:
-                xi = [0, nw]  # x interp
-                for j, x in enumerate(self.optimizer.param_groups):
-                    # bias lr falls from 0.1 to lr0, all other lrs rise from 0.0 to lr0
-                    x['lr'] = np.interp(
-                        ni, xi, [self.cfg.warmup_bias_lr if j == 0 else 0.0, x['initial_lr'] * self.lf(self.epoch)])
-                    if 'momentum' in x:
-                        x['momentum'] = np.interp(ni, xi, [self.cfg.warmup_momentum, self.cfg.momentum])
+            if nw > 0 and ni < nw:
+                self.lr_scheduler_warmup(ni, self.optimizer)
+            elif ni == nw:
+                print("Warmup stage is over.")
+                self.lr_scheduler_warmup.set_lr(self.optimizer, self.cfg.base_lr)
                                 
             # To device
             images = images.to(self.device, non_blocking=True).float()
@@ -211,21 +209,23 @@ class YoloTrainer(object):
                 loss_dict = self.criterion(outputs=outputs, targets=targets)
                 losses = loss_dict['losses']
                 loss_dict_reduced = distributed_utils.reduce_dict(loss_dict)
+                losses /= self.grad_accumulate
 
             # Backward
             self.scaler.scale(losses).backward()
 
             # Optimize
-            if self.cfg.clip_max_norm > 0:
-                self.scaler.unscale_(self.optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
-            self.optimizer.zero_grad()
+            if (iter_i + 1) % self.grad_accumulate == 0:
+                if self.cfg.clip_max_norm > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
 
-            # ModelEMA
-            if self.model_ema is not None:
-                self.model_ema.update(model)
+                # ModelEMA
+                if self.model_ema is not None:
+                    self.model_ema.update(model)
 
             # Update log
             metric_logger.update(**loss_dict_reduced)
@@ -272,7 +272,7 @@ class YoloTrainer(object):
                 # refine tgt
                 tgt_boxes_wh = boxes[..., 2:] - boxes[..., :2]
                 min_tgt_size = torch.min(tgt_boxes_wh, dim=-1)[0]
-                keep = (min_tgt_size >= 8)
+                keep = (min_tgt_size >= 1)
 
                 tgt["boxes"] = boxes[keep]
                 tgt["labels"] = labels[keep]
@@ -346,7 +346,8 @@ class RTDetrTrainer(object):
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
 
         # ---------------------------- Build Optimizer ----------------------------
-        cfg.base_lr = cfg.per_image_lr * args.batch_size
+        self.grad_accumulate = max(16 // args.batch_size, 1)
+        cfg.base_lr = cfg.per_image_lr * args.batch_size * self.grad_accumulate
         cfg.min_lr  = cfg.base_lr * cfg.min_lr_ratio
         self.optimizer, self.start_epoch = build_rtdetr_optimizer(cfg, model, args.resume)
 
@@ -480,22 +481,24 @@ class RTDetrTrainer(object):
                 outputs = model(images, targets)    
                 loss_dict = self.criterion(outputs, targets)
                 losses = sum(loss_dict.values())
+                losses /= self.grad_accumulate
                 loss_dict_reduced = distributed_utils.reduce_dict(loss_dict)
 
             # Backward
             self.scaler.scale(losses).backward()
 
             # Optimize
-            if self.cfg.clip_max_norm > 0:
-                self.scaler.unscale_(self.optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
-            self.optimizer.zero_grad()
+            if (iter_i + 1) % self.grad_accumulate == 0:
+                if self.cfg.clip_max_norm > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
 
-            # ModelEMA
-            if self.model_ema is not None:
-                self.model_ema.update(model)
+                # ModelEMA
+                if self.model_ema is not None:
+                    self.model_ema.update(model)
 
             # Update log
             metric_logger.update(**loss_dict_reduced)
@@ -539,4 +542,3 @@ def build_trainer(args, cfg, device, model, model_ema, criterion, train_transfor
         return RTDetrTrainer(args, cfg, device, model, model_ema, criterion, train_transform, val_transform, dataset, train_loader, evaluator)
     else:
         raise NotImplementedError(cfg.trainer)
-    

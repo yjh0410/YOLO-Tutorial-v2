@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import torch
 
 
@@ -31,7 +30,8 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
     print('LR Scheduler: {}'.format(cfg.lr_scheduler))
 
     if cfg.lr_scheduler == "step":
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=cfg.lr_step, gamma=0.1)
+        lr_step = [cfg.max_epoch // 3, cfg.max_epoch // 3 * 2]
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_step, gamma=0.1)
     elif cfg.lr_scheduler == "cosine":
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.max_epoch - cfg.warmup_epoch - 1, eta_min=cfg.min_lr)
     else:
@@ -46,21 +46,3 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
             lr_scheduler.load_state_dict(checkpoint_state_dict)
 
     return lr_scheduler
-
-def build_lambda_lr_scheduler(cfg, optimizer, epochs):
-    """Build learning rate scheduler from cfg file."""
-    print('==============================')
-    print('Lr Scheduler: {}'.format(cfg.lr_scheduler))
-    # Cosine LR scheduler
-    if cfg.lr_scheduler == 'cosine':
-        lf = lambda x: ((1 - math.cos(x * math.pi / epochs)) / 2) * (cfg.min_lr_ratio - 1) + 1
-    # Linear LR scheduler
-    elif cfg.lr_scheduler == 'linear':
-        lf = lambda x: (1 - x / epochs) * (1.0 - cfg.min_lr_ratio) + cfg.min_lr_ratio
-
-    else:
-        print('unknown lr scheduler.')
-        exit(0)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
-
-    return scheduler, lf
