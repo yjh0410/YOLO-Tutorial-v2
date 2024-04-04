@@ -16,7 +16,8 @@ if [[ $WORLD_SIZE == 1 ]]; then
             --root ${DATASET_ROOT} \
             --model ${MODEL} \
             --batch_size ${BATCH_SIZE} \
-            --resume ${RESUME}
+            --resume ${RESUME} \
+            --fp16
 elif [[ $WORLD_SIZE -gt 1 && $WORLD_SIZE -le 8 ]]; then
     python -m torch.distributed.run --nproc_per_node=${WORLD_SIZE} --master_port ${MASTER_PORT} train.py \
             --cuda \

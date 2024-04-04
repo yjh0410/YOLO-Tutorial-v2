@@ -62,7 +62,8 @@ class YoloTrainer(object):
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
 
         # ---------------------------- Build Optimizer ----------------------------
-        cfg.base_lr = cfg.per_image_lr * args.batch_size
+        self.grad_accumulate = max(64 // args.batch_size, 1)
+        cfg.base_lr = cfg.per_image_lr * args.batch_size * self.grad_accumulate
         cfg.min_lr  = cfg.base_lr * cfg.min_lr_ratio
         self.optimizer, self.start_epoch = build_yolo_optimizer(cfg, model, args.resume)
 
@@ -168,6 +169,7 @@ class YoloTrainer(object):
         header = 'Epoch: [{} / {}]'.format(self.epoch, self.cfg.max_epoch)
         epoch_size = len(self.train_loader)
         print_freq = 10
+        gnorm = 0.0
 
         # basic parameters
         epoch_size = len(self.train_loader)
@@ -208,28 +210,30 @@ class YoloTrainer(object):
                 # Compute loss
                 loss_dict = self.criterion(outputs=outputs, targets=targets)
                 losses = loss_dict['losses']
+                losses /= self.grad_accumulate
                 loss_dict_reduced = distributed_utils.reduce_dict(loss_dict)
 
             # Backward
             self.scaler.scale(losses).backward()
 
             # Optimize
-            if self.cfg.clip_max_norm > 0:
-                self.scaler.unscale_(self.optimizer)
-                gnorm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
-            self.optimizer.zero_grad()
+            if (iter_i + 1) % self.grad_accumulate == 0:
+                if self.cfg.clip_max_norm > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    gnorm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
 
-            # ModelEMA
-            if self.model_ema is not None:
-                self.model_ema.update(model)
+                # ModelEMA
+                if self.model_ema is not None:
+                    self.model_ema.update(model)
 
             # Update log
             metric_logger.update(**loss_dict_reduced)
             metric_logger.update(lr=self.optimizer.param_groups[2]["lr"])
-            metric_logger.update(gnorm=gnorm)
             metric_logger.update(size=img_size)
+            metric_logger.update(gnorm=gnorm)
 
             if self.args.debug:
                 print("For debug mode, we only train 1 iteration")
