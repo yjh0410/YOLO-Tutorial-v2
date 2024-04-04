@@ -214,7 +214,7 @@ class YoloTrainer(object):
 
             # Backward
             self.scaler.scale(losses).backward()
-            gnorm = get_total_grad_norm(model.parameters())
+            gnorm = 0.0
 
             # Optimize
             if (iter_i + 1) % self.grad_accumulate == 0:
