@@ -6,7 +6,7 @@ import random
 
 # ----------------- Extra Components -----------------
 from utils import distributed_utils
-from utils.misc import MetricLogger, SmoothedValue
+from utils.misc import MetricLogger, SmoothedValue, get_total_grad_norm
 from utils.vis_tools import vis_data
 
 # ----------------- Optimizer & LrScheduler Components -----------------
@@ -214,7 +214,7 @@ class YoloTrainer(object):
 
             # Backward
             self.scaler.scale(losses).backward()
-            gnorm = None
+            gnorm = get_total_grad_norm(model.parameters())
 
             # Optimize
             if (iter_i + 1) % self.grad_accumulate == 0:
@@ -232,8 +232,8 @@ class YoloTrainer(object):
             # Update log
             metric_logger.update(**loss_dict_reduced)
             metric_logger.update(lr=self.optimizer.param_groups[2]["lr"])
-            metric_logger.update(size=img_size)
             metric_logger.update(gnorm=gnorm)
+            metric_logger.update(size=img_size)
 
             if self.args.debug:
                 print("For debug mode, we only train 1 iteration")
