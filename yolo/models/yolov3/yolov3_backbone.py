@@ -9,7 +9,7 @@ except:
 # IN1K pretrained weight
 pretrained_urls = {
     'n': None,
-    's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/darknet_s_in1k_44.2.pth",
+    's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/darknet_s_in1k_68.5.pth",
     'm': None,
     'l': None,
     'x': None,
