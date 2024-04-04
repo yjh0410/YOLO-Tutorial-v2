@@ -165,7 +165,7 @@ class YoloTrainer(object):
         metric_logger = MetricLogger(delimiter="  ")
         metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value:.6f}'))
         metric_logger.add_meter('size', SmoothedValue(window_size=1, fmt='{value:d}'))
-        metric_logger.add_meter('gnorm', SmoothedValue(window_size=1, fmt='{value:1f}'))
+        metric_logger.add_meter('gnorm', SmoothedValue(window_size=1, fmt='{value:.1f}'))
         header = 'Epoch: [{} / {}]'.format(self.epoch, self.cfg.max_epoch)
         epoch_size = len(self.train_loader)
         print_freq = 10
@@ -214,7 +214,7 @@ class YoloTrainer(object):
 
             # Backward
             self.scaler.scale(losses).backward()
-            gnorm = 0.0
+            gnorm = get_total_grad_norm(model.parameters())
 
             # Optimize
             if (iter_i + 1) % self.grad_accumulate == 0:
