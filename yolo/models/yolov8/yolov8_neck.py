@@ -28,6 +28,17 @@ class SPPF(nn.Module):
                               stride=1,
                               padding=cfg.spp_pooling_size // 2)
 
+        # Initialize all layers
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                # In order to be consistent with the source code,
+                # reset the Conv2d initialization parameters
+                m.reset_parameters()
+
     def forward(self, x):
         x = self.cv1(x)
         y1 = self.m(x)

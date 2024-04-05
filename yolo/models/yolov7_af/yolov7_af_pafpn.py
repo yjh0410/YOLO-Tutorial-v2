@@ -85,6 +85,17 @@ class Yolov7PaFPN(nn.Module):
                                      kernel_size=3, padding=1, stride=1,
                                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
 
+        # Initialize all layers
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                # In order to be consistent with the source code,
+                # reset the Conv2d initialization parameters
+                m.reset_parameters()
+
     def forward(self, features):
         c3, c4, c5 = features
 
