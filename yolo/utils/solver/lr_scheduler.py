@@ -5,9 +5,8 @@ import torch
 # ------------------------- WarmUp LR Scheduler -------------------------
 ## Warmup LR Scheduler
 class LinearWarmUpLrScheduler(object):
-    def __init__(self, wp_iter=500, base_lr=0.01, warmup_bias_lr=0.1, warmup_momentum=0.8):
+    def __init__(self, wp_iter=500, base_lr=0.01, warmup_bias_lr=0.0):
         self.wp_iter = wp_iter
-        self.warmup_momentum = warmup_momentum
         self.base_lr = base_lr
         self.warmup_bias_lr = warmup_bias_lr
 

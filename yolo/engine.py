@@ -69,7 +69,7 @@ class YoloTrainer(object):
 
         # ---------------------------- Build LR Scheduler ----------------------------
         warmup_iters = cfg.warmup_epoch * len(self.train_loader)
-        self.lr_scheduler_warmup = LinearWarmUpLrScheduler(warmup_iters, cfg.base_lr, cfg.warmup_bias_lr, cfg.warmup_momentum)
+        self.lr_scheduler_warmup = LinearWarmUpLrScheduler(warmup_iters, cfg.base_lr, cfg.warmup_bias_lr)
         self.lr_scheduler = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
     def train(self, model):
