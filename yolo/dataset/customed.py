@@ -28,6 +28,7 @@ class CustomedDataset(Dataset):
         self.image_set = image_set
         self.is_train  = is_train
         self.num_classes = len(customed_class_labels)
+        self.num_classes = 9
         # ----------- Path parameters -----------
         self.data_dir = data_dir
         self.json_file = '{}.json'.format(image_set)

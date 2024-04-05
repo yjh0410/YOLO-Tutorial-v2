@@ -26,7 +26,6 @@ class DetPredLayer(nn.Module):
         self.obj_pred = nn.Conv2d(self.cls_dim, 1 * self.num_anchors, kernel_size=1)
         self.cls_pred = nn.Conv2d(self.cls_dim, num_classes * self.num_anchors, kernel_size=1)
         self.reg_pred = nn.Conv2d(self.reg_dim, 4 * self.num_anchors, kernel_size=1)                
-
         self.init_bias()
         
     def init_bias(self):

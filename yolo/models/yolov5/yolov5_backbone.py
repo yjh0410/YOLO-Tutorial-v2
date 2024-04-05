@@ -15,6 +15,7 @@ pretrained_urls = {
     'x': None,
 }
 
+
 # --------------------- Yolov3's Backbone -----------------------
 ## Modified DarkNet
 class Yolov5Backbone(nn.Module):

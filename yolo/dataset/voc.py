@@ -54,7 +54,7 @@ class VOCDataset(data.Dataset):
         # ----------- Basic parameters -----------
         self.image_set = image_set
         self.is_train  = is_train
-        self.num_classes = 80
+        self.num_classes = 20
         # ----------- Path parameters -----------
         self.root = data_dir
         self._annopath = osp.join('%s', 'Annotations', '%s.xml')

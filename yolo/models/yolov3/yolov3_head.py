@@ -111,7 +111,6 @@ class Yolov3DetHead(nn.Module):
         self.cls_head_dim = cfg.head_dim
         self.reg_head_dim = cfg.head_dim
 
-
     def forward(self, feats):
         """
             feats: List[(Tensor)] [[B, C, H, W], ...]

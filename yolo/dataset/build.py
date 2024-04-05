@@ -25,7 +25,6 @@ def build_dataset(args, cfg, transform=None, is_train=False):
     ## VOC dataset
     if args.dataset == 'voc':
         image_set = [('2007', 'trainval'), ('2012', 'trainval')] if is_train else [('2007', 'test')]
-        cfg.num_classes  = 20
         dataset = VOCDataset(cfg       = cfg,
                              data_dir  = args.root,
                              image_set = image_set,
@@ -35,7 +34,6 @@ def build_dataset(args, cfg, transform=None, is_train=False):
     ## COCO dataset
     elif args.dataset == 'coco':
         image_set = 'train2017' if is_train else 'val2017'
-        cfg.num_classes  = 80
         dataset = COCODataset(cfg       = cfg,
                               data_dir  = args.root,
                               image_set = image_set,
@@ -45,7 +43,6 @@ def build_dataset(args, cfg, transform=None, is_train=False):
     ## Custom dataset
     elif args.dataset == 'customed':
         image_set = 'train' if is_train else 'val'
-        cfg.num_classes  = 20
         dataset = CustomedDataset(cfg       = cfg,
                                   data_dir  = args.root,
                                   image_set = image_set,

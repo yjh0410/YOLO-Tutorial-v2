@@ -77,6 +77,17 @@ class Yolov5PaFPN(nn.Module):
                       ])
         self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
 
+        # Initialize all layers
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                # In order to be consistent with the source code,
+                # reset the Conv2d initialization parameters
+                m.reset_parameters()
+
     def forward(self, features):
         c3, c4, c5 = features
         

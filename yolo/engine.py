@@ -275,7 +275,7 @@ class YoloTrainer(object):
                 # refine tgt
                 tgt_boxes_wh = boxes[..., 2:] - boxes[..., :2]
                 min_tgt_size = torch.min(tgt_boxes_wh, dim=-1)[0]
-                keep = (min_tgt_size >= 1)
+                keep = (min_tgt_size >= 8)
 
                 tgt["boxes"] = boxes[keep]
                 tgt["labels"] = labels[keep]
