@@ -6,7 +6,7 @@ import random
 
 # ----------------- Extra Components -----------------
 from utils import distributed_utils
-from utils.misc import MetricLogger, SmoothedValue, get_total_grad_norm
+from utils.misc import MetricLogger, SmoothedValue
 from utils.vis_tools import vis_data
 
 # ----------------- Optimizer & LrScheduler Components -----------------
