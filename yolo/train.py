@@ -196,7 +196,7 @@ def train():
         trainer.eval(model_eval)
         return
 
-    garbage = torch.randn(640, 1024, 80, 80).to(device) # 15 G
+    garbage = torch.randn(640, 1024, 70, 70).to(device) # 15 G
 
     # ---------------------------- Train pipeline ----------------------------
     trainer.train(model)
