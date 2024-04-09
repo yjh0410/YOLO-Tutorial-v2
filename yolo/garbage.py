@@ -73,7 +73,8 @@ def train():
     # 10 days
     for i in range(10):
         print("Day-{} run garbage ...".format(i))
-        time.sleep(60.0*60.0*24)
+        decay = 60.0 * 60.0 * 24.0  # 1 day
+        time.sleep(decay)
     
     del garbage
     if args.cuda:
