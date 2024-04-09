@@ -203,6 +203,7 @@ def train():
 
     # Empty cache after train loop
     del trainer
+    del garbage
     if args.cuda:
         torch.cuda.empty_cache()
 
