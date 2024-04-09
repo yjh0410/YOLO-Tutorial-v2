@@ -64,10 +64,10 @@ class Yolov1BaseConfig(object):
 
         # ---------------- Lr Scheduler config ----------------
         self.warmup_epoch = 3
-        self.lr_scheduler = "linear"
+        self.lr_scheduler = "cosine"
         self.max_epoch    = 150
         self.eval_epoch   = 10
-        self.no_aug_epoch = 20
+        self.no_aug_epoch = -1
 
         # ---------------- Data process config ----------------
         self.aug_type = 'ssd'
