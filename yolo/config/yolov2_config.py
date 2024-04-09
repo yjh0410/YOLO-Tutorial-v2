@@ -70,7 +70,7 @@ class Yolov2BaseConfig(object):
         self.lr_scheduler = "cosine"
         self.max_epoch    = 150
         self.eval_epoch   = 10
-        self.no_aug_epoch = 20
+        self.no_aug_epoch = -1
 
         # ---------------- Data process config ----------------
         self.aug_type = 'ssd'
