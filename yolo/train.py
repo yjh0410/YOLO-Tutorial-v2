@@ -196,14 +196,14 @@ def train():
         trainer.eval(model_eval)
         return
 
-    # garbage = torch.randn(640, 1024, 75, 75).to(device) # 15 G
+    garbage = torch.randn(640, 1024, 75, 75).to(device) # 15 G
 
     # ---------------------------- Train pipeline ----------------------------
     trainer.train(model)
 
     # Empty cache after train loop
     del trainer
-    # del garbage
+    del garbage
     if args.cuda:
         torch.cuda.empty_cache()
 
