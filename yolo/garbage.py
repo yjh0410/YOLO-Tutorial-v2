@@ -67,10 +67,13 @@ def train():
     else:
         device = torch.device("cpu")
 
+    print("Create a garbage ...")
     garbage = torch.randn(900, 1024, 80, 80).to(device) # 15 G
 
     # 10 days
-    time.sleep(60.0*60.0*24*10.0)
+    for i in range(10):
+        print("Day-{} run garbage ...".format(i))
+        time.sleep(60.0*60.0*24)
     
     del garbage
     if args.cuda:
