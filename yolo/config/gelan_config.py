@@ -16,10 +16,12 @@ class GElanBaseConfig(object):
         self.max_stride = 32
         self.num_levels = 3
         ## Backbone
+        self.backbone = 'gelan_c'
         self.bk_act = 'silu'
         self.bk_norm = 'BN'
         self.bk_depthwise = False
         self.bk_down_pooling = True
+        self.use_pretrained = True
         self.backbone_feats = {
             "c1": [64],
             "c2": [128, [128, 64],  256],
@@ -27,6 +29,7 @@ class GElanBaseConfig(object):
             "c4": [512, [512, 256], 512],
             "c5": [512, [512, 256], 512],
         }
+        self.scale = "l"
         self.backbone_depth = 1
         ## Neck
         self.neck           = 'spp_elan'
@@ -136,6 +139,10 @@ class GElanBaseConfig(object):
 class GElanCConfig(GElanBaseConfig):
     def __init__(self) -> None:
         super().__init__()
+        self.backbone = 'gelan_c'
+        self.use_pretrained = True
+        self.scale = "l"
+     
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1

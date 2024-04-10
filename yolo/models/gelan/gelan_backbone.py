@@ -6,12 +6,20 @@ try:
 except:
     from  gelan_basic import BasicConv, RepGElanLayer, ADown
 
+# IN1K pretrained weight
+pretrained_urls = {
+    's': None,
+    'm': None,
+    'l': None,
+    'x': None,
+}
 
 # ---------------------------- Basic functions ----------------------------
-class GElanBackbone(nn.Module):
+class GElanCBackbone(nn.Module):
     def __init__(self, cfg):
-        super(GElanBackbone, self).__init__()
+        super(GElanCBackbone, self).__init__()
         # ------------------ Basic setting ------------------
+        self.model_scale = cfg.scale
         self.feat_dims = [cfg.backbone_feats["c1"][-1],  # 64
                           cfg.backbone_feats["c2"][-1],  # 128
                           cfg.backbone_feats["c3"][-1],  # 256
@@ -80,7 +88,11 @@ class GElanBackbone(nn.Module):
 
         # Initialize all layers
         self.init_weights()
-        
+
+        # Load imagenet pretrained weight
+        if cfg.use_pretrained:
+            self.load_pretrained()
+
     def init_weights(self):
         """Initialize the parameters."""
         for m in self.modules():
@@ -88,6 +100,31 @@ class GElanBackbone(nn.Module):
                 # In order to be consistent with the source code,
                 # reset the Conv2d initialization parameters
                 m.reset_parameters()
+
+    def load_pretrained(self):
+        url = pretrained_urls[self.model_scale]
+        if url is not None:
+            print('Loading backbone pretrained weight from : {}'.format(url))
+            # checkpoint state dict
+            checkpoint = torch.hub.load_state_dict_from_url(
+                url=url, map_location="cpu", check_hash=True)
+            checkpoint_state_dict = checkpoint.pop("model")
+            # model state dict
+            model_state_dict = self.state_dict()
+            # check
+            for k in list(checkpoint_state_dict.keys()):
+                if k in model_state_dict:
+                    shape_model = tuple(model_state_dict[k].shape)
+                    shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
+                    if shape_model != shape_checkpoint:
+                        checkpoint_state_dict.pop(k)
+                else:
+                    checkpoint_state_dict.pop(k)
+                    print('Unused key: ', k)
+            # load the weight
+            self.load_state_dict(checkpoint_state_dict)
+        else:
+            print('No pretrained weight for model scale: {}.'.format(self.model_scale))
 
     def forward(self, x):
         c1 = self.layer_1(x)
@@ -104,7 +141,10 @@ class GElanBackbone(nn.Module):
 ## build Yolo's Backbone
 def build_backbone(cfg): 
     # model
-    backbone = GElanBackbone(cfg)
+    if   cfg.backbone == "gelan_c":
+        backbone = GElanCBackbone(cfg)
+    else:
+        raise NotImplementedError("Unknown gelan backbone: {}".format(cfg.backbone))
         
     return backbone
 
@@ -112,12 +152,10 @@ def build_backbone(cfg):
 if __name__ == '__main__':
     import time
     from thop import profile
-    base_config = {
-        "bk_act": "silu",
-        "bk_norm": "BN"
-    }
     class BaseConfig(object):
         def __init__(self) -> None:
+            self.backbone = 'gelan_c'
+            self.use_pretrained = True
             self.bk_act = 'silu'
             self.bk_norm = 'BN'
             self.bk_depthwise = False
@@ -128,6 +166,7 @@ if __name__ == '__main__':
                 "c4": [512, [512, 256], 512],
                 "c5": [512, [512, 256], 512],
             }
+            self.scale = "l"
             self.backbone_depth = 1
 
     cfg = BaseConfig()
