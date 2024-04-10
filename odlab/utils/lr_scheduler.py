@@ -27,7 +27,7 @@ def build_wp_lr_scheduler(cfg):
     print('==============================')
     print('WarmUpScheduler: {}'.format(cfg.warmup))
     print('--base_lr: {}'.format(cfg.base_lr))
-    print('--warmup_iters: {}'.format(cfg.warmup_iters))
+    print('--warmup_iters: {} ({})'.format(cfg.warmup_iters, cfg.warmup_iters * cfg.grad_accumulate))
     print('--warmup_factor: {}'.format(cfg.warmup_factor))
 
     if cfg.warmup == 'linear':

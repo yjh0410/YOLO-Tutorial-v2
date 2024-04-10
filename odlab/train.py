@@ -146,7 +146,6 @@ def main():
     optimizer, start_epoch = build_optimizer(cfg, model_without_ddp, args.resume)
 
     # ---------------------------- Build LR Scheduler ----------------------------
-    cfg.warmup_iters = cfg.warmup_iters * cfg.grad_accumulate
     wp_lr_scheduler = build_wp_lr_scheduler(cfg)
     lr_scheduler    = build_lr_scheduler(cfg, optimizer, args.resume)
 
