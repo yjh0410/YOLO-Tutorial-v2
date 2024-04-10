@@ -179,6 +179,7 @@ class YoloTrainer(object):
         # Train one epoch
         for iter_i, (images, targets) in enumerate(metric_logger.log_every(self.train_loader, print_freq, header)):
             ni = iter_i + self.epoch * epoch_size
+
             # Warmup
             if nw > 0 and ni < nw:
                 self.lr_scheduler_warmup(ni, self.optimizer)
