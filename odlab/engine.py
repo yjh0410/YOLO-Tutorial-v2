@@ -31,6 +31,8 @@ def train_one_epoch(cfg,
     epoch_size = len(data_loader)
     print_freq = 10
 
+    optimizer.zero_grad()
+
     for iter_i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         ni = iter_i + epoch * epoch_size
         # WarmUp
