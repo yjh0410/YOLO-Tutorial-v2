@@ -43,7 +43,7 @@ class GElanPaFPN(nn.Module):
         # ---------------- Bottom up ----------------
         ## P3 -> P4
         self.dowmsample_layer_1 = ADown(cfg.fpn_feats_td["p3"][1], cfg.fpn_feats_td["p3"][1],
-                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise, use_pooling=cfg.fpn_down_pooling)
+                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
         self.bottom_up_layer_1  = RepGElanLayer(in_dim     = cfg.fpn_feats_td["p3"][1] + cfg.fpn_feats_td["p4"][1],
                                                 inter_dims = cfg.fpn_feats_bu["p4"][0],
                                                 out_dim    = cfg.fpn_feats_bu["p4"][1],
@@ -55,7 +55,7 @@ class GElanPaFPN(nn.Module):
                                                 )
         ## P4 -> P5
         self.dowmsample_layer_2 = ADown(cfg.fpn_feats_bu["p4"][1], cfg.fpn_feats_bu["p4"][1],
-                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise, use_pooling=cfg.fpn_down_pooling)
+                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
         self.bottom_up_layer_2  = RepGElanLayer(in_dim     = cfg.fpn_feats_td["p4"][1] + self.in_dims[0],
                                                 inter_dims = cfg.fpn_feats_bu["p5"][0],
                                                 out_dim    = cfg.fpn_feats_bu["p5"][1],
