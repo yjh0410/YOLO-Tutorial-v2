@@ -89,8 +89,8 @@ class YolofBaseConfig(object):
         ## input size
         self.train_min_size = [800]   # short edge of image
         self.train_max_size = 1333
-        self.test_min_size  = [800]
-        self.test_max_size  = 1333
+        self.test_min_size  = [320]
+        self.test_max_size  = 320
         ## Pixel mean & std
         self.pixel_mean = [0.485, 0.456, 0.406]
         self.pixel_std  = [0.229, 0.224, 0.225]
