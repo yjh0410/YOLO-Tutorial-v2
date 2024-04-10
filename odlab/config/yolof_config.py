@@ -83,6 +83,7 @@ class YolofBaseConfig(object):
         # --------- Train epoch ---------
         self.max_epoch = 12        # 1x
         self.lr_epoch  = [8, 11]   # 1x
+        self.eval_epoch = 2
 
         # --------- Data process ---------
         ## input size

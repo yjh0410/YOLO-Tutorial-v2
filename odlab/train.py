@@ -189,7 +189,7 @@ def main():
         if distributed_utils.is_main_process():
             model_eval = model_without_ddp
             to_save = False
-            if (epoch % args.eval_epoch) == 0 or (epoch == cfg.max_epoch - 1):
+            if (epoch % cfg.eval_epoch) == 0 or (epoch == cfg.max_epoch - 1):
                 if evaluator is None:
                     to_save = True
                 else:
