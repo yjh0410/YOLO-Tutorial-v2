@@ -26,7 +26,7 @@ class YolofBaseConfig(object):
         self.neck_dilations = [2, 4, 6, 8]
         self.neck_expand_ratio = 0.25
         self.neck_act = 'relu'
-        self.neck_norm = 'GN'
+        self.neck_norm = 'BN'
 
         # --------- Head ---------
         self.head         = 'yolof_head'
@@ -34,7 +34,7 @@ class YolofBaseConfig(object):
         self.num_cls_head = 2
         self.num_reg_head = 4
         self.head_act     = 'relu'
-        self.head_norm    = 'GN'
+        self.head_norm    = 'BN'
         self.center_clamp = 32
         self.anchor_size  = [[32, 32],
                              [64, 64],
@@ -139,7 +139,7 @@ class Yolof_R50_DC5_1x_Config(YolofBaseConfig):
         self.neck_dilations = [4, 8, 12, 16]
         self.neck_expand_ratio = 0.25
         self.neck_act = 'relu'
-        self.neck_norm = 'GN'
+        self.neck_norm = 'BN'
 
         # --------- Head ---------
         self.anchor_size  = [[16, 16],
