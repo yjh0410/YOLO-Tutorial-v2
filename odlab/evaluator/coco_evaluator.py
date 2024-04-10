@@ -70,26 +70,22 @@ class COCOAPIEvaluator():
         if len(coco_results) > 0:
             print('evaluating ......')
             cocoGt = self.dataset.coco
-            if self.testset:
-                json.dump(coco_results, open('coco_test-dev.json', 'w'))
-                cocoDt = cocoGt.loadRes('coco_test-dev.json')
-            else:
-                # suppress pycocotools prints
-                with open(os.devnull, 'w') as devnull:
-                    with contextlib.redirect_stdout(devnull):
-                        cocoDt = cocoGt.loadRes(coco_results)
-                        cocoEval = COCOeval(self.dataset.coco, cocoDt, annType[1])
-                        cocoEval.params.imgIds = ids
-                cocoEval.evaluate()
-                cocoEval.accumulate()
-                cocoEval.summarize()
-                # update mAP
-                ap50_95, ap50 = cocoEval.stats[0], cocoEval.stats[1]
-                print('ap50_95 : ', ap50_95)
-                print('ap50 : ', ap50)
-                self.map = ap50_95
-                self.ap50_95 = ap50_95
-                self.ap50 = ap50
+            # suppress pycocotools prints
+            with open(os.devnull, 'w') as devnull:
+                with contextlib.redirect_stdout(devnull):
+                    cocoDt = cocoGt.loadRes(coco_results)
+                    cocoEval = COCOeval(self.dataset.coco, cocoDt, annType[1])
+                    cocoEval.params.imgIds = ids
+            cocoEval.evaluate()
+            cocoEval.accumulate()
+            cocoEval.summarize()
+            # update mAP
+            ap50_95, ap50 = cocoEval.stats[0], cocoEval.stats[1]
+            print('ap50_95 : ', ap50_95)
+            print('ap50 : ', ap50)
+            self.map = ap50_95
+            self.ap50_95 = ap50_95
+            self.ap50 = ap50
             del coco_results
         else:
             print('No coco detection results !')
