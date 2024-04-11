@@ -1,34 +1,14 @@
 # FCOS: Fully Convolutional One-Stage Object Detector
 
-Our `FCOS-R50-1x` baseline on COCO-val:
-```Shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.391
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.579
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.422
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.236
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.428
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.501
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.326
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.559
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.625
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.450
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.685
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.758
-```
 
-- FCOS
-
-| Model        |  scale     |  FPS  | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | Weight | Logs  |
-| -------------| ---------- | ----- | ---------------------- |  ---------------  | ------ | ----- |
-| FCOS_R18_1x  |  800,1333  |       |          34.1          |        52.2       | [ckpt](https://github.com/yjh0410/ODLab/releases/download/detection_weights/fcos_r18_1x_coco.pth) | [Logs](https://github.com/yjh0410/ODLab/releases/download/detection_weights/FCOS-R18-1x.txt) |
-| FCOS_R50_1x  |  800,1333  |       |          39.1          |        57.9       | [ckpt](https://github.com/yjh0410/ODLab/releases/download/detection_weights/fcos_r50_1x_coco.pth) | [Logs](https://github.com/yjh0410/ODLab/releases/download/detection_weights/FCOS-R50-1x.txt) |
-
-- Real-time FCOS
+- COCO
 
 | Model          |  scale     |  FPS  | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | Weight | Logs  |
 | ---------------| ---------- | ----- | ---------------------- |  ---------------  | ------ | ----- |
-| FCOS_RT_R18_4x |  512,736   |       |                        |                   |        |  |
-| FCOS_RT_R50_4x |  512,736   |       |          43.9          |        60.2       |        |  |
+| FCOS_R18_1x    |  800,1333  |       |                    |               | [ckpt]() | [Logs]() |
+| FCOS_R50_1x    |  800,1333  |       |                        |                   | [ckpt]() | [Logs]() |
+| FCOS_RT_R18_4x |  512,736   |       |                        |                   | [ckpt]() | [Logs]() |
+| FCOS_RT_R50_4x |  512,736   |       |                        |                   | [ckpt]() | [Logs]() |
 
 ## Train FCOS
 ### Single GPU

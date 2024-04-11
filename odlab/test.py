@@ -73,7 +73,11 @@ def test_det(args, model, device, dataset, transform, class_colors, class_names)
         bboxes[..., 0::2] *= orig_w
         bboxes[..., 1::2] *= orig_h
 
-        # vis detection
+        # Convert PIL.Image to numpy
+        image = np.array(image).astype(np.uint8)
+        image = image[..., (2, 1, 0)].copy()
+
+        # Visualize results
         img_processed = visualize(image=image,
                                   bboxes=bboxes,
                                   scores=scores,
@@ -127,8 +131,8 @@ if __name__ == '__main__':
     model_copy.eval()
     compute_flops(
         model=model_copy,
-        min_size=cfg['test_min_size'],
-        max_size=cfg['test_max_size'],
+        min_size=cfg.test_min_size,
+        max_size=cfg.test_max_size,
         device=device)
     del model_copy
         
