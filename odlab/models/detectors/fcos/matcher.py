@@ -238,7 +238,6 @@ class SimOtaMatcher(object):
                  anchors, 
                  pred_cls, 
                  pred_box,
-                 pred_iou,
                  gt_labels,
                  gt_bboxes):
         # [M,]
@@ -275,13 +274,12 @@ class SimOtaMatcher(object):
 
         # ----------------------------------- classification cost -----------------------------------
         ## select the predicted scores corresponded to the gt_labels
-        pred_scores = torch.sqrt(pred_cls.sigmoid() * pred_iou.sigmoid())
-        pred_scores = pred_scores.permute(1, 0)  # [M, C] -> [C, M]
-        pairwise_pred_scores = pred_scores[gt_labels.long(), :].float()   # [N, M]
+        pairwise_pred_scores = pred_cls.permute(1, 0)  # [M, C] -> [C, M]
+        pairwise_pred_scores = pairwise_pred_scores[gt_labels.long(), :].float()   # [N, M]
         ## scale factor
-        scale_factor = (pair_wise_ious - pairwise_pred_scores).abs().pow(2.0)
+        scale_factor = (pair_wise_ious - pairwise_pred_scores.sigmoid()).abs().pow(2.0)
         ## cls cost
-        pair_wise_cls_loss = F.binary_cross_entropy(
+        pair_wise_cls_loss = F.binary_cross_entropy_with_logits(
             pairwise_pred_scores, pair_wise_ious,
             reduction="none") * scale_factor # [N, M]
             

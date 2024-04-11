@@ -5,10 +5,10 @@ def build_fcos_config(args):
         return Fcos_R18_1x_Config()
     elif args.model == 'fcos_r50_1x':
         return Fcos_R50_1x_Config()
-    elif args.model == 'fcos_rt_r18_1x':
-        return FcosRT_R18_1x_Config()
-    elif args.model == 'fcos_rt_r50_1x':
-        return FcosRT_R50_1x_Config()
+    elif args.model == 'fcos_rt_r18_3x':
+        return FcosRT_R18_3x_Config()
+    elif args.model == 'fcos_rt_r50_3x':
+        return FcosRT_R50_3x_Config()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
 
@@ -118,7 +118,7 @@ class Fcos_R50_1x_Config(FcosBaseConfig):
         ## Backbone
         self.backbone = "resnet50"
 
-class FcosRT_R18_1x_Config(FcosBaseConfig):
+class FcosRT_R18_3x_Config(FcosBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         ## Backbone
@@ -132,20 +132,27 @@ class FcosRT_R18_1x_Config(FcosBaseConfig):
         self.fpn_p7_feat = False
         self.fpn_p6_from_c5  = False
 
+        # --------- Head ---------
+        self.head = 'fcos_rt_head'
+        self.head_dim = 256
+        self.num_cls_head = 4
+        self.num_reg_head = 4
+        self.head_act     = 'relu'
+        self.head_norm    = 'GN'
+
         # --------- Label Assignment ---------
         self.matcher = 'simota'
-        self.matcher_hpy = {'soft_center_radius': 2.5,
-                            'topk_candidates': 13},
+        self.matcher_hpy = {'soft_center_radius': 3.0,
+                            'topk_candidates': 13}
 
         # --------- Loss weight ---------
         self.focal_loss_alpha = 0.25
         self.focal_loss_gamma = 2.0
         self.loss_cls_weight  = 1.0
         self.loss_reg_weight  = 2.0
-        self.loss_ctn_weight  = 0.5
 
         # --------- Train epoch ---------
-        self.max_epoch = 36,        # 3x
+        self.max_epoch = 36         # 3x
         self.lr_epoch  = [24, 33]   # 3x
 
         # --------- Data process ---------
@@ -166,7 +173,7 @@ class FcosRT_R18_1x_Config(FcosBaseConfig):
             {'name': 'RandomResize'},
         ]
 
-class FcosRT_R50_1x_Config(FcosBaseConfig):
+class FcosRT_R50_3x_Config(FcosBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         ## Backbone
@@ -180,20 +187,27 @@ class FcosRT_R50_1x_Config(FcosBaseConfig):
         self.fpn_p7_feat = False
         self.fpn_p6_from_c5  = False
 
+        # --------- Head ---------
+        self.head = 'fcos_rt_head'
+        self.head_dim = 256
+        self.num_cls_head = 4
+        self.num_reg_head = 4
+        self.head_act     = 'relu'
+        self.head_norm    = 'GN'
+
         # --------- Label Assignment ---------
         self.matcher = 'simota'
         self.matcher_hpy = {'soft_center_radius': 2.5,
-                            'topk_candidates': 13},
+                            'topk_candidates': 13}
 
         # --------- Loss weight ---------
         self.focal_loss_alpha = 0.25
         self.focal_loss_gamma = 2.0
         self.loss_cls_weight  = 1.0
         self.loss_reg_weight  = 2.0
-        self.loss_ctn_weight  = 0.5
 
         # --------- Train epoch ---------
-        self.max_epoch = 36,        # 3x
+        self.max_epoch = 36         # 3x
         self.lr_epoch  = [24, 33]   # 3x
 
         # --------- Data process ---------

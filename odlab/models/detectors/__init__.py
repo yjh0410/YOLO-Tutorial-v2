@@ -1,14 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
 
-from .fcos.build  import build_fcos
+from .fcos.build  import build_fcos, build_fcos_rt
 from .yolof.build import build_yolof
 
 
 def build_model(args, cfg, is_val=False):
     # ------------ build object detector ------------
+    ## RT-FCOS    
+    if   'fcos_rt' in args.model:
+        model, criterion = build_fcos_rt(cfg, is_val)
     ## FCOS    
-    if 'fcos' in args.model:
+    elif 'fcos' in args.model:
         model, criterion = build_fcos(cfg, is_val)
     ## YOLOF    
     elif 'yolof' in args.model:
