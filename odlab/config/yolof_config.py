@@ -5,11 +5,19 @@ def build_yolof_config(args):
         return Yolof_R18_C5_1x_Config()
     elif args.model == 'yolof_r50_c5_1x':
         return Yolof_R50_C5_1x_Config()
+    elif args.model == 'yolof_r101_c5_1x':
+        return Yolof_R101_C5_1x_Config()
+    
     elif args.model == 'yolof_r50_dc5_1x':
         return Yolof_R50_DC5_1x_Config()
+    elif args.model == 'yolof_r101_dc5_1x':
+        return Yolof_R101_DC5_1x_Config()
+    
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
 
+
+# --------------- Base configuration ---------------
 class YolofBaseConfig(object):
     def __init__(self):
         # --------- Backbone ---------
@@ -109,6 +117,7 @@ class YolofBaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
+# --------------- C5 level & 1x scheduler ---------------
 class Yolof_R18_C5_1x_Config(YolofBaseConfig):
     def __init__(self) -> None:
         super().__init__()
@@ -116,13 +125,21 @@ class Yolof_R18_C5_1x_Config(YolofBaseConfig):
         # --------- Backbone ---------
         self.backbone = "resnet18"
 
-class Yolof_R50_C5_1x_Config(YolofBaseConfig):
+class Yolof_R50_C5_1x_Config(Yolof_R18_C5_1x_Config):
     def __init__(self) -> None:
         super().__init__()
         ## Backbone
         # --------- Backbone ---------
         self.backbone = "resnet50"
 
+class Yolof_R101_C5_1x_Config(Yolof_R18_C5_1x_Config):
+    def __init__(self) -> None:
+        super().__init__()
+        ## Backbone
+        # --------- Backbone ---------
+        self.backbone = "resnet101"
+
+# --------------- DC5 level & 1x scheduler ---------------
 class Yolof_R50_DC5_1x_Config(YolofBaseConfig):
     def __init__(self) -> None:
         super().__init__()
@@ -155,3 +172,9 @@ class Yolof_R50_DC5_1x_Config(YolofBaseConfig):
                             'iou_thresh': 0.1,
                             'ignore_thresh': 0.7,
                               }
+
+class Yolof_R101_DC5_1x_Config(Yolof_R50_DC5_1x_Config):
+    def __init__(self) -> None:
+        super().__init__()
+        # --------- Backbone ---------
+        self.backbone = "resnet101"
