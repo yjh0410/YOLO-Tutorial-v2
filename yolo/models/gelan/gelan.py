@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .gelan_backbone import GElanBackbone
+from .gelan_backbone import build_backbone
 from .gelan_neck     import SPPElan
 from .gelan_pafpn    import GElanPaFPN
 from .gelan_head     import GElanDetHead
@@ -33,7 +33,7 @@ class GElan(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = GElanBackbone(cfg)
+        self.backbone = build_backbone(cfg)
         self.neck     = SPPElan(cfg, self.backbone.feat_dims[-1])
         self.backbone.feat_dims[-1] = self.neck.out_dim
         ## PaFPN

@@ -437,10 +437,11 @@ class RTDetrTrainer(object):
         metric_logger = MetricLogger(delimiter="  ")
         metric_logger.add_meter('lr', SmoothedValue(window_size=1, fmt='{value:.6f}'))
         metric_logger.add_meter('size', SmoothedValue(window_size=1, fmt='{value:d}'))
-        metric_logger.add_meter('grad_norm', SmoothedValue(window_size=1, fmt='{value:.1f}'))
+        metric_logger.add_meter('gnorm', SmoothedValue(window_size=1, fmt='{value:.1f}'))
         header = 'Epoch: [{} / {}]'.format(self.epoch, self.cfg.max_epoch)
         epoch_size = len(self.train_loader)
         print_freq = 10
+        gnorm = 0.0
 
         # basic parameters
         epoch_size = len(self.train_loader)
@@ -451,13 +452,17 @@ class RTDetrTrainer(object):
         # Train one epoch
         for iter_i, (images, targets) in enumerate(metric_logger.log_every(self.train_loader, print_freq, header)):
             ni = iter_i + self.epoch * epoch_size
+
             # WarmUp
-            if ni < nw and lr_warmup_stage:
-                self.wp_lr_scheduler(ni, self.optimizer)
-            elif ni == nw and lr_warmup_stage:
-                print('Warmup stage is over.')
-                lr_warmup_stage = False
-                self.wp_lr_scheduler.set_lr(self.optimizer, self.cfg.base_lr)
+            if lr_warmup_stage:
+                if ni % self.grad_accumulate == 0:
+                    ni = ni // self.grad_accumulate
+                    if ni < nw:
+                        self.wp_lr_scheduler(ni, self.optimizer)
+                    elif ni == nw and lr_warmup_stage:
+                        print('Warmup stage is over.')
+                        lr_warmup_stage = False
+                        self.wp_lr_scheduler.set_lr(self.optimizer, self.cfg.base_lr)
                                 
             # To device
             images = images.to(self.device, non_blocking=True).float()
@@ -483,6 +488,7 @@ class RTDetrTrainer(object):
             # Inference
             with torch.cuda.amp.autocast(enabled=self.args.fp16):
                 outputs = model(images, targets)    
+                # Compute loss
                 loss_dict = self.criterion(outputs, targets)
                 losses = sum(loss_dict.values())
                 losses /= self.grad_accumulate
@@ -495,7 +501,7 @@ class RTDetrTrainer(object):
             if (iter_i + 1) % self.grad_accumulate == 0:
                 if self.cfg.clip_max_norm > 0:
                     self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
+                    gnorm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=self.cfg.clip_max_norm)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
@@ -508,6 +514,7 @@ class RTDetrTrainer(object):
             metric_logger.update(**loss_dict_reduced)
             metric_logger.update(lr=self.optimizer.param_groups[2]["lr"])
             metric_logger.update(size=img_size)
+            metric_logger.update(gnorm=gnorm)
 
             if self.args.debug:
                 print("For debug mode, we only train 1 iteration")
