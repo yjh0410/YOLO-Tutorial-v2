@@ -6,9 +6,9 @@
 | Model          |  scale     |  FPS  | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | Weight | Logs  |
 | ---------------| ---------- | ----- | ---------------------- |  ---------------  | ------ | ----- |
 | FCOS_R18_1x    |  800,1333  |       |                    |               | [ckpt]() | [Logs]() |
-| FCOS_R50_1x    |  800,1333  |       |                        |                   | [ckpt]() | [Logs]() |
-| FCOS_RT_R18_4x |  512,736   |       |                        |                   | [ckpt]() | [Logs]() |
-| FCOS_RT_R50_4x |  512,736   |       |                        |                   | [ckpt]() | [Logs]() |
+| FCOS_R50_1x    |  800,1333  |       |                    |                   | [ckpt]() | [Logs]() |
+| FCOS_RT_R18_3x |  512,736   |       |                    |                   | [ckpt]() | [Logs]() |
+| FCOS_RT_R50_3x |  512,736   |       |                    |                   | [ckpt]() | [Logs]() |
 
 ## Train FCOS
 ### Single GPU
