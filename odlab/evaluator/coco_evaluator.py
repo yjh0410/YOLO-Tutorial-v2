@@ -39,7 +39,9 @@ class COCOAPIEvaluator():
             # inference
             image = image.unsqueeze(0).to(self.device)
             outputs = model(image)
-            bboxes, scores, cls_inds = outputs
+            scores = outputs['scores']
+            labels = outputs['labels']
+            bboxes = outputs['bboxes']
 
             # rescale bbox
             orig_h, orig_w = target["orig_size"].tolist()
@@ -52,7 +54,7 @@ class COCOAPIEvaluator():
                 y1 = float(box[1])
                 x2 = float(box[2])
                 y2 = float(box[3])
-                label = self.dataset.coco_indexs[int(cls_inds[i])]
+                label = self.dataset.coco_indexs[int(labels[i])]
                 
                 # COCO json format
                 bbox = [x1, y1, x2 - x1, y2 - y1]

@@ -117,6 +117,10 @@ class FCOS(nn.Module):
             bboxes[..., 1::2] /= src.shape[-2]
             bboxes = bboxes.clip(0., 1.)
 
-            return bboxes, scores, labels
+            outputs = {
+                'scores': scores,
+                'labels': labels,
+                'bboxes': bboxes
+            }
 
         return outputs 
