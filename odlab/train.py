@@ -164,7 +164,7 @@ def main():
 
     # ----------------------- Training -----------------------
     print("Start training")
-    best_map = -1.
+    best_map = cfg.best_map
     for epoch in range(start_epoch, cfg.max_epoch):
         if args.distributed:
             train_loader.batch_sampler.sampler.set_epoch(epoch)

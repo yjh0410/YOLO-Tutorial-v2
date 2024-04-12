@@ -34,6 +34,7 @@ def build_optimizer(cfg, model, resume=None):
             )
                                 
     start_epoch = 0
+    cfg.best_map = -1.
     if resume is not None and resume.lower() != "none":
         print('Load optimzier from the checkpoint: ', resume)
         checkpoint = torch.load(resume)
@@ -41,5 +42,10 @@ def build_optimizer(cfg, model, resume=None):
         checkpoint_state_dict = checkpoint.pop("optimizer")
         optimizer.load_state_dict(checkpoint_state_dict)
         start_epoch = checkpoint.pop("epoch") + 1
+        if "mAP" in checkpoint:
+            print('--Load best metric from the checkpoint: ', resume)
+            best_map = checkpoint["mAP"]
+            cfg.best_map = best_map
+        del checkpoint, checkpoint_state_dict
                                                         
     return optimizer, start_epoch
