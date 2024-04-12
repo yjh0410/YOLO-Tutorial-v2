@@ -21,7 +21,7 @@ def build_model(args, cfg, is_val=False):
     
     if is_val:
         # ------------ Keep training from the given weight ------------
-        if args.resume is not None:
+        if args.resume is not None and args.resume.lower() != "none":
             print('Load model from the checkpoint: ', args.resume)
             checkpoint = torch.load(args.resume, map_location='cpu')
             # checkpoint state dict

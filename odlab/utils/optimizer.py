@@ -34,7 +34,7 @@ def build_optimizer(cfg, model, resume=None):
             )
                                 
     start_epoch = 0
-    if resume is not None:
+    if resume is not None and resume.lower() != "none":
         print('Load optimzier from the checkpoint: ', resume)
         checkpoint = torch.load(resume)
         # checkpoint state dict
