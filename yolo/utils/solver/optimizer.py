@@ -44,6 +44,12 @@ def build_yolo_optimizer(cfg, model, resume=None):
             optimizer.load_state_dict(checkpoint_state_dict)
             start_epoch = checkpoint.pop("epoch") + 1
             del checkpoint, checkpoint_state_dict
+            if "mAP" in checkpoint:
+                print('--Load best metric from the checkpoint: ', resume)
+                best_map = checkpoint["mAP"]
+                cfg.best_map = best_map
+            else:
+                cfg.best_map = -1.
         except:
             print("No optimzier in the given checkpoint.")
                                                         

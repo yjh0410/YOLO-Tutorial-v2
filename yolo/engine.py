@@ -72,6 +72,8 @@ class YoloTrainer(object):
         self.lr_scheduler_warmup = LinearWarmUpLrScheduler(warmup_iters, cfg.base_lr, cfg.warmup_bias_lr)
         self.lr_scheduler = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
+        self.best_map = cfg.best_map
+
     def train(self, model):
         for epoch in range(self.start_epoch, self.cfg.max_epoch):
             if self.args.distributed:
