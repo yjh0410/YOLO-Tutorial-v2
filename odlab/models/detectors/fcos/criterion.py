@@ -252,7 +252,7 @@ class SetCriterion(nn.Module):
         box_preds_pos = box_preds.view(-1, 4)[foreground_idxs]
         box_targets_pos = box_targets[foreground_idxs]
         box_weight = assign_metrics[foreground_idxs]
-        loss_bboxes = self.loss_bboxes_xyxy(box_preds_pos, box_targets_pos, num_fgs)
+        loss_bboxes = self.loss_bboxes_xyxy(box_preds_pos, box_targets_pos, num_fgs, box_weight)
 
         loss_dict = dict(
                 loss_cls = loss_labels,
