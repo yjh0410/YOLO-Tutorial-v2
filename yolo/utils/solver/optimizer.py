@@ -35,6 +35,7 @@ def build_yolo_optimizer(cfg, model, resume=None):
     optimizer.add_param_group({"params": param_dicts[2], "weight_decay": cfg.weight_decay})
 
     start_epoch = 0
+    cfg.best_map = -1.
     if resume and resume != 'None':
         checkpoint = torch.load(resume)
         # checkpoint state dict
@@ -47,8 +48,6 @@ def build_yolo_optimizer(cfg, model, resume=None):
                 print('--Load best metric from the checkpoint: ', resume)
                 best_map = checkpoint["mAP"]
                 cfg.best_map = best_map
-            else:
-                cfg.best_map = -1.
             del checkpoint, checkpoint_state_dict
         except:
             print("No optimzier in the given checkpoint.")
