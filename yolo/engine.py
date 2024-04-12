@@ -73,6 +73,7 @@ class YoloTrainer(object):
         self.lr_scheduler = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
         self.best_map = cfg.best_map
+        print("Best mAP metric: {}".format(self.best_map))
 
     def train(self, model):
         for epoch in range(self.start_epoch, self.cfg.max_epoch):
