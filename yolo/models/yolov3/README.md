@@ -10,7 +10,7 @@
 
 |   Model  | Batch | Scale | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight |  Logs  |
 |----------|-------|-------|------------------------|-------------------|-------------------|--------------------|--------|--------|
-| YOLOv3-S | 1xb16 |  640  |                    |               |   25.2            |   7.3             |  |  |
+| YOLOv3-S | 1xb16 |  640  |         31.3           |        49.2       |   25.2            |   7.3              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/yolov3_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/YOLOv3-S-COCO.txt) |
 
 - For training, we train redesigned YOLOv3 with 300 epochs on COCO. We also use the gradient accumulation.
 - For data augmentation, we use the RandomAffine, RandomHSV, Mosaic and Mixup augmentation.
