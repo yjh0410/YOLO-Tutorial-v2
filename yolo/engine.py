@@ -72,7 +72,7 @@ class YoloTrainer(object):
         self.lr_scheduler_warmup = LinearWarmUpLrScheduler(warmup_iters, cfg.base_lr, cfg.warmup_bias_lr)
         self.lr_scheduler = build_lr_scheduler(cfg, self.optimizer, args.resume)
 
-        self.best_map = cfg.best_map
+        self.best_map = cfg.best_map / 100.0
         print("Best mAP metric: {}".format(self.best_map))
 
     def train(self, model):
@@ -147,7 +147,7 @@ class YoloTrainer(object):
                 checkpoint_path = os.path.join(self.path_to_save, weight_name)
                 state_dicts = {
                     'model': model_eval.state_dict(),
-                    'mAP': round(cur_map*100, 1),
+                    'mAP': round(cur_map*100, 3),
                     'optimizer':  self.optimizer.state_dict(),
                     'lr_scheduler': self.lr_scheduler.state_dict(),
                     'epoch': self.epoch,

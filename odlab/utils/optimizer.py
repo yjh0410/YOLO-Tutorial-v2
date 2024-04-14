@@ -45,7 +45,7 @@ def build_optimizer(cfg, model, resume=None):
         if "mAP" in checkpoint:
             print('--Load best metric from the checkpoint: ', resume)
             best_map = checkpoint["mAP"]
-            cfg.best_map = best_map
+            cfg.best_map = best_map / 100.0
         del checkpoint, checkpoint_state_dict
                                                         
     return optimizer, start_epoch

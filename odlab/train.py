@@ -204,7 +204,7 @@ def main():
                     torch.save({'model':        model_eval.state_dict(),
                                 'optimizer':    optimizer.state_dict(),
                                 'lr_scheduler': lr_scheduler.state_dict(),
-                                'mAP':          round(best_map*100, 1),
+                                'mAP':          round(best_map*100, 3),
                                 'epoch':        epoch,
                                 'args':         args}, 
                                 os.path.join(path_to_save, '{}_best.pth'.format(args.model)))
