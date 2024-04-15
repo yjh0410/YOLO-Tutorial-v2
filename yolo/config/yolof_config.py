@@ -102,8 +102,8 @@ class YolofBaseConfig(object):
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
-        self.pixel_mean = [123.675, 116.28, 103.53]   # RGB format
-        self.pixel_std  = [58.395, 57.12, 57.375]     # RGB format
+        self.pixel_mean = [0., 0., 0.]
+        self.pixel_std  = [255., 255., 255.]
         ## Transforms
         self.train_img_size = 640
         self.test_img_size  = 640
