@@ -44,7 +44,7 @@ class Bottleneck(nn.Module):
 
         return x + self.branch(x) if self.shortcut else h
 
-# CSP-style Dilated Encoder
+# ELAN-style Dilated Encoder
 class YolofEncoder(nn.Module):
     def __init__(self, cfg, in_dim, out_dim):
         super(YolofEncoder, self).__init__()
@@ -54,21 +54,22 @@ class YolofEncoder(nn.Module):
         self.expand_ratio = cfg.neck_expand_ratio
         self.dilations    = cfg.neck_dilations
         # ------------------ Network parameters -------------------
-        ## proj layer
-        self.projector = nn.Sequential(
-            BasicConv(in_dim, out_dim, kernel_size=1, act_type=None, norm_type=cfg.neck_norm),
-            BasicConv(out_dim, out_dim, kernel_size=3, padding=1, act_type=None, norm_type=cfg.neck_norm)
-        )
-        ## encoder layers
-        self.encoders = nn.Sequential(*[Bottleneck(in_dim      = out_dim,
-                                                   out_dim     = out_dim,
-                                                   dilation    = d,
-                                                   expand_ratio = self.expand_ratio,
-                                                   shortcut     = True,
-                                                   act_type     = cfg.neck_act,
-                                                   norm_type    = cfg.neck_norm,
-                                                   depthwise    = cfg.neck_depthwise,
-                                                   ) for d in self.dilations])
+        ## input layer
+        self.input_proj = BasicConv(in_dim, out_dim, kernel_size=1, act_type=cfg.neck_act, norm_type=cfg.neck_norm)
+        ## dilated layers
+        self.module = nn.ModuleList([Bottleneck(in_dim       = out_dim,
+                                                out_dim      = out_dim,
+                                                dilation     = dilation,
+                                                expand_ratio = self.expand_ratio,
+                                                shortcut     = True,
+                                                act_type     = cfg.neck_act,
+                                                norm_type    = cfg.neck_norm,
+                                                depthwise    = cfg.neck_depthwise,
+                                                ) for dilation in self.dilations])
+        ## output layer
+        self.output_proj = BasicConv(out_dim * (len(self.dilations) + 1), out_dim,
+                                     kernel_size=1, padding=0, stride=1,
+                                     act_type=cfg.neck_act, norm_type=cfg.neck_norm)
 
         # Initialize all layers
         self.init_weights()
@@ -82,7 +83,13 @@ class YolofEncoder(nn.Module):
                 m.reset_parameters()
 
     def forward(self, x):
-        x = self.projector(x)
-        x = self.encoders(x)
+        x = self.input_proj(x)
 
-        return x
+        out = [x]
+        for m in self.module:
+            x = m(x)
+            out.append(x)
+
+        out = self.output_proj(torch.cat(out, dim=1))
+
+        return out
