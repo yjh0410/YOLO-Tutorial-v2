@@ -44,7 +44,7 @@ class Bottleneck(nn.Module):
 
         return x + self.branch(x) if self.shortcut else h
 
-# Dilated Encoder
+# CSP-style Dilated Encoder
 class YolofEncoder(nn.Module):
     def __init__(self, cfg, in_dim, out_dim):
         super(YolofEncoder, self).__init__()

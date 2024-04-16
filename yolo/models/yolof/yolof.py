@@ -30,7 +30,7 @@ class Yolof(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         self.backbone  = YolofBackbone(cfg)
-        self.upsampler = YolofUpsampler(cfg, self.backbone.feat_dims[-1], cfg.head_dim)
+        self.upsampler = YolofUpsampler(cfg, self.backbone.feat_dims, cfg.head_dim)
         self.encoder   = YolofEncoder(cfg, cfg.head_dim, cfg.head_dim)
         self.decoder   = YolofDecoder(cfg, self.encoder.out_dim)
 
@@ -117,7 +117,7 @@ class Yolof(nn.Module):
         pyramid_feats = self.backbone(x)
 
         # ---------------- Encoder ----------------
-        x = self.upsampler(pyramid_feats[-1])
+        x = self.upsampler(pyramid_feats)
         x = self.encoder(x)
 
         # ---------------- Decoder ----------------
