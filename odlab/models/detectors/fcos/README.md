@@ -7,7 +7,7 @@
 | ---------------| ---------- | -------------------------- | ---------------------- |  ---------------  | ------ | ----- |
 | FCOS_R18_1x    |  800,1333  |            24              |          34.0          |        52.2       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_r18_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-R18-1x.txt) |
 | FCOS_R50_1x    |  800,1333  |             9              |          39.0          |        58.3       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_r50_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-R50-1x.txt) |
-| FCOS_RT_R18_3x |  512,736   |                          |                    |               | [ckpt]() | [Logs]() |
+| FCOS_RT_R18_3x |  512,736   |            56              |          35.8          |        53.3       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_rt_r18_3x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-RT-R18-3x.txt) |
 | FCOS_RT_R50_3x |  512,736   |                          |                    |               | [ckpt]() | [Logs]() |
 
 ## Train FCOS

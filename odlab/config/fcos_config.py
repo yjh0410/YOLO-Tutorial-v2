@@ -143,6 +143,15 @@ class FcosRT_R18_3x_Config(FcosBaseConfig):
         self.head_act     = 'relu'
         self.head_norm    = 'GN'
 
+        # --------- Post-process ---------
+        self.train_topk = 1000
+        self.train_conf_thresh = 0.05
+        self.train_nms_thresh  = 0.6
+        self.test_topk = 100
+        self.test_conf_thresh = 0.4
+        self.test_nms_thresh  = 0.45
+        self.nms_class_agnostic = True
+
         # --------- Label Assignment ---------
         self.matcher = 'simota'
         self.matcher_hpy = {'soft_center_radius': 3.0,
