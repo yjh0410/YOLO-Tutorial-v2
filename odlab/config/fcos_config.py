@@ -5,10 +5,17 @@ def build_fcos_config(args):
         return Fcos_R18_1x_Config()
     elif args.model == 'fcos_r50_1x':
         return Fcos_R50_1x_Config()
+    
+    elif args.model == 'fcos_r18_3x':
+        return Fcos_R18_3x_Config()
+    elif args.model == 'fcos_r50_3x':
+        return Fcos_R50_3x_Config()
+    
     elif args.model == 'fcos_rt_r18_3x':
         return FcosRT_R18_3x_Config()
     elif args.model == 'fcos_rt_r50_3x':
         return FcosRT_R50_3x_Config()
+    
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
 
@@ -118,6 +125,28 @@ class Fcos_R18_1x_Config(FcosBaseConfig):
 class Fcos_R50_1x_Config(Fcos_R18_1x_Config):
     def __init__(self) -> None:
         super().__init__()
+        self.backbone = "resnet50"
+
+# -------------- 3x scheduler --------------
+class Fcos_R18_3x_Config(Fcos_R18_1x_Config):
+    def __init__(self) -> None:
+        super().__init__()
+        # --------- Train epoch ---------
+        self.max_epoch = 36         # 3x
+        self.lr_epoch  = [24, 33]   # 3x
+        self.eval_epoch = 2
+
+        # --------- Data process ---------
+        ## input size
+        self.train_min_size = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]   # short edge of image
+        self.train_max_size = 1333
+        self.test_min_size  = [800]
+        self.test_max_size  = 1333
+
+class Fcos_R50_3x_Config(Fcos_R18_3x_Config):
+    def __init__(self) -> None:
+        super().__init__()
+        ## Backbone
         self.backbone = "resnet50"
 
 # --------------- RT-FCOS & 3x scheduler ---------------
