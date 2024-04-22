@@ -127,7 +127,7 @@ class Fcos_R50_1x_Config(Fcos_R18_1x_Config):
         super().__init__()
         self.backbone = "resnet50"
 
-# -------------- 3x scheduler --------------
+# --------------- 3x scheduler ---------------
 class Fcos_R18_3x_Config(Fcos_R18_1x_Config):
     def __init__(self) -> None:
         super().__init__()
