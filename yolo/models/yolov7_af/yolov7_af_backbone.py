@@ -28,10 +28,10 @@ class Yolov7TBackbone(nn.Module):
 
         # ---------------- Model parameters ----------------
         self.layer_1 = self.make_stem(3, self.feat_dims[0])
-        self.layer_2 = self.make_block(self.feat_dims[0], self.feat_dims[1], expansion=0.5)
-        self.layer_3 = self.make_block(self.feat_dims[1], self.feat_dims[2], expansion=0.5)
-        self.layer_4 = self.make_block(self.feat_dims[2], self.feat_dims[3], expansion=0.5)
-        self.layer_5 = self.make_block(self.feat_dims[3], self.feat_dims[4], expansion=0.5)
+        self.layer_2 = self.make_block(self.feat_dims[0], self.feat_dims[1], expansion=0.5, downsample="conv")
+        self.layer_3 = self.make_block(self.feat_dims[1], self.feat_dims[2], expansion=0.5, downsample="maxpool")
+        self.layer_4 = self.make_block(self.feat_dims[2], self.feat_dims[3], expansion=0.5, downsample="maxpool")
+        self.layer_5 = self.make_block(self.feat_dims[3], self.feat_dims[4], expansion=0.5, downsample="maxpool")
 
         # Initialize all layers
         # Initialize all layers
@@ -80,13 +80,22 @@ class Yolov7TBackbone(nn.Module):
         
         return stem
 
-    def make_block(self, in_dim, out_dim, expansion=0.5):
-        block = nn.Sequential(
-            nn.MaxPool2d((2, 2), stride=2),             
-            ELANLayer(in_dim, out_dim,
-                    expansion=expansion, num_blocks=self.elan_depth,
-                    act_type=self.bk_act, norm_type=self.bk_norm, depthwise=self.bk_depthwise),
-                    )
+    def make_block(self, in_dim, out_dim, expansion=0.5, downsample="maxpool"):
+        if downsample == "maxpool":
+            block = nn.Sequential(
+                nn.MaxPool2d((2, 2), stride=2),             
+                ELANLayer(in_dim, out_dim, expansion=expansion, num_blocks=self.elan_depth,
+                          act_type=self.bk_act, norm_type=self.bk_norm, depthwise=self.bk_depthwise),
+                          )
+        elif downsample == "conv":
+            block = nn.Sequential(
+                BasicConv(in_dim, out_dim, kernel_size=3, padding=1, stride=2,
+                          act_type=self.bk_act, norm_type=self.bk_norm, depthwise=self.bk_depthwise),             
+                ELANLayer(out_dim, out_dim, expansion=expansion, num_blocks=self.elan_depth,
+                          act_type=self.bk_act, norm_type=self.bk_norm, depthwise=self.bk_depthwise),
+                          )
+        else:
+            raise NotImplementedError("Unknown downsample type: {}".format(downsample))
 
         return block
     
@@ -212,7 +221,7 @@ if __name__ == '__main__':
             self.bk_act = 'silu'
             self.bk_norm = 'BN'
             self.bk_depthwise = False
-            self.use_pretrained = True
+            self.use_pretrained = False
             self.width = 0.5
             self.scale = "t"
 

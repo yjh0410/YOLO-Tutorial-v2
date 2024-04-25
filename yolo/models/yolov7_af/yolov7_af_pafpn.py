@@ -15,7 +15,6 @@ class Yolov7PaFPN(nn.Module):
         super(Yolov7PaFPN, self).__init__()
         # ----------------------------- Basic parameters -----------------------------
         self.in_dims = in_dims
-        self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(1024*cfg.width)]
         c3, c4, c5 = in_dims
 
         # ----------------------------- Yolov7's Top-down FPN -----------------------------
@@ -85,6 +84,14 @@ class Yolov7PaFPN(nn.Module):
                                      kernel_size=3, padding=1, stride=1,
                                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
 
+        # ---------------------- Yolox's output projection ----------------------
+        self.out_layers = nn.ModuleList([
+            BasicConv(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1,
+                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+                      for in_dim in [round(256*cfg.width), round(512*cfg.width), round(1024*cfg.width)]
+                      ])
+        self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
+
         # Initialize all layers
         self.init_weights()
 
@@ -125,7 +132,12 @@ class Yolov7PaFPN(nn.Module):
 
         out_feats = [self.head_conv_1(p3), self.head_conv_2(p4), self.head_conv_3(p5)]
             
-        return out_feats
+        # output proj layers
+        out_feats_proj = []
+        for feat, layer in zip(out_feats, self.out_layers):
+            out_feats_proj.append(layer(feat))
+            
+        return out_feats_proj
 
 
 if __name__=='__main__':

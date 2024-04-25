@@ -4,7 +4,7 @@ import torch.nn as nn
 
 # --------------- Model components ---------------
 from .yolov7_af_backbone import Yolov7TBackbone, Yolov7LBackbone
-from .yolov7_af_neck     import SPPF
+from .yolov7_af_neck     import SPPFBlockCSP
 from .yolov7_af_pafpn    import Yolov7PaFPN
 from .yolov7_af_head     import Yolov7DetHead
 from .yolov7_af_pred     import Yolov7AFDetPredLayer
@@ -35,7 +35,7 @@ class Yolov7AF(nn.Module):
         self.backbone = Yolov7TBackbone(cfg) if cfg.scale == "t" else Yolov7LBackbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
-        self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1]//2)
+        self.neck     = SPPFBlockCSP(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1]//2)
         self.pyramid_feat_dims[-1] = self.neck.out_dim
         ## Neck: FPN
         self.fpn      = Yolov7PaFPN(cfg, self.pyramid_feat_dims)

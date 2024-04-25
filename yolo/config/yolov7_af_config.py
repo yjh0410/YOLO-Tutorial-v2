@@ -124,6 +124,7 @@ class Yolov7AFTConfig(Yolov7AFBaseConfig):
         # ---------------- Model config ----------------
         self.width = 0.50
         self.scale = "t"
+        self.use_pretrained = True
         self.fpn_expansions = [0.5, 0.5]
         self.fpn_block_bw = 2
         self.fpn_block_dw = 1
