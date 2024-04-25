@@ -10,7 +10,7 @@
 
 |    Model    | Batch | Scale | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight |  Logs  |
 |-------------|-------|-------|------------------------|-------------------|-------------------|--------------------|--------|--------|
-| YOLOv5-AF-S | 1xb16 |  640  |                    |               |   26.9            |   8.9             |  |  |
+| YOLOv5-AF-S | 1xb16 |  640  |       39.6             |       58.7        |   26.9            |   8.9              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_af_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-AF-S-COCO.txt) |
 
 - For training, we train redesigned YOLOv5-AF with 300 epochs on COCO. We also use the gradient accumulation.
 - For data augmentation, we use the RandomAffine, RandomHSV, Mosaic and YOLOX's Mixup augmentation.
