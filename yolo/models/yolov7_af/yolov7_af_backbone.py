@@ -8,7 +8,7 @@ except:
 
 # IN1K pretrained weight
 pretrained_urls = {
-    't': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elannet_t_in1k_62.0.pth",
+    't': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elannet_t_in1k_63.2.pth",
     'l': None,
     'x': None,
 }
