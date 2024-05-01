@@ -64,7 +64,7 @@ class BasicConv(nn.Module):
             return self.act(self.norm(self.conv(x)))
         else:
             # Depthwise conv
-            x = self.act(self.norm1(self.conv1(x)))
+            x = self.norm1(self.conv1(x))
             # Pointwise conv
             x = self.act(self.norm2(self.conv2(x)))
             return x
