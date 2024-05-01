@@ -90,18 +90,12 @@ class MDown(nn.Module):
                       kernel_size=3, padding=1, stride=2,
                       act_type=act_type, norm_type=norm_type, depthwise=depthwise)
         )
-        if in_dim == out_dim:
-            self.output_proj = nn.Identity()
-        else:
-            self.output_proj = BasicConv(inter_dim * 2, out_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
 
     def forward(self, x):
         x1 = self.downsample_1(x)
         x2 = self.downsample_2(x)
 
-        out = self.output_proj(torch.cat([x1, x2], dim=1))
-
-        return out
+        return torch.cat([x1, x2], dim=1)
 
 class ELANLayer(nn.Module):
     def __init__(self,
