@@ -7,7 +7,6 @@ from .yolov2.build    import build_yolov2
 from .yolov3.build    import build_yolov3
 from .yolov5.build    import build_yolov5
 from .yolov5_af.build import build_yolov5af
-from .yolov7_af.build import build_yolov7af
 from .yolov8.build    import build_yolov8
 from .gelan.build     import build_gelan
 from .rtdetr.build    import build_rtdetr
@@ -31,9 +30,6 @@ def build_model(args, cfg, is_val=False):
     ## Modified YOLOv5
     elif 'yolov5' in args.model:
         model, criterion = build_yolov5(cfg, is_val)
-    ## Anchor-free YOLOv7
-    elif 'yolov7_af' in args.model:
-        model, criterion = build_yolov7af(cfg, is_val)
     ## YOLOv8
     elif 'yolov8' in args.model:
         model, criterion = build_yolov8(cfg, is_val)
