@@ -84,7 +84,7 @@ class BasicConv(nn.Module):
             # Depthwise conv
             x = self.norm1(self.conv1(x))
             # Pointwise conv
-            x = self.norm2(self.conv2(x))
+            x = self.act(self.norm2(self.conv2(x)))
             return x
 
 class Bottleneck(nn.Module):
