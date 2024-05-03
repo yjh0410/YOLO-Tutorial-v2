@@ -19,10 +19,9 @@ class GElanBaseConfig(object):
         self.num_levels = 3
         ## Backbone
         self.backbone = 'gelan'
-        self.bk_act = 'silu'
-        self.bk_norm = 'BN'
+        self.bk_act   = 'silu'
+        self.bk_norm  = 'BN'
         self.bk_depthwise = False
-        self.bk_down_pooling = True
         self.use_pretrained = True
         self.backbone_feats = {
             "c1": [64],
@@ -45,7 +44,6 @@ class GElanBaseConfig(object):
         self.fpn_act  = 'silu'
         self.fpn_norm = 'BN'
         self.fpn_depthwise = False
-        self.fpn_down_pooling = True
         self.fpn_depth    = 1
         self.fpn_feats_td = {
             "p4": [[512, 256], 512],
@@ -155,15 +153,8 @@ class GElanSConfig(GElanBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
-        self.reg_max  = 16
-        self.out_stride = [8, 16, 32]
-        self.max_stride = 32
-        self.num_levels = 3
         ## Backbone
         self.backbone = 'gelan'
-        self.bk_act   = 'silu'
-        self.bk_norm  = 'BN'
-        self.bk_depthwise = False
         self.use_pretrained = True
         self.backbone_feats = {
             "c1": [32],
@@ -172,20 +163,12 @@ class GElanSConfig(GElanBaseConfig):
             "c4": [128, [128, 64],  256],
             "c5": [256, [256, 128], 256],
         }
-        self.scale = "l"
+        self.scale = "s"
         self.backbone_depth = 3
         ## Neck
-        self.neck           = 'spp_elan'
-        self.neck_act       = 'silu'
-        self.neck_norm      = 'BN'
-        self.spp_pooling_size  = 5
-        self.spp_inter_dim     = 128
-        self.spp_out_dim       = 256
+        self.spp_inter_dim = 128
+        self.spp_out_dim   = 256
         ## FPN
-        self.fpn      = 'gelan_pafpn'
-        self.fpn_act  = 'silu'
-        self.fpn_norm = 'BN'
-        self.fpn_depthwise = False
         self.fpn_depth    = 3
         self.fpn_feats_td = {
             "p4": [[256, 128], 256],
@@ -195,14 +178,6 @@ class GElanSConfig(GElanBaseConfig):
             "p4": [[256, 128], 256],
             "p5": [[256, 128], 256],
         }
-        ## Head
-        self.head      = 'gelan_head'
-        self.head_act  = 'silu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
-        self.num_cls_head   = 2
-        self.num_reg_head   = 2
-
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
