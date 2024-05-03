@@ -15,9 +15,9 @@ pretrained_urls = {
 }
 
 # ---------------------------- Basic functions ----------------------------
-class GElanCBackbone(nn.Module):
+class GElanBackbone(nn.Module):
     def __init__(self, cfg):
-        super(GElanCBackbone, self).__init__()
+        super(GElanBackbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.model_scale = cfg.scale
         self.feat_dims = [cfg.backbone_feats["c1"][-1],  # 64
@@ -141,8 +141,8 @@ class GElanCBackbone(nn.Module):
 ## build Yolo's Backbone
 def build_backbone(cfg): 
     # model
-    if   cfg.backbone == "gelan_c":
-        backbone = GElanCBackbone(cfg)
+    if   cfg.backbone == "gelan":
+        backbone = GElanBackbone(cfg)
     else:
         raise NotImplementedError("Unknown gelan backbone: {}".format(cfg.backbone))
         

@@ -336,6 +336,11 @@ def replace_module(module, replaced_module_type, new_module_type, replace_func=N
 
 ## compute FLOPs & Parameters
 def compute_flops(model, img_size, device):
+    # Reparam
+    for m in model.modules():
+        if hasattr(m, 'fuse_convs'):
+            m.fuse_convs()
+            
     x = torch.randn(1, 3, img_size, img_size).to(device)
     print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
