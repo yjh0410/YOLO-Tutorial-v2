@@ -154,11 +154,12 @@ if __name__ == '__main__':
     from thop import profile
     class BaseConfig(object):
         def __init__(self) -> None:
-            self.backbone = 'gelan_c'
+            self.backbone = 'gelan'
             self.use_pretrained = True
             self.bk_act = 'silu'
             self.bk_norm = 'BN'
             self.bk_depthwise = False
+            # Gelan-C scale
             self.backbone_feats = {
                 "c1": [64],
                 "c2": [128, [128, 64], 256],
@@ -166,8 +167,18 @@ if __name__ == '__main__':
                 "c4": [512, [512, 256], 512],
                 "c5": [512, [512, 256], 512],
             }
-            self.scale = "l"
-            self.backbone_depth = 1
+            # # Gelan-S scale
+            # self.scale = "l"
+            # self.backbone_depth = 1
+            # self.backbone_feats = {
+            #     "c1": [32],
+            #     "c2": [64,  [64, 32],   64],
+            #     "c3": [64,  [64, 32],   128],
+            #     "c4": [128, [128, 64],  256],
+            #     "c5": [256, [256, 128], 256],
+            # }
+            # self.scale = "s"
+            # self.backbone_depth = 3
 
     cfg = BaseConfig()
     model = build_backbone(cfg)
@@ -179,7 +190,6 @@ if __name__ == '__main__':
     for out in outputs:
         print(out.shape)
 
-    x = torch.randn(1, 3, 640, 640)
     print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
     print('==============================')
