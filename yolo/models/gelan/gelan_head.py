@@ -1,8 +1,11 @@
 import torch
 import torch.nn as nn
 
-from .gelan_basic import BasicConv
-
+try:
+    from .gelan_basic import BasicConv
+except:
+    from  gelan_basic import BasicConv
+    
 
 # Single-level Head
 class SingleLevelHead(nn.Module):
@@ -123,3 +126,51 @@ class GElanDetHead(nn.Module):
             reg_feats.append(reg_feat)
 
         return cls_feats, reg_feats
+    
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # GElan-Base config
+    class GElanBaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.reg_max  = 16
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.num_levels = 3
+            ## Head
+            self.head_act  = 'lrelu'
+            self.head_norm = 'BN'
+            self.head_depthwise = False
+            self.num_cls_head   = 2
+            self.num_reg_head   = 2
+
+    cfg = GElanBaseConfig()
+    cfg.num_classes = 20
+
+    # Build a head
+    fpn_dims = [128, 256, 256]
+    pyramid_feats = [torch.randn(1, fpn_dims[0], 80, 80),
+                     torch.randn(1, fpn_dims[1], 40, 40),
+                     torch.randn(1, fpn_dims[2], 20, 20)]
+    head = GElanDetHead(cfg, fpn_dims)
+
+
+    # Inference
+    t0 = time.time()
+    cls_feats, reg_feats = head(pyramid_feats)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print("====== GElan Head output ======")
+    for level, (cls_f, reg_f) in enumerate(zip(cls_feats, reg_feats)):
+        print("- Level-{} : ".format(level), cls_f.shape, reg_f.shape)
+
+    flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))
+    

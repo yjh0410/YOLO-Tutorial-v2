@@ -3,7 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List
 
-from .gelan_basic import RepGElanLayer, ADown
+try:
+    from .gelan_basic import RepGElanLayer, ADown
+except:
+    from  gelan_basic import RepGElanLayer, ADown
 
 
 # PaFPN-ELAN
@@ -100,4 +103,56 @@ class GElanPaFPN(nn.Module):
         out_feats = [p3, p4, p5] # [P3, P4, P5]
 
         return out_feats
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
     
+    # GElan-Base config
+    class GElanBaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.ratio    = 2.0
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.num_levels = 3
+            ## FPN
+            self.fpn      = 'gelan_pafpn'
+            self.fpn_act  = 'silu'
+            self.fpn_norm = 'BN'
+            self.fpn_depthwise = False
+            self.fpn_depth    = 3
+            self.fpn_feats_td = {
+                "p4": [[256, 128], 256],
+                "p3": [[128, 64],  128],
+            }
+            self.fpn_feats_bu = {
+                "p4": [[256, 128], 256],
+                "p5": [[256, 128], 256],
+            }
+
+    cfg = GElanBaseConfig()
+    # Build a head
+    in_dims  = [128, 256, 256]
+    fpn = GElanPaFPN(cfg, in_dims)
+
+    # Inference
+    x = [torch.randn(1, in_dims[0], 80, 80),
+         torch.randn(1, in_dims[1], 40, 40),
+         torch.randn(1, in_dims[2], 20, 20)]
+    t0 = time.time()
+    output = fpn(x)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== FPN output ====== ')
+    for level, feat in enumerate(output):
+        print("- Level-{} : ".format(level), feat.shape)
+
+    flops, params = profile(fpn, inputs=(x, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))

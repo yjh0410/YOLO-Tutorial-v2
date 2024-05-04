@@ -8,7 +8,7 @@ except:
 
 # IN1K pretrained weight
 pretrained_urls = {
-    's': None,
+    's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/gelan_s.pth",
     'm': None,
     'l': None,
     'x': None,
@@ -159,26 +159,26 @@ if __name__ == '__main__':
             self.bk_act = 'silu'
             self.bk_norm = 'BN'
             self.bk_depthwise = False
-            # Gelan-C scale
-            self.backbone_feats = {
-                "c1": [64],
-                "c2": [128, [128, 64], 256],
-                "c3": [256, [256, 128], 512],
-                "c4": [512, [512, 256], 512],
-                "c5": [512, [512, 256], 512],
-            }
-            # # Gelan-S scale
+            # # Gelan-C scale
+            # self.backbone_feats = {
+            #     "c1": [64],
+            #     "c2": [128, [128, 64], 256],
+            #     "c3": [256, [256, 128], 512],
+            #     "c4": [512, [512, 256], 512],
+            #     "c5": [512, [512, 256], 512],
+            # }
             # self.scale = "l"
             # self.backbone_depth = 1
-            # self.backbone_feats = {
-            #     "c1": [32],
-            #     "c2": [64,  [64, 32],   64],
-            #     "c3": [64,  [64, 32],   128],
-            #     "c4": [128, [128, 64],  256],
-            #     "c5": [256, [256, 128], 256],
-            # }
-            # self.scale = "s"
-            # self.backbone_depth = 3
+            # Gelan-S scale
+            self.backbone_feats = {
+                "c1": [32],
+                "c2": [64,  [64, 32],   64],
+                "c3": [64,  [64, 32],   128],
+                "c4": [128, [128, 64],  256],
+                "c5": [256, [256, 128], 256],
+            }
+            self.scale = "s"
+            self.backbone_depth = 3
 
     cfg = BaseConfig()
     model = build_backbone(cfg)
