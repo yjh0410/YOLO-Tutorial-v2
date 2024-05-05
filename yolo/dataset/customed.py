@@ -28,7 +28,6 @@ class CustomedDataset(Dataset):
         self.image_set = image_set
         self.is_train  = is_train
         self.num_classes = len(customed_class_labels)
-        self.num_classes = 9
         # ----------- Path parameters -----------
         self.data_dir = data_dir
         self.json_file = '{}.json'.format(image_set)
@@ -200,6 +199,8 @@ if __name__ == "__main__":
                         help='data root')
     parser.add_argument('--is_train', action="store_true", default=False,
                         help='mixup augmentation.')
+    parser.add_argument('--aug_type', default="yolo", type=str, choices=["yolo", "ssd"],
+                        help='yolo, ssd.')
     
     args = parser.parse_args()
 
@@ -218,7 +219,6 @@ if __name__ == "__main__":
             ## Transforms
             self.train_img_size = 640
             self.test_img_size  = 640
-            self.random_crop_size = [320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
             self.use_ablu = True
             self.aug_type = 'yolo'
             self.affine_params = {
@@ -232,7 +232,7 @@ if __name__ == "__main__":
                 'hsv_v': 0.4,
             }
 
-    class RTDetrBaseConfig(object):
+    class SSDBaseConfig(object):
         def __init__(self) -> None:
             self.max_stride = 32
             # ---------------- Data process config ----------------
@@ -247,12 +247,12 @@ if __name__ == "__main__":
             ## Transforms
             self.train_img_size = 640
             self.test_img_size  = 640
-            self.aug_type = 'rtdetr'
+            self.aug_type = 'ssd'
 
     if args.aug_type == "yolo":
         cfg = YoloBaseConfig()
-    elif args.aug_type == "rtdetr":
-        cfg = RTDetrBaseConfig()
+    elif args.aug_type == "ssd":
+        cfg = SSDBaseConfig()
 
     transform = build_transform(cfg, args.is_train)
     dataset = CustomedDataset(cfg, args.root, 'val', transform, args.is_train)

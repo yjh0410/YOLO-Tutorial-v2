@@ -16,8 +16,11 @@ from utils.box_ops import rescale_bboxes
 from utils.vis_tools import visualize
 
 from models import build_model
-from config import build_config
+from config import build_config\
+
+from dataset.voc  import voc_class_labels
 from dataset.coco import coco_class_labels
+from dataset.customed import customed_class_labels
 
 
 def parse_args():
@@ -43,18 +46,14 @@ def parse_args():
     # Model setting
     parser.add_argument('-m', '--model', default='yolo_n', type=str,
                         help='build yolo')
-    parser.add_argument('-nc', '--num_classes', default=80, type=int,
-                        help='number of classes.')
     parser.add_argument('--weight', default=None,
                         type=str, help='Trained state_dict file path to open')
-    parser.add_argument("--deploy", action="store_true", default=False,
-                        help="deploy mode or not")
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
                         help='fuse Conv & BN')
 
     # Data setting
     parser.add_argument('-d', '--dataset', default='coco',
-                        help='coco, voc, crowdhuman, widerface.')
+                        help='coco, voc, customed.')
 
     return parser.parse_args()
                     
@@ -86,7 +85,8 @@ def detect(args,
         print(save_video_name)
         image_list = []
 
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        # 笔记本摄像头，index=0；外接摄像头，index=1；
+        cap = cv2.VideoCapture(index=0, apiPreference=cv2.CAP_DSHOW)
         while True:
             ret, frame = cap.read()
             if ret:
@@ -252,30 +252,41 @@ def detect(args,
 
 def run():
     args = parse_args()
+    # Dataset config
+    if   args.dataset == "voc":
+        cfg.num_classes = 20
+        cfg.class_labels = voc_class_labels
+    elif args.dataset == "coco":
+        cfg.num_classes = 80
+        cfg.class_labels = coco_class_labels
+    elif args.dataset == "customed":
+        cfg.num_classes = len(customed_class_labels)
+        cfg.class_labels = customed_class_labels
+    else:
+        raise NotImplementedError("Unknown dataset: {}".format(args.dataset))
+    
     # cuda
-    if args.cuda:
+    if args.cuda and torch.cuda.is_available():
         print('use cuda')
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
 
-    # config
+    # Build config
     cfg = build_config(args)
-    cfg.num_classes = 80
-    cfg.class_labels = coco_class_labels
-    
-    # build model
+
+    # Build model
     model = build_model(args, cfg, False)
 
-    # load trained weight
+    # Load trained weight
     model = load_weight(model, args.weight, args.fuse_conv_bn)
     model.to(device).eval()
 
-    # transform
+    # Build transform
     transform = build_transform(cfg, is_train=False)
 
     print("================= DETECT =================")
-    # run
+    # Run demo
     detect(args         = args,
            mode         = args.mode,
            model        = model, 

@@ -16,12 +16,4 @@ imageio
 
 pycocotools
 
-onnxsim
-
-onnxruntime
-
-openvino
-
-loguru
-
 albumentations
