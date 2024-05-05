@@ -12,6 +12,59 @@
 ## 准备工作
 在使用此代码前，需要读者完成一些必要的环境配置，如python语言的安装、pytorch框架的安装等，随后，遵循`yolo/`和`odlab/`两个文件中的`README.md`文件所提供的内容，配置相关的环境、准备学习所需的数据集，并了解如何使用此项目代码进行训练和测试。如果读者想使用此代码去训练自定义的数据集，也请遵从这两个文件夹中的`README.md`文件中所给出的指示和说明来准备数据，并训练和测试。
 
+## 实验结果
+### YOLO系列
+下面的两个表分别汇报了本项目的YOLO系列的small量级的模型在VOC和COCO数据集上的性能指标，
+
+- VOC
+
+| Model       | Batch | Scale | AP<sup>val<br>0.5 | Weight |  Logs  |
+|-------------|-------|-------|-------------------|--------|--------|
+| YOLOv1-R18  | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| YOLOv2-R18  | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| YOLOv3-S    | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| YOLOv5-S    | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| YOLOv5-AF-S | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| YOLOv8-S    | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| GELAN-S     | 1xb16 |  640  |               | [ckpt]() | [log]() |
+
+- COCO
+
+| Model       | Batch | Scale | FPS<sup>FP32<br>RTX 4060 |AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight | Logs |
+|-------------|-------|-------|--------------------------|------------------------|-------------------|-------------------|--------------------|--------|------|
+| YOLOv1-R18  | 1xb16 |  640  |                          |         27.6           |       46.8        |   37.8            |   21.3             | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov1_r18_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv1-R18-COCO.txt) |
+| YOLOv2-R18  | 1xb16 |  640  |                          |         28.4           |       47.4        |   38.0            |   21.5             | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov2_r18_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv2-R18-COCO.txt) |
+| YOLOv3-S    | 1xb16 |  640  |                          |         31.3           |        49.2       |   25.2            |   7.3              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/yolov3_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/YOLOv3-S-COCO.txt) |
+| YOLOv5-S    | 1xb16 |  640  |                          |       38.8             |     56.9          |   27.3            |   9.0              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-S-COCO.txt) |
+| YOLOv5-AF-S | 1xb16 |  640  |                          |       39.6             |       58.7        |   26.9            |   8.9              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_af_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-AF-S-COCO.txt) |
+| YOLOv8-S    | 1xb16 |  640  |                          |                        |                   |   28.4            |   11.3            |  |  |
+| GELAN-S     | 1xb16 |  640  |                          |                        |                   |   26.9            |   8.9             |  |  |
+
+### RT-DETR系列
+下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标，
+
+- COCO
+
+| Model        | Batch | Scale | FPS<sup>FP32<br>RTX 4060 |AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight | Logs |
+|--------------|-------|-------|--------------------------|------------------------|-------------------|-------------------|--------------------|--------|------|
+| RT-DETR-R18  | 4xb4  |  640  |                          |           45.5         |        63.5       |        66.8       |        21.0        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r18_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R18-COCO.txt)|
+| RT-DETR-R50  | 4xb4  |  640  |                          |           50.6         |        69.4       |       112.1       |        36.7        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r50_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R50-COCO.txt)|
+
+### ODLab系列
+下表汇报了本项目的ODLab系列在COCO数据集上的性能指标，
+
+- COCO
+
+| Model          | Sclae      | FPS<sup>FP32<br>RTX 4060 | AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | Weight | Logs |
+|----------------|------------|--------------------------|------------------------|-------------------|--------|------|
+| FCOS_R18_1x    |  800,1333  |           24             |          34.0          |        52.2       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_r18_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-R18-1x.txt) |
+| FCOS_R50_1x    |  800,1333  |            9             |          39.0          |        58.3       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_r50_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-R50-1x.txt) |
+| FCOS_RT_R18_3x |  512,736   |           56             |          35.8          |        53.3       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_rt_r18_3x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-RT-R18-3x.txt) |
+| FCOS_RT_R50_3x |  512,736   |           34             |          40.7          |        59.3       | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/fcos_rt_r50_3x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/FCOS-RT-R50-3x.txt) |
+| YOLOF_R18_C5_1x  |  800,1333  |          54          |          32.8          |       51.4        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolof_r18_c5_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOF-R18-C5-1x.txt) |
+| YOLOF_R50_C5_1x  |  800,1333  |          21          |          37.7          |       57.2        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolof_r50_c5_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOF-R50-C5-1x.txt) |
+
+
 # The source code of the second edition of the book "YOLO Object Detection"
 This project is the source code of the "YOLO Target Detection" book （second edition）, which includes all YOLO models, RT-DETR models, DETR models, FCOS models, and YOLOF models involved in this book. For YOLO and RT-DETR, readers can find all source codes in the `yolo/` folder of the project; for DETR, FCOS and YOLOF models, readers can find all source codes in the `odlab/` folder of the project. 
 
