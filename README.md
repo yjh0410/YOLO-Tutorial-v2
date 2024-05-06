@@ -14,7 +14,7 @@
 
 ## 实验结果
 ### YOLO系列
-下面的两个表分别汇报了本项目的YOLO系列的small量级的模型在VOC和COCO数据集上的性能指标，
+下面的两个表分别汇报了本项目的YOLO系列的small量级的模型在VOC和COCO数据集上的性能指标，所有模型都采用单张3090显卡训练的，在训练中，batch size被设置为16，且会累加梯度4次来近似batch size为64的训练效果。
 
 - VOC
 
@@ -41,7 +41,7 @@
 | GELAN-S     | 1xb16 |  640  |                          |                       |                   |   26.9            |   8.9             |  |  |
 
 ### RT-DETR系列
-下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标，需要说明的是，官方的RT-DETR所汇报的FPS指标，是经过各种加速处理后所测得的，因而会很高，而这里我们没有做加速处理，也没有编译CUDA版本的Deformable Attention算子，纯纯的PyTorch框架实现的，且使用的是4060显卡，而非诸如3090和V100等高算力显卡，因此，FPS指标会显著低于论文中所汇报的指标。
+下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标。所有模型都采用4张3090显卡训练的，在训练中，每张3090显卡上的batch size被设置为4，并使用多卡同步BN来计算BN层的统计量。需要说明的是，官方的RT-DETR所汇报的FPS指标，是经过各种加速处理后所测得的，因而会很高，而这里我们没有做加速处理，也没有编译CUDA版本的Deformable Attention算子，纯纯的PyTorch框架实现的，且使用的是4060显卡，而非诸如3090和V100等高算力显卡，因此，FPS指标会显著低于论文中所汇报的指标。
 
 - COCO
 
@@ -51,7 +51,7 @@
 | RT-DETR-R50  | 4xb4  |  640  |           30             |          50.6          |        69.4       |       112.1       |        36.7        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r50_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R50-COCO.txt)|
 
 ### ODLab系列
-下表汇报了本项目的ODLab系列在COCO数据集上的性能指标，
+下表汇报了本项目的ODLab系列在COCO数据集上的性能指标，所有模型都采用单张3090显卡训练的，在训练中，每张3090显卡上的batch size被设置为4或8，并使用梯度累加策略来近似batch size为16的训练效果。对于FCOS系列，由于resnet的BN层采用的是冻结的BN层、且其他的归一化层为GN层，因此，梯度累加可以完全等效大batch size的效果；对于YOLOF系列，由于DilatedEncoder和Decoder部分中使用到了标准的BN层，因此，梯度累加无法完全等效大batch size的效果。
 
 - COCO
 
