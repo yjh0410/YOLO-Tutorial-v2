@@ -2,8 +2,10 @@
 
 
 def build_rtdetr_config(args):
-    if args.model == "rtdetr_r18":
+    if   args.model == "rtdetr_r18":
         return RTDetrR18Config()
+    elif args.model == "rtdetr_r50":
+        return RTDetrR50Config()
     raise NotImplementedError("No config for model: {}".format(args.model))   
  
 # rtdetr-Base config
@@ -122,4 +124,18 @@ class RTDetrR18Config(RTDetrBaseConfig):
         self.pretrained = True
         self.freeze_at = -1
         self.freeze_stem_only = False
+
+# RT-DETR-R50
+class RTDetrR50Config(RTDetrBaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        ## Backbone
+        self.backbone        = 'resnet50'
+        self.backbone_norm   = 'BN'
+        self.pretrained_weight  = 'imagenet1k_v1'
+        self.pretrained = True
+        self.freeze_at = -1
+        self.freeze_stem_only = False
+        ## Transformer Decoder
+        self.de_num_layers = 6
 

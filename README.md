@@ -41,14 +41,14 @@
 | GELAN-S     | 1xb16 |  640  |                          |                       |                   |   26.9            |   8.9             |  |  |
 
 ### RT-DETR系列
-下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标，
+下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标，需要说明的是，官方的RT-DETR所汇报的FPS指标，是经过各种加速处理后所测得的，因而会很高，而这里我们没有做加速处理，也没有编译CUDA版本的Deformable Attention算子，纯纯的PyTorch框架实现的，且使用的是4060显卡，而非诸如3090和V100等高算力显卡，因此，FPS指标会显著低于论文中所汇报的指标。
 
 - COCO
 
 | Model        | Batch | Scale | FPS<sup>FP32<br>RTX 4060 |AP<sup>val<br>0.5:0.95 | AP<sup>val<br>0.5 | FLOPs<br><sup>(G) | Params<br><sup>(M) | Weight | Logs |
 |--------------|-------|-------|--------------------------|------------------------|-------------------|-------------------|--------------------|--------|------|
-| RT-DETR-R18  | 4xb4  |  640  |                          |           45.5         |        63.5       |        66.8       |        21.0        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r18_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R18-COCO.txt)|
-| RT-DETR-R50  | 4xb4  |  640  |                          |           50.6         |        69.4       |       112.1       |        36.7        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r50_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R50-COCO.txt)|
+| RT-DETR-R18  | 4xb4  |  640  |           54             |          45.5          |        63.5       |        66.8       |        21.0        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r18_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R18-COCO.txt)|
+| RT-DETR-R50  | 4xb4  |  640  |           30             |          50.6          |        69.4       |       112.1       |        36.7        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r50_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R50-COCO.txt)|
 
 ### ODLab系列
 下表汇报了本项目的ODLab系列在COCO数据集上的性能指标，
