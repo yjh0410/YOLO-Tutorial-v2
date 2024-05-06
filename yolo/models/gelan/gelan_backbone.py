@@ -9,9 +9,7 @@ except:
 # IN1K pretrained weight
 pretrained_urls = {
     's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/gelan_s_in1k_68.4.pth",
-    'm': None,
-    'l': None,
-    'x': None,
+    'c': None,
 }
 
 # ---------------------------- Basic functions ----------------------------
