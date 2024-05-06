@@ -1,7 +1,7 @@
 import json
 import tempfile
 import torch
-from yolo.dataset.custom import CustomDataset
+from dataset.custom import CustomDataset
 from utils.box_ops import rescale_bboxes
 
 try:
