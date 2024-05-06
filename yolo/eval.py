@@ -1,9 +1,10 @@
 import argparse
 import torch
 
-from evaluator.voc_evaluator import VOCAPIEvaluator
-from evaluator.coco_evaluator import COCOAPIEvaluator
-from evaluator.customed_evaluator import CustomedEvaluator
+# evaluators
+from evaluator.voc_evaluator    import VOCAPIEvaluator
+from evaluator.coco_evaluator   import COCOAPIEvaluator
+from evaluator.custom_evaluator import CustomEvaluator
 
 # load transform
 from dataset.build import build_dataset, build_transform
@@ -28,13 +29,9 @@ def parse_args():
                         help='build yolo')
     parser.add_argument('--weight', default=None,
                         type=str, help='Trained state_dict file path to open')
-    parser.add_argument('-p', '--pretrained', default=None, type=str,
-                        help='load pretrained weight')
     parser.add_argument('-r', '--resume', default=None, type=str,
                         help='keep training')
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
-                        help='fuse Conv & BN')
-    parser.add_argument('--fuse_rep_conv', action='store_true', default=False,
                         help='fuse Conv & BN')
 
     # Data setting
@@ -72,8 +69,8 @@ def coco_test(cfg, model, data_dir, device, transform):
     # COCO evaluation
     evaluator.evaluate(model)
 
-def customed_test(cfg, model, data_dir, device, transform):
-    evaluator = CustomedEvaluator(
+def custom_test(cfg, model, data_dir, device, transform):
+    evaluator = CustomEvaluator(
         cfg=cfg,
         data_dir=data_dir,
         device=device,
@@ -115,5 +112,5 @@ if __name__ == '__main__':
             voc_test(cfg, model, args.root, device, transform)
         elif args.dataset == 'coco':
             coco_test(cfg, model, args.root, device, transform)
-        elif args.dataset == 'customed':
-            customed_test(cfg, model, args.root, device, transform)
+        elif args.dataset == 'custom':
+            custom_test(cfg, model, args.root, device, transform)

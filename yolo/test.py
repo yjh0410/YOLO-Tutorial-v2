@@ -41,8 +41,6 @@ def parse_args():
                         type=str, help='Trained state_dict file path to open')
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
                         help='fuse Conv & BN')
-    parser.add_argument('--fuse_rep_conv', action='store_true', default=False,
-                        help='fuse Conv & BN')
 
     # Data setting
     parser.add_argument('--root', default='D:/python_work/dataset/COCO/',
@@ -134,7 +132,7 @@ if __name__ == '__main__':
     model = build_model(args, cfg, is_val=False)
 
     # load trained weight
-    model = load_weight(model, args.weight, args.fuse_conv_bn, args.fuse_rep_conv)
+    model = load_weight(model, args.weight, args.fuse_conv_bn)
     model.to(device).eval()
 
     # compute FLOPs and Params

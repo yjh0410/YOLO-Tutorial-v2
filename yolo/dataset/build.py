@@ -4,7 +4,7 @@ try:
     # dataset class
     from .voc        import VOCDataset
     from .coco       import COCODataset
-    from .customed   import CustomedDataset
+    from .custom     import CustomDataset
     # transform class
     from .data_augment.yolo_augment import YOLOAugmentation, YOLOBaseTransform
     from .data_augment.ssd_augment  import SSDAugmentation, SSDBaseTransform
@@ -13,7 +13,7 @@ except:
     # dataset class
     from voc        import VOCDataset
     from coco       import COCODataset
-    from customed   import CustomedDataset
+    from yolo.dataset.custom   import CustomDataset
     # transform class
     from data_augment.yolo_augment import YOLOAugmentation, YOLOBaseTransform
     from data_augment.ssd_augment  import SSDAugmentation, SSDBaseTransform
@@ -41,9 +41,9 @@ def build_dataset(args, cfg, transform=None, is_train=False):
                               is_train  = is_train,
                               )
     ## Custom dataset
-    elif args.dataset == 'customed':
+    elif args.dataset == 'custom':
         image_set = 'train' if is_train else 'val'
-        dataset = CustomedDataset(cfg       = cfg,
+        dataset = CustomDataset(cfg       = cfg,
                                   data_dir  = args.root,
                                   image_set = image_set,
                                   transform = transform,

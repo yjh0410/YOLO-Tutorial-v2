@@ -1,7 +1,7 @@
 import json
 import tempfile
 import torch
-from dataset.customed import CustomedDataset
+from yolo.dataset.custom import CustomDataset
 from utils.box_ops import rescale_bboxes
 
 try:
@@ -10,7 +10,7 @@ except:
     print("It seems that the COCOAPI is not installed.")
 
 
-class CustomedEvaluator():
+class CustomEvaluator():
     def __init__(self, cfg, data_dir, device, image_set='val', transform=None):
         # ----------------- Basic parameters -----------------
         self.image_set = image_set
@@ -21,7 +21,7 @@ class CustomedEvaluator():
         self.ap50_95 = 0.
         self.ap50 = 0.
         # ----------------- Dataset -----------------
-        self.dataset = CustomedDataset(cfg, data_dir=data_dir, image_set=image_set, transform=None, is_train=False)
+        self.dataset = CustomDataset(cfg, data_dir=data_dir, image_set=image_set, transform=None, is_train=False)
 
     @torch.no_grad()
     def evaluate(self, model):

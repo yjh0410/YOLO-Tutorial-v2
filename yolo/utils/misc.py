@@ -343,7 +343,7 @@ def compute_flops(model, img_size, device):
     print('Params : {:.2f} M'.format(params / 1e6))
 
 ## load trained weight
-def load_weight(model, path_to_ckpt, fuse_cbn=False, fuse_rep_conv=False):
+def load_weight(model, path_to_ckpt, fuse_cbn=False):
     # Check ckpt file
     if path_to_ckpt is None:
         print('no weight file ...')

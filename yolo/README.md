@@ -86,10 +86,10 @@ bash train.sh yolov1_r18 coco path/to/coco 128 4 1699 path/to/yolov1_r18_coco.pt
 ## 训练自定义数据
 除了本教程所介绍的VOC和COCO两大主流数据集，本项目也支持训练读者自定义的数据。不过，需要按照本项目的要求来从头开始准备数据，包括标注和格式转换（COCO格式）。如果读者手中的数据已经都准备好了，倘若不符合本项目的格式，还请另寻他法，切不可强行使用本项目，否则出了问题，我们也无法提供解决策略，只能后果自负。为了能够顺利使用本项目，请读者遵循以下的步骤来开始准备数据
 
-- 第1步，准备图片，诸如jpg格式、png格式等都可以，构建为自定义数据集，不妨起名为`CustomedDataset`，然后使用开源的`labelimg`制作标签文件。有关于`labelimg`的使用方法，请自行了解。完成标注后，应得到如下所示的文件目录格式：
+- 第1步，准备图片，诸如jpg格式、png格式等都可以，构建为自定义数据集，不妨起名为`CustomDataset`，然后使用开源的`labelimg`制作标签文件。有关于`labelimg`的使用方法，请自行了解。完成标注后，应得到如下所示的文件目录格式：
 
 ```
-CustomedDataset
+CustomDataset
 |_ train
 |  |_ images     
 |     |_ 0.jpg
@@ -112,11 +112,11 @@ CustomedDataset
 ```
 
 - 第2步: 修改与数据有关的配置参数
-读者需要修改定义在`dataset/customed.py`文件中的`customed_class_indexs` 和 `customed_class_labels`两个参数，前者是类别索引，后者是类别名称。例如，我们使用了如下的定义以供读者参考:
+读者需要修改定义在`dataset/custom.py`文件中的`custom_class_indexs` 和 `custom_class_labels`两个参数，前者是类别索引，后者是类别名称。例如，我们使用了如下的定义以供读者参考:
 ```Shell
-# dataset/customed.py
-customed_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-customed_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
+# dataset/custom.py
+custom_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+custom_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
 ```
 
 - 第3步: 将数据转换为COCO的json格式
@@ -126,14 +126,14 @@ customed_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'pers
 cd <YOLO-TUTORIAL-V2/yolo/>
 cd tools
 # convert train split
-python convert_ours_to_coco.py --root path/to/customed_dataset/ --split train
+python convert_ours_to_coco.py --root path/to/custom_dataset/ --split train
 # convert val split
-python convert_ours_to_coco.py --root path/to/customed_dataset/ --split val
+python convert_ours_to_coco.py --root path/to/custom_dataset/ --split val
 ```
 
 随后，我们便可得到一个名为`train.json` 的文件和一个名为 `val.json` 文件，如下所示.
 ```
-CustomedDataset
+CustomDataset
 |_ train
 |  |_ images     
 |     |_ 0.jpg
@@ -164,9 +164,9 @@ CustomedDataset
 cd <YOLO-TUTORIAL-V2/yolo/>
 cd dataset
 # convert train split
-python customed.py --root path/to/customed_dataset/ --split train
+python custom.py --root path/to/custom_dataset/ --split train
 # convert val split
-python customed.py --root path/to/customed_dataset/ --split val
+python custom.py --root path/to/custom_dataset/ --split val
 ```
 
 - 第5步：使用自定义数据训练模型
@@ -174,8 +174,27 @@ python customed.py --root path/to/customed_dataset/ --split val
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
-bash train.sh yolov1_r18 customed path/to/customed_dataset/ 128 4 1699 None
+# For single GPU
+python train.py --cuda \
+                --dataset custom \
+                --root path/to/custom_dataset/ \
+                --model yolov1_r18 \
+                --batch_size 16 \
+                --fp16
+
+# For multi GPUs (taking 8 gpus with 1623 port as the example)
+python -m torch.distributed.run --nproc_per_node 8 --master_port 1623 train.py --cuda \
+                --distributed \
+                --dataset custom \
+                --root path/to/custom_dataset/ \
+                --model yolov1_r18 \
+                --batch_size 16 \
+                --sybn \
+                --fp16
 ```
+
+You could add `--pretrained path/to/yolov1_r18_coco.pth` into the above command to load the coco pretrained weight as
+the initial weight, which might help with faster training convergence and improve performance on custom tasks. However, if there is a significant difference between your custom data and COCO data, this trick may not be effective. For example, if your custom data is medical images, in my opinion, the large number of natural images contained in the COCO dataset may not have any promoting effect on your task.
 
 - 第6步：使用自定义数据测试模型
 
@@ -183,7 +202,7 @@ bash train.sh yolov1_r18 customed path/to/customed_dataset/ 128 4 1699 None
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
-python test.py -d customed --root path/to/customed_dataset/ -d customed -m yolov1_r18 --weight path/to/checkpoint --show
+python test.py -d custom --root path/to/custom_dataset/ -d custom -m yolov1_r18 --weight path/to/checkpoint --show
 ```
 
 - 第7步：使用自定义数据验证模型
@@ -192,7 +211,7 @@ python test.py -d customed --root path/to/customed_dataset/ -d customed -m yolov
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
-python eval.py -d customed --root path/to/customed_dataset/ -d customed -m yolov1_r18 --weight path/to/checkpoint
+python eval.py -d custom --root path/to/custom_dataset/ -d custom -m yolov1_r18 --weight path/to/checkpoint
 ```
 
 ## Demo
@@ -336,7 +355,7 @@ Besides the popular datasets, we can also train the model on ourself dataset. To
 - Step-1: Prepare the images (JPG/JPEG/PNG ...) and use `labelimg` to make XML format annotation files.
 
 ```
-CustomedDataset
+CustomDataset
 |_ train
 |  |_ images     
 |     |_ 0.jpg
@@ -359,28 +378,28 @@ CustomedDataset
 ```
 
 - Step-2: Make the configuration for our dataset.
-You need to edit the `customed_class_indexs` and `customed_class_labels` defined in `dataset/customed.py` to adapt to your customed dataset.
+You need to edit the `custom_class_indexs` and `custom_class_labels` defined in `dataset/custom.py` to adapt to your custom dataset.
 
 For example:
 ```Shell
-# dataset/customed.py
-customed_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-customed_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
+# dataset/custom.py
+custom_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+custom_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
 ```
 
-- Step-3: Convert customed to COCO format.
+- Step-3: Convert custom to COCO format.
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
 cd tools
 # convert train split
-python convert_ours_to_coco.py --root path/to/customed_dataset/ --split train
+python convert_ours_to_coco.py --root path/to/custom_dataset/ --split train
 # convert val split
-python convert_ours_to_coco.py --root path/to/customed_dataset/ --split val
+python convert_ours_to_coco.py --root path/to/custom_dataset/ --split val
 ```
 Then, we can get a `train.json` file and a `val.json` file, as shown below.
 ```
-CustomedDataset
+CustomDataset
 |_ train
 |  |_ images     
 |     |_ 0.jpg
@@ -410,43 +429,43 @@ CustomedDataset
 cd <YOLO-TUTORIAL-V2/yolo/>
 cd dataset
 # convert train split
-python customed.py --root path/to/customed_dataset/ --split train
+python custom.py --root path/to/custom_dataset/ --split train
 # convert val split
-python customed.py --root path/to/customed_dataset/ --split val
+python custom.py --root path/to/custom_dataset/ --split val
 ```
 
-- Step-5 **Train** on the customed dataset
+- Step-5 **Train** on the custom dataset
 
 For example:
 
 ```Shell
 # With coco pretrained weight
 cd <YOLO-TUTORIAL-V2/yolo/>
-python train.py --root path/to/customed_dataset/ -d customed -m yolov1_r18 -bs 16 -p path/to/yolov1_r18_coco.pth
+python train.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 -bs 16 -p path/to/yolov1_r18_coco.pth
 ```
 
 ```Shell
 # Without coco pretrained weight
 cd <YOLO-TUTORIAL-V2/yolo/>
-python train.py --root path/to/customed_dataset/ -d customed -m yolov1_r18 -bs 16
+python train.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 -bs 16
 ```
 
-- Step-6 **Test** on the customed dataset
+- Step-6 **Test** on the custom dataset
 
 For example:
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
-python test.py --root path/to/customed_dataset/ -d customed -m yolov1_r18 --weight path/to/checkpoint --show
+python test.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 --weight path/to/checkpoint --show
 ```
 
-- Step-7 **Eval** on the customed dataset
+- Step-7 **Eval** on the custom dataset
 
 For example:
 
 ```Shell
 cd <YOLO-TUTORIAL-V2/yolo/>
-python eval.py --root path/to/customed_dataset/ -d customed -m yolov1_r18 --weight path/to/checkpoint
+python eval.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 --weight path/to/checkpoint
 ```
 
 ## Demo

@@ -20,7 +20,7 @@ from config import build_config\
 
 from dataset.voc  import voc_class_labels
 from dataset.coco import coco_class_labels
-from dataset.customed import customed_class_labels
+from yolo.dataset.custom import custom_class_labels
 
 
 def parse_args():
@@ -53,7 +53,7 @@ def parse_args():
 
     # Data setting
     parser.add_argument('-d', '--dataset', default='coco',
-                        help='coco, voc, customed.')
+                        help='coco, voc, custom.')
 
     return parser.parse_args()
                     
@@ -259,9 +259,9 @@ def run():
     elif args.dataset == "coco":
         cfg.num_classes = 80
         cfg.class_labels = coco_class_labels
-    elif args.dataset == "customed":
-        cfg.num_classes = len(customed_class_labels)
-        cfg.class_labels = customed_class_labels
+    elif args.dataset == "custom":
+        cfg.num_classes = len(custom_class_labels)
+        cfg.class_labels = custom_class_labels
     else:
         raise NotImplementedError("Unknown dataset: {}".format(args.dataset))
     

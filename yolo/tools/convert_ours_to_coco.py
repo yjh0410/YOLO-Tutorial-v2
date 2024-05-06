@@ -5,9 +5,9 @@ import glob
 
 import sys
 sys.path.append("..")
-from dataset.customed import customed_class_labels
-num_classes = len(customed_class_labels)
-categories  = customed_class_labels
+from yolo.dataset.custom import custom_class_labels
+num_classes = len(custom_class_labels)
+categories  = custom_class_labels
 START_BOUNDING_BOX_ID = 1
 PRE_DEFINE_CATEGORIES = {categories[i]: i + 1 for i in range(num_classes)} 
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Convert VOC-style annotation labele by LabelImg to COCO format."
     )
-    parser.add_argument("--root", default="path/to/customed_dataset", type=str,
+    parser.add_argument("--root", default="path/to/custom_dataset", type=str,
                         help="Directory path to dataset.", )
     parser.add_argument("--split", default='train', 
                         help="split of dataset.", type=str)

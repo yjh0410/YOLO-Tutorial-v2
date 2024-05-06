@@ -27,13 +27,11 @@ def parse_args():
                         help='use cuda.')
 
     # Model setting
-    parser.add_argument('-m', '--model', default='yolo_n', type=str,
+    parser.add_argument('-m', '--model', default='yolov1_r18', type=str,
                         help='build yolo')
     parser.add_argument('--weight', default=None,
                         type=str, help='Trained state_dict file path to open')
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
-                        help='fuse Conv & BN')
-    parser.add_argument('--fuse_rep_conv', action='store_true', default=False,
                         help='fuse Conv & BN')
 
     # Data setting
@@ -108,7 +106,7 @@ if __name__ == '__main__':
     model = build_model(args, cfg, is_val=False)
 
     # Load trained weight
-    model = load_weight(model, args.weight, args.fuse_conv_bn, args.fuse_rep_conv)
+    model = load_weight(model, args.weight, args.fuse_conv_bn)
     model.to(device).eval()
         
     # Run

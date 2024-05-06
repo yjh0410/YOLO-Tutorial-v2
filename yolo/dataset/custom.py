@@ -12,11 +12,11 @@ except:
     from  data_augment.strong_augment import MosaicAugment, MixupAugment
 
 
-customed_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-customed_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
+custom_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+custom_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
 
 
-class CustomedDataset(Dataset):
+class CustomDataset(Dataset):
     def __init__(self, 
                  cfg,
                  data_dir     :str = None, 
@@ -27,7 +27,7 @@ class CustomedDataset(Dataset):
         # ----------- Basic parameters -----------
         self.image_set = image_set
         self.is_train  = is_train
-        self.num_classes = len(customed_class_labels)
+        self.num_classes = len(custom_class_labels)
         # ----------- Path parameters -----------
         self.data_dir = data_dir
         self.json_file = '{}.json'.format(image_set)
@@ -36,8 +36,8 @@ class CustomedDataset(Dataset):
         self.ids = self.coco.getImgIds()
         self.class_ids = sorted(self.coco.getCatIds())
         self.dataset_size = len(self.ids)
-        self.class_labels = customed_class_labels
-        self.class_indexs = customed_class_indexs
+        self.class_labels = custom_class_labels
+        self.class_indexs = custom_class_indexs
         # ----------- Transform parameters -----------
         self.transform = transform
         if is_train:
@@ -255,7 +255,7 @@ if __name__ == "__main__":
         cfg = SSDBaseConfig()
 
     transform = build_transform(cfg, args.is_train)
-    dataset = CustomedDataset(cfg, args.root, 'val', transform, args.is_train)
+    dataset = CustomDataset(cfg, args.root, 'val', transform, args.is_train)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             cls_id = int(label)
             color = class_colors[cls_id]
             # class name
-            label = customed_class_labels[cls_id]
+            label = custom_class_labels[cls_id]
             image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
             # put the test on the bbox
             cv2.putText(image, label, (int(x1), int(y1 - 5)), 0, 0.5, color, 1, lineType=cv2.LINE_AA)
