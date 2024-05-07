@@ -141,7 +141,7 @@ class GElanCConfig(GElanBaseConfig):
         super().__init__()
         self.backbone = 'gelan'
         self.use_pretrained = True
-        self.scale = "l"
+        self.scale = "c"
      
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
