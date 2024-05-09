@@ -37,7 +37,7 @@
 | YOLOv3-S    | 1xb16 |  640  |           107            |         31.3          |       49.2        |   25.2            |   7.3              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/yolov3_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v3/releases/download/yolo_tutorial_ckpt/YOLOv3-S-COCO.txt) |
 | YOLOv5-S    | 1xb16 |  640  |            80            |         38.8          |       56.9        |   27.3            |   9.0              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-S-COCO.txt) |
 | YOLOv5-AF-S | 1xb16 |  640  |            83            |         39.6          |       58.7        |   26.9            |   8.9              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_af_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-AF-S-COCO.txt) |
-| YOLOv8-S    | 1xb16 |  640  |                          |                       |                   |   28.4            |   11.3            |  |  |
+| YOLOv8-S    | 1xb16 |  640  |                          |         42.5          |       59.3        |   28.4            |   11.3            | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov8_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv8-S-COCO.txt) |
 | GELAN-S     | 1xb16 |  640  |                          |                       |                   |   26.9            |   8.9             |  |  |
 
 ### RT-DETR系列
