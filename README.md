@@ -38,7 +38,7 @@
 | YOLOv5-S    | 1xb16 |  640  |            80            |         38.8          |       56.9        |   27.3            |   9.0              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-S-COCO.txt) |
 | YOLOv5-AF-S | 1xb16 |  640  |            83            |         39.6          |       58.7        |   26.9            |   8.9              | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov5_af_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv5-AF-S-COCO.txt) |
 | YOLOv8-S    | 1xb16 |  640  |                          |         42.5          |       59.3        |   28.4            |   11.3            | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/yolov8_s_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v5/releases/download/yolo_tutorial_ckpt/YOLOv8-S-COCO.txt) |
-| GELAN-S     | 1xb16 |  640  |                          |                       |                   |   26.9            |   8.9             |  |  |
+| GELAN-S     | 1xb16 |  640  |                          |                       |                   |   26.4            |   7.1             |  |  |
 
 ### RT-DETR系列
 下表汇报了本项目的RT-DETR系列在COCO数据集上的性能指标。所有模型都采用4张3090显卡训练的，在训练中，每张3090显卡上的batch size被设置为4，并使用多卡同步BN来计算BN层的统计量。需要说明的是，官方的RT-DETR所汇报的FPS指标，是经过各种加速处理后所测得的，因而会很高，而这里我们没有做加速处理，也没有编译CUDA版本的Deformable Attention算子，纯纯的PyTorch框架实现的，且使用的是4060显卡，而非诸如3090和V100等高算力显卡，因此，FPS指标会显著低于论文中所汇报的指标。
