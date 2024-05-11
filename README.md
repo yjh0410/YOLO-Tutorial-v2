@@ -64,6 +64,10 @@
 | YOLOF_R18_C5_1x  |  800,1333  |          54          |          32.8          |       51.4        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolof_r18_c5_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOF-R18-C5-1x.txt) |
 | YOLOF_R50_C5_1x  |  800,1333  |          21          |          37.7          |       57.2        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolof_r50_c5_1x_coco.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOF-R50-C5-1x.txt) |
 
+### ICLab系列
+本项目的`iclab/`文件夹则是用于预训练主干网络的，例如本书所介绍的YOLOv3和YOLOv4的主干网络、YOLOv5和YOLOv8的主干网络等，虽然本书主讲视觉目标检测，但预训练时至今日也还是比较重要的一项技术，因此，我们还是提供了预训练的代码，以便读者根据自己的兴趣去尝试预训练某些主干网络。对于这个文件夹，我们就不做过多介绍了，毕竟不是本书的重点，且视觉分类任务太基础也太简单了，已经是入门深度学习的基本功了，相信读者都或多或少有些基础了。
+
+------------- 以下是英文文档 -------------
 
 # The source code of the second edition of the book "YOLO Object Detection"
 This project is the source code of the "YOLO Target Detection" book （second edition）, which includes all YOLO models, RT-DETR models, DETR models, FCOS models, and YOLOF models involved in this book. For YOLO and RT-DETR, readers can find all source codes in the `yolo/` folder of the project; for DETR, FCOS and YOLOF models, readers can find all source codes in the `odlab/` folder of the project. 

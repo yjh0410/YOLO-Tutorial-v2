@@ -193,8 +193,7 @@ python -m torch.distributed.run --nproc_per_node 8 --master_port 1623 train.py -
                 --fp16
 ```
 
-You could add `--pretrained path/to/yolov1_r18_coco.pth` into the above command to load the coco pretrained weight as
-the initial weight, which might help with faster training convergence and improve performance on custom tasks. However, if there is a significant difference between your custom data and COCO data, this trick may not be effective. For example, if your custom data is medical images, in my opinion, the large number of natural images contained in the COCO dataset may not have any promoting effect on your task.
+在自定义数据集上训练时，也可以考虑加载COCO预训练权重，例如在命令行参数中加入 `--pretrained path/to/yolov1_r18_coco.pth`，使用COCO预训练权重通常是可以加快收敛和提升性能的，但前提得是自定义数据集和COCO数据集的分布差不多，否则可能不会起作用，例如，对于医学图像的目标检测，COCO预训练权重可能就无效了，因为COCO数据集所包含的大多都是自然世界的图像。
 
 - 第6步：使用自定义数据测试模型
 
@@ -266,7 +265,7 @@ python demo.py --mode camera \
 ```
 
 
--------------------
+------------- 以下是英文文档 -------------
 
 # Tutorial of YOLO series
 
@@ -439,15 +438,18 @@ python custom.py --root path/to/custom_dataset/ --split val
 For example:
 
 ```Shell
-# With coco pretrained weight
-cd <YOLO-TUTORIAL-V2/yolo/>
-python train.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 -bs 16 -p path/to/yolov1_r18_coco.pth
-```
-
-```Shell
 # Without coco pretrained weight
 cd <YOLO-TUTORIAL-V2/yolo/>
 python train.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 -bs 16
+```
+
+You could add `--pretrained path/to/yolov1_r18_coco.pth` into the above command to load the coco pretrained weight as
+the initial weight, which might help with faster training convergence and improve performance on custom tasks. However, if there is a significant difference between your custom data and COCO data, this trick may not be effective. For example, if your custom data is medical images, in my opinion, the large number of natural images contained in the COCO dataset may not have any promoting effect on your task.
+
+```Shell
+# With coco pretrained weight
+cd <YOLO-TUTORIAL-V2/yolo/>
+python train.py --root path/to/custom_dataset/ -d custom -m yolov1_r18 -bs 16 -p path/to/yolov1_r18_coco.pth
 ```
 
 - Step-6 **Test** on the custom dataset
