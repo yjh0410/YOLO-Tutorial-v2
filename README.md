@@ -51,6 +51,10 @@
 | RT-DETR-R50  | 4xb4  |  640  |           30             |          50.6          |        69.4       |       112.1       |        36.7        | [ckpt](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/rtdetr_r50_coco.pth) | [log](https://github.com/yjh0410/ODLab-World/releases/download/coco_weight/RT-DETR-R50-COCO.txt)|
 
 ### ODLab系列
+注意，`odlab/`虽然也提供了DETR模型，但本项目并不支持训练，仅用于加载DETR官方权重来进行测试和可视化。考虑到官方的DETR需要训练500epoch，且受限于Transformer的推理速度，1个epoch的训练极其耗时，因此训练周期非常长，远不是在入门阶段就能实现的，因此，读者只需要了解了书中的DETR基本原理即可，随后继续学习，无需尝试DETR的训练。强烈不建议读者尝试去训练DETR，如果读者使用本项目训练DETR模型遇到了任何问题，笔者实在是爱莫能助。
+
+**DETR-R50官方权重**：[ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/detr-r50-e632da11.pth)
+
 下表汇报了本项目的ODLab系列在COCO数据集上的性能指标，所有模型都采用单张3090显卡训练的，在训练中，每张3090显卡上的batch size被设置为4或8，并使用梯度累加策略来近似batch size为16的训练效果。对于FCOS系列，由于resnet的BN层采用的是冻结的BN层、且其他的归一化层为GN层，因此，梯度累加可以完全等效大batch size的效果；对于YOLOF系列，由于DilatedEncoder和Decoder部分中使用到了标准的BN层，因此，梯度累加无法完全等效大batch size的效果。
 
 - COCO
