@@ -8,6 +8,7 @@ import torch
 
 # load transform
 from datasets import build_dataset, build_transform
+from datasets.coco import coco_labels_91
 
 # load some utils
 from utils.misc import load_weight, compute_flops
@@ -98,6 +99,7 @@ def test_det(args, model, device, dataset, transform, class_colors, class_names)
 
 
 if __name__ == '__main__':
+    np.random.seed(0)
     args = parse_args()
     # cuda
     if args.cuda:
@@ -114,11 +116,6 @@ if __name__ == '__main__':
 
     # Dataset
     dataset = build_dataset(args, cfg, is_train=False)
-
-    np.random.seed(0)
-    class_colors = [(np.random.randint(255),
-                     np.random.randint(255),
-                     np.random.randint(255)) for _ in range(cfg.num_classes)]
 
     # Model
     model = build_model(args, cfg, is_val=False)
@@ -137,12 +134,19 @@ if __name__ == '__main__':
     del model_copy
         
     print("================= DETECT =================")
-    # run
+    if cfg.use_coco_labels_91:
+        class_names = coco_labels_91
+    else:
+        class_names = cfg.class_labels
+    class_colors = [(np.random.randint(255),
+                     np.random.randint(255),
+                     np.random.randint(255)) for _ in range(len(class_names))]
+    # Run
     test_det(args         = args,
              model        = model, 
              device       = device, 
              dataset      = dataset,
              transform    = transform,
              class_colors = class_colors,
-             class_names  = cfg.class_labels,
+             class_names  = class_names,
              )

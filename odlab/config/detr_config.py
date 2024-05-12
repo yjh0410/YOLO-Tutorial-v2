@@ -23,6 +23,7 @@ class DetrBaseConfig(object):
         self.hidden_dim = 256
         self.num_heads = 8
         self.feedforward_dim = 2048
+        self.num_queries = 100
         self.num_enc_layers = 6
         self.num_dec_layers = 6
         self.dropout = 0.1
@@ -67,6 +68,7 @@ class DetrBaseConfig(object):
         self.eval_epoch = 2
 
         # --------- Data process ---------
+        self.use_coco_labels_91 = True
         ## input size
         self.train_min_size = [800]   # short edge of image
         self.train_min_size2 = [400, 500, 600]

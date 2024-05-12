@@ -149,5 +149,7 @@ if __name__ == '__main__':
 
     x = torch.randn(2, 3, 320, 320)
     output = model(x)
+    for k in model.state_dict():
+        print(k)
     for y in output:
         print(y.size())

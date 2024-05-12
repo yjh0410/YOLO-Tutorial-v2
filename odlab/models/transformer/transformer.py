@@ -39,6 +39,7 @@ class DETRTransformer(nn.Module):
             hidden_dim, num_heads, ffn_dim, dropout, act_type, pre_norm)
         encoder_norm = nn.LayerNorm(hidden_dim) if pre_norm else None
         self.encoder = TransformerEncoder(encoder_layer, num_enc_layers, encoder_norm)
+
         ## Decoder module
         decoder_layer = TransformerDecoderLayer(
             hidden_dim, num_heads, ffn_dim, dropout, act_type, pre_norm)
@@ -67,7 +68,7 @@ class DETRTransformer(nn.Module):
             y_embed = y_embed / (y_embed[:, -1:, :] + 1e-6) * scale
             x_embed = x_embed / (x_embed[:, :, -1:] + 1e-6) * scale
     
-        dim_t = torch.arange(num_pos_feats, dtype=torch.float32)
+        dim_t = torch.arange(num_pos_feats, dtype=torch.float32, device=src_mask.device)
         dim_t_ = torch.div(dim_t, 2, rounding_mode='floor') / num_pos_feats
         dim_t = temperature ** (2 * dim_t_)
 
@@ -82,9 +83,8 @@ class DETRTransformer(nn.Module):
         return pos_embed
 
     def forward(self, src, src_mask, query_embed):
-        bs, c, h, w = src.shape
-
         # Get position embedding
+        bs, c, h, w = src.shape
         pos_embed = self.get_posembed(c, src_mask, normalize=True)
 
         # reshape: [B, C, H, W] -> [N, B, C], H=HW
@@ -96,7 +96,7 @@ class DETRTransformer(nn.Module):
         query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1)
 
         # Encoder
-        memory = self.encoder(src, src_key_padding_mask=src_mask, pos_embed=pos_embed)
+        memory = self.encoder(src, src_mask, pos_embed=pos_embed)
 
         # Decoder
         tgt = torch.zeros_like(query_embed)

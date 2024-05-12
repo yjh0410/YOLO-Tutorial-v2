@@ -62,14 +62,13 @@ class TransformerEncoderLayer(nn.Module):
         self.dropout2   = nn.Dropout(dropout)
         self.norm2      = nn.LayerNorm(hidden_dim)
 
-
     def with_pos_embed(self, tensor, pos_embed):
         return tensor if pos_embed is None else tensor + pos_embed
 
     def forward_post(self, src, src_mask, pos_embed):
         # MSHA
         q = k = self.with_pos_embed(src, pos_embed)
-        src2 = self.self_attn(q, k, src, src_key_padding_mask=src_mask)[0]
+        src2 = self.self_attn(q, k, src, key_padding_mask=src_mask)[0]
         src = src + self.dropout1(src2)
         src = self.norm1(src)
 
@@ -84,7 +83,7 @@ class TransformerEncoderLayer(nn.Module):
         # MSHA
         src2 = self.norm1(src)
         q = k = self.with_pos_embed(src2, pos_embed)
-        src2 = self.self_attn(q, k, src2, src_key_padding_mask=src_mask)[0]
+        src2 = self.self_attn(q, k, src2, key_padding_mask=src_mask)[0]
         src = src + self.dropout1(src2)
 
         # FFN

@@ -90,7 +90,6 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout3   = nn.Dropout(dropout)
         self.norm3      = nn.LayerNorm(hidden_dim)
 
-
     def with_pos_embed(self, tensor, pos_embed):
         return tensor if pos_embed is None else tensor + pos_embed
 

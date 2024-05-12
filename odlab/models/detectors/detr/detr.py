@@ -12,7 +12,7 @@ from ...basic.mlp   import MLP
 class DETR(nn.Module):
     def __init__(self, 
                  cfg,
-                 num_classes :int   = 80, 
+                 num_classes :int   = 90, 
                  conf_thresh :float = 0.05,
                  topk        :int   = 1000,
                  ):
@@ -25,20 +25,20 @@ class DETR(nn.Module):
 
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone, feat_dims = build_backbone(cfg)
-
+        backbone, feat_dims = build_backbone(cfg)
+        self.backbone = nn.Sequential(backbone)
         ## Input proj
         self.input_proj = nn.Conv2d(feat_dims[-1], cfg.hidden_dim, kernel_size=1)
 
-        ## Object Queries
-        self.query_embed = nn.Embedding(cfg.num_queries, cfg.hidden_dim)
-        
         ## Transformer
         self.transformer = build_transformer(cfg, return_intermediate_dec=True)
 
+        ## Object queries
+        self.query_embed = nn.Embedding(cfg.num_queries, cfg.hidden_dim)
+        
         ## Output
         self.class_embed = nn.Linear(cfg.hidden_dim, num_classes + 1)
-        self.bbox_embed  = MLP(cfg.hidden_dim, cfg.feedward_dim, 4, 3)
+        self.bbox_embed  = MLP(cfg.hidden_dim, cfg.hidden_dim, 4, 3)
 
     @torch.jit.unused
     def set_aux_loss(self, outputs_class, outputs_coord):
@@ -102,10 +102,14 @@ class DETR(nn.Module):
             outputs = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
             outputs['aux_outputs'] = self.set_aux_loss(outputs_class, outputs_coord)
         else:
-            # [B, N, C] -> [N, C]
             cls_pred = outputs_class[-1].softmax(-1)[..., :-1]
             box_pred = outputs_coord[-1]
 
+            # [B, N, C] -> [N, C]
+            cls_pred = cls_pred[0]
+            box_pred = box_pred[0]
+
+            # xywh -> xyxy
             cxcy_pred = box_pred[..., :2]
             bwbh_pred = box_pred[..., 2:]
             x1y1_pred = cxcy_pred - 0.5 * bwbh_pred
