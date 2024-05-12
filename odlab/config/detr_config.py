@@ -68,7 +68,6 @@ class DetrBaseConfig(object):
         self.eval_epoch = 2
 
         # --------- Data process ---------
-        self.use_coco_labels_91 = True
         ## input size
         self.train_min_size = [800]   # short edge of image
         self.train_min_size2 = [400, 500, 600]

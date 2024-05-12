@@ -126,6 +126,7 @@ def main():
     ## Build model
     model, criterion = build_model(args, cfg, is_val=True)
     model.to(device)
+    criterion.to(device)
     model_without_ddp = model
     ## Calcute Params & GFLOPs
     if distributed_utils.is_main_process():

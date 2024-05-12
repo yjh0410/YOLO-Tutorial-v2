@@ -99,7 +99,6 @@ def test_det(args, model, device, dataset, transform, class_colors, class_names)
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
     args = parse_args()
     # cuda
     if args.cuda:
@@ -116,6 +115,10 @@ if __name__ == '__main__':
 
     # Dataset
     dataset = build_dataset(args, cfg, is_train=False)
+    if args.model == "detr_r50":
+        # Test official DETR model
+        cfg.class_labels = coco_labels_91
+        cfg.num_classes = 91
 
     # Model
     model = build_model(args, cfg, is_val=False)
@@ -134,13 +137,12 @@ if __name__ == '__main__':
     del model_copy
         
     print("================= DETECT =================")
-    if cfg.use_coco_labels_91:
-        class_names = coco_labels_91
-    else:
-        class_names = cfg.class_labels
+    # Color for beautiful visualization
+    np.random.seed(0)
     class_colors = [(np.random.randint(255),
                      np.random.randint(255),
-                     np.random.randint(255)) for _ in range(len(class_names))]
+                     np.random.randint(255))
+                     for _ in range(cfg.num_classes)]
     # Run
     test_det(args         = args,
              model        = model, 
@@ -148,5 +150,5 @@ if __name__ == '__main__':
              dataset      = dataset,
              transform    = transform,
              class_colors = class_colors,
-             class_names  = class_names,
+             class_names  = cfg.class_labels,
              )

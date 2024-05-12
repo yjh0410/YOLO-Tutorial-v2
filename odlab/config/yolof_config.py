@@ -94,7 +94,6 @@ class YolofBaseConfig(object):
         self.eval_epoch = 2
 
         # --------- Data process ---------
-        self.use_coco_labels_91 = False
         ## input size
         self.train_min_size = [800]   # short edge of image
         self.train_max_size = 1333
