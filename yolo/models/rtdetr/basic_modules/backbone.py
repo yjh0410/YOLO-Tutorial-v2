@@ -9,17 +9,6 @@ except:
     from  norm import FrozenBatchNorm2d
 
 
-# IN1K pretrained weights
-pretrained_urls = {
-    # ResNet series
-    'resnet18':  resnet.ResNet18_Weights,
-    'resnet34':  resnet.ResNet34_Weights,
-    'resnet50':  resnet.ResNet50_Weights,
-    'resnet101': resnet.ResNet101_Weights,
-
-}
-
-
 # ----------------- Model functions -----------------
 ## Build backbone network
 def build_backbone(cfg, pretrained):
