@@ -10,7 +10,7 @@ except:
 pretrained_urls = {
     'n': None,
     's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/cspdarknet_s_in1k_70.1.pth",
-    'm': None,
+    'm': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/cspdarknet_m_in1k_75.2.pth",
     'l': None,
     'x': None,
 }
