@@ -365,9 +365,9 @@ def load_weight(model, path_to_ckpt, fuse_cbn=False):
         model = fuse_conv_bn(model)
 
     # Fuse RepConv
-    if hasattr(model, "switch_deploy"):
+    if hasattr(model, "switch_to_deploy"):
         print("Reparam ...")
-        model.switch_deploy()
+        model.switch_to_deploy()
 
     return model
 
