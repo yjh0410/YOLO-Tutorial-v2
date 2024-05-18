@@ -343,7 +343,7 @@ def compute_flops(model, img_size, device):
     print('Params : {:.2f} M'.format(params / 1e6))
 
 ## load trained weight
-def load_weight(model, path_to_ckpt, fuse_cbn=False):
+def load_weight(model, path_to_ckpt, fuse_cbn=False, rep_conv=False):
     # Check ckpt file
     if path_to_ckpt is None:
         print('no weight file ...')
@@ -365,7 +365,7 @@ def load_weight(model, path_to_ckpt, fuse_cbn=False):
         model = fuse_conv_bn(model)
 
     # Fuse RepConv
-    if hasattr(model, "switch_to_deploy"):
+    if hasattr(model, "switch_to_deploy") and rep_conv:
         print("Reparam ...")
         model.switch_to_deploy()
 
