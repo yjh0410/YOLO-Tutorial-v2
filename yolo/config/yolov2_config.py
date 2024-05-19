@@ -37,7 +37,7 @@ class Yolov2BaseConfig(object):
         self.val_conf_thresh = 0.001
         self.val_nms_thresh  = 0.7
         self.test_topk = 300
-        self.test_conf_thresh = 0.4
+        self.test_conf_thresh = 0.3
         self.test_nms_thresh  = 0.5
 
         # ---------------- Assignment config ----------------
