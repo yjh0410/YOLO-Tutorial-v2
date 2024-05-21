@@ -1,9 +1,5 @@
 import argparse
-import cv2
-import os
 import time
-import numpy as np
-from copy import deepcopy
 import torch
 
 # load transform
@@ -11,9 +7,6 @@ from dataset.build import build_dataset, build_transform
 
 # load some utils
 from utils.misc import load_weight, compute_flops
-from utils.box_ops import rescale_bboxes
-from utils.vis_tools import visualize
-
 from config import build_config
 from models import build_model
 
