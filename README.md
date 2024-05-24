@@ -26,7 +26,7 @@
 | YOLOv5-S    | 1xb16 |  640  |       81.2        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov5_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv5-S-VOC.txt) |
 | YOLOv5-AF-S | 1xb16 |  640  |       83.4        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov5_af_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv5-AF-S-VOC.txt) |
 | YOLOv8-S    | 1xb16 |  640  |       83.3        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/yolov8_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/YOLOv8-S-VOC.txt) |
-| GELAN-S     | 1xb16 |  640  |               | [ckpt]() | [log]() |
+| GELAN-S     | 1xb16 |  640  |       83.5        | [ckpt](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/gelan_s_voc.pth) | [log](https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/yolo_tutorial_ckpt/GELAN-S-VOC.txt) |
 
 - COCO
 
