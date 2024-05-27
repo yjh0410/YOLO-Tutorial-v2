@@ -10,8 +10,8 @@ except:
 pretrained_urls = {
     'n': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elandarknet_n_in1k_62.1.pth",
     's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elandarknet_s_in1k_71.3.pth",
-    'm': None,
-    'l': None,
+    'm': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elandarknet_m_in1k_75.7.pth",
+    'l': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/elandarknet_l_in1k_77.3.pth",
     'x': None,
 }
 
