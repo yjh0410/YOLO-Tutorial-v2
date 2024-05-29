@@ -8,8 +8,8 @@ except:
 
 # IN1K pretrained weight
 pretrained_urls = {
-    's': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/gelan_s_in1k_68.4.pth",
-    'c': "https://github.com/yjh0410/ICLab/releases/download/in1k_pretrained/gelan_c_in1k_76.7.pth",
+    's': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/gelan_s_in1k_68.4.pth",
+    'c': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/gelan_c_in1k_76.7.pth",
 }
 
 # ----------------- GELAN backbone proposed by YOLOv9 -----------------
