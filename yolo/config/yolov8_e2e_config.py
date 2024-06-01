@@ -1,22 +1,22 @@
 # yolo Config
 
 
-def build_yolov8_config(args):
-    if   args.model == 'yolov8_n':
-        return Yolov8NConfig()
-    elif args.model == 'yolov8_s':
-        return Yolov8SConfig()
-    elif args.model == 'yolov8_m':
-        return Yolov8MConfig()
-    elif args.model == 'yolov8_l':
-        return Yolov8LConfig()
-    elif args.model == 'yolov8_x':
-        return Yolov8XConfig()
+def build_yolov8_e2e_config(args):
+    if   args.model == 'yolov8_e2e_n':
+        return Yolov8E2E_N_Config()
+    elif args.model == 'yolov8_e2e_s':
+        return Yolov8E2E_S_Config()
+    elif args.model == 'yolov8_e2e_m':
+        return Yolov8E2E_M_Config()
+    elif args.model == 'yolov8_e2e_l':
+        return Yolov8E2E_L_Config()
+    elif args.model == 'yolov8_e2e_x':
+        return Yolov8E2E_X_Config()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
-# YOLOv8-Base config
-class Yolov8BaseConfig(object):
+# YOLOv8-E2E Base config
+class Yolov8E2EBaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
         self.width    = 1.0
@@ -51,12 +51,10 @@ class Yolov8BaseConfig(object):
 
         # ---------------- Post-process config ----------------
         ## Post process
-        self.val_topk = 1000
+        self.val_topk = 100
         self.val_conf_thresh = 0.001
-        self.val_nms_thresh  = 0.7
         self.test_topk = 100
         self.test_conf_thresh = 0.2
-        self.test_nms_thresh  = 0.5
 
         # ---------------- Assignment config ----------------
         ## Matcher
@@ -123,8 +121,8 @@ class Yolov8BaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
-# YOLOv8-N
-class Yolov8NConfig(Yolov8BaseConfig):
+# YOLOv8-E2E N
+class Yolov8E2E_N_Config(Yolov8E2EBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -139,7 +137,7 @@ class Yolov8NConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-S
-class Yolov8SConfig(Yolov8BaseConfig):
+class Yolov8E2E_S_Config(Yolov8E2EBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -154,7 +152,7 @@ class Yolov8SConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-M
-class Yolov8MConfig(Yolov8BaseConfig):
+class Yolov8E2E_M_Config(Yolov8E2EBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -169,7 +167,7 @@ class Yolov8MConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-L
-class Yolov8LConfig(Yolov8BaseConfig):
+class Yolov8E2E_L_Config(Yolov8E2EBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -184,7 +182,7 @@ class Yolov8LConfig(Yolov8BaseConfig):
         self.copy_paste  = 0.5
 
 # YOLOv8-X
-class Yolov8XConfig(Yolov8BaseConfig):
+class Yolov8E2E_X_Config(Yolov8E2EBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------

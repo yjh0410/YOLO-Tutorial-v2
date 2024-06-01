@@ -1,13 +1,14 @@
 # ------------------ Model Config ------------------
-from .yolov1_config    import build_yolov1_config
-from .yolov2_config    import build_yolov2_config
-from .yolov3_config    import build_yolov3_config
-from .yolov5_config    import build_yolov5_config
-from .yolov5_af_config import build_yolov5af_config
-from .yolov6_config    import build_yolov6_config
-from .yolov8_config    import build_yolov8_config
-from .gelan_config     import build_gelan_config
-from .rtdetr_config    import build_rtdetr_config
+from .yolov1_config     import build_yolov1_config
+from .yolov2_config     import build_yolov2_config
+from .yolov3_config     import build_yolov3_config
+from .yolov5_config     import build_yolov5_config
+from .yolov5_af_config  import build_yolov5af_config
+from .yolov6_config     import build_yolov6_config
+from .yolov8_config     import build_yolov8_config
+from .yolov8_e2e_config import build_yolov8_e2e_config
+from .gelan_config      import build_gelan_config
+from .rtdetr_config     import build_rtdetr_config
 
 
 def build_config(args):
@@ -26,6 +27,8 @@ def build_config(args):
         cfg = build_yolov5_config(args)
     elif 'yolov6' in args.model:
         cfg = build_yolov6_config(args)
+    elif 'yolov8_e2e' in args.model:
+        cfg = build_yolov8_e2e_config(args)
     elif 'yolov8' in args.model:
         cfg = build_yolov8_config(args)
     elif 'gelan' in args.model:
