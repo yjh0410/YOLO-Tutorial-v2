@@ -1,9 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
 
-from .fcos.build  import build_fcos, build_fcos_rt
-from .yolof.build import build_yolof
-from .detr.build  import build_detr
+from .fcos.build     import build_fcos, build_fcos_rt
+from .fcos_e2e.build import build_fcos_e2e
+from .yolof.build    import build_yolof
+from .detr.build     import build_detr
 
 
 def build_model(args, cfg, is_val=False):
@@ -11,6 +12,9 @@ def build_model(args, cfg, is_val=False):
     ## RT-FCOS    
     if   'fcos_rt' in args.model:
         model, criterion = build_fcos_rt(cfg, is_val)
+    ## E2E-FCOS
+    elif 'fcos_e2e' in args.model:
+        model, criterion = build_fcos_e2e(cfg, is_val)
     ## FCOS    
     elif 'fcos' in args.model:
         model, criterion = build_fcos(cfg, is_val)
