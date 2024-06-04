@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 from .loss import SetCriterion
-from .yolov8 import Yolov8E2E
+from .yolov8_e2e import Yolov8E2E
 
 
 # build object detector

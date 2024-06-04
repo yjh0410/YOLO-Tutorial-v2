@@ -11,7 +11,7 @@ pretrained_urls = {
     'n': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/elandarknet_n_in1k_62.1.pth",
     's': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/elandarknet_s_in1k_71.3.pth",
     'm': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/elandarknet_m_in1k_75.7.pth",
-    'l': None,
+    'l': "https://github.com/yjh0410/YOLO-Tutorial-v2/releases/download/in1k_pretrained_weight/elandarknet_l_in1k_77.3.pth",
     'x': None,
 }
 
