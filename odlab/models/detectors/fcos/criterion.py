@@ -176,10 +176,14 @@ class SetCriterion(nn.Module):
             pred_ctn[foreground_idxs],  gt_centerness[foreground_idxs], reduction='none')
         loss_centerness = loss_centerness.sum() / num_foreground
 
+        total_loss = loss_labels * self.weight_dict["loss_cls"] + \
+                     loss_bboxes * self.weight_dict["loss_reg"] + \
+                     loss_centerness * self.weight_dict["loss_ctn"]
         loss_dict = dict(
                 loss_cls = loss_labels,
                 loss_reg = loss_bboxes,
                 loss_ctn = loss_centerness,
+                losses   = total_loss,
         )
 
         return loss_dict
@@ -254,9 +258,12 @@ class SetCriterion(nn.Module):
         box_weight = assign_metrics[foreground_idxs]
         loss_bboxes = self.loss_bboxes_xyxy(box_preds_pos, box_targets_pos, num_fgs, box_weight)
 
+        total_loss = loss_labels * self.weight_dict["loss_cls"] + \
+                     loss_bboxes * self.weight_dict["loss_reg"]
         loss_dict = dict(
                 loss_cls = loss_labels,
                 loss_reg = loss_bboxes,
+                losses   = total_loss,
         )
 
         return loss_dict

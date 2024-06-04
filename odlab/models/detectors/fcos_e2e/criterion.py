@@ -133,11 +133,11 @@ class SetCriterion(nn.Module):
         loss_bboxes = self.loss_bboxes(box_preds_pos, box_targets_pos, num_fgs, box_weight)
 
         total_loss = loss_labels * self.weight_dict["loss_cls"] + \
-                         loss_bboxes * self.weight_dict["loss_reg"]
+                     loss_bboxes * self.weight_dict["loss_reg"]
         loss_dict = dict(
                 loss_cls = loss_labels,
                 loss_reg = loss_bboxes,
-                loss     = total_loss,
+                losses   = total_loss,
         )
 
         return loss_dict
@@ -158,7 +158,7 @@ class SetCriterion(nn.Module):
         o2o_loss_dict = self.compute_loss(outputs["outputs_o2o"], targets)
 
         loss_dict = {}
-        loss_dict["loss"] = o2o_loss_dict["loss"] + o2m_loss_dict["loss"]
+        loss_dict["losses"] = o2o_loss_dict["losses"] + o2m_loss_dict["losses"]
         for k in o2m_loss_dict:
             loss_dict['o2m_' + k] = o2m_loss_dict[k]
         for k in o2o_loss_dict:

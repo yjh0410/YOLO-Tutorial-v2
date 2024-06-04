@@ -1,7 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-"""
-Train and eval functions used in main.py
-"""
 import math
 import sys
 from typing import Iterable
@@ -59,8 +55,7 @@ def train_one_epoch(cfg,
 
         # Compute loss
         loss_dict = criterion(outputs, targets)
-        loss_weight_dict = criterion.weight_dict
-        losses = sum(loss_dict[k] * loss_weight_dict[k] for k in loss_dict.keys() if k in loss_weight_dict)
+        losses = loss_dict["losses"]# sum(loss_dict[k] * loss_weight_dict[k] for k in loss_dict.keys() if k in loss_weight_dict)
         loss_value = losses.item()
         losses /= cfg.grad_accumulate
 

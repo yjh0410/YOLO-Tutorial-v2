@@ -134,9 +134,12 @@ class SetCriterion(nn.Module):
         matched_pred_box = pred_box.reshape(-1, 4)[src_idx[~pos_ignore_idx.cpu()]]
         loss_bboxes = self.loss_bboxes(matched_pred_box, tgt_boxes, num_foreground)
 
+        total_loss = loss_labels * self.weight_dict["loss_cls"] + \
+                     loss_bboxes * self.weight_dict["loss_reg"]
         loss_dict = dict(
                 loss_cls = loss_labels,
                 loss_reg = loss_bboxes,
+                losses   = total_loss,
         )
 
         return loss_dict
