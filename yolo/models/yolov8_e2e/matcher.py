@@ -6,6 +6,9 @@ from utils.box_ops import bbox_iou
 
 # -------------------------- Task Aligned Assigner --------------------------
 class TaskAlignedAssigner(nn.Module):
+    """
+        This code referenced to https://github.com/ultralytics/ultralytics
+    """
     def __init__(self,
                  num_classes     = 80,
                  topk_candidates = 10,

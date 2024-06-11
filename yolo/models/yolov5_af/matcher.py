@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------
-# Copyright (c) Megvii Inc. All rights reserved.
-# ---------------------------------------------------------------------
-
-
 import torch
 import torch.nn.functional as F
 from utils.box_ops import *
