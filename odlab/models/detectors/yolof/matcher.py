@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------
-# Copyright (c) Megvii Inc. All rights reserved.
-# ---------------------------------------------------------------------
-
-
 import numpy as np
 import torch
 from torch import nn
@@ -11,14 +6,8 @@ from utils.box_ops import *
 
 class UniformMatcher(nn.Module):
     """
-    This code referenced to https://github.com/megvii-model/YOLOF/blob/main/playground/detection/coco/yolof/yolof_base/uniform_matcher.py
-    Uniform Matching between the anchors and gt boxes, which can achieve
-    balance in positive anchors.
-
-    Args:
-        match_times(int): Number of positive anchors for each gt box.
+    This code is referenced to https://github.com/megvii-model/YOLOF/blob/main/playground/detection/coco/yolof/yolof_base/uniform_matcher.py
     """
-
     def __init__(self, match_times: int = 4):
         super().__init__()
         self.match_times = match_times

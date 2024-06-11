@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------
-# Copyright (c) Megvii Inc. All rights reserved.
-# ---------------------------------------------------------------------
-
-
 import math
 import torch
 import torch.nn.functional as F
@@ -226,7 +221,10 @@ class FcosMatcher(object):
         return torch.stack(gt_classes), torch.stack(gt_anchors_deltas), torch.stack(gt_centerness)
 
 
-class SimOtaMatcher(object):
+class AlignedOTAMatcher(object):
+    """
+    This code referenced to https://github.com/open-mmlab/mmyolo/models/task_modules/assigners/batch_dsl_assigner.py
+    """
     def __init__(self, num_classes, soft_center_radius=3.0, topk_candidates=13):
         self.num_classes = num_classes
         self.soft_center_radius = soft_center_radius

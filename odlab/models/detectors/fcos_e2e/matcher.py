@@ -5,6 +5,9 @@ from utils.box_ops import box_iou
 
 
 class AlignedOTAMatcher(object):
+    """
+    This code referenced to https://github.com/open-mmlab/mmyolo/models/task_modules/assigners/batch_dsl_assigner.py
+    """
     def __init__(self,
                  num_classes,
                  soft_center_radius=3.0,
