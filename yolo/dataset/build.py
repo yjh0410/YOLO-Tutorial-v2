@@ -65,7 +65,6 @@ def build_transform(cfg, is_train=False):
         if is_train:
             transform = YOLOAugmentation(cfg.train_img_size,
                                          cfg.affine_params,
-                                         cfg.use_ablu,
                                          cfg.pixel_mean,
                                          cfg.pixel_std,
                                          cfg.box_format,

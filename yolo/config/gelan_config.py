@@ -118,7 +118,6 @@ class GElanBaseConfig(object):
         ## Transforms
         self.train_img_size = 640
         self.test_img_size  = 640
-        self.use_ablu = True
         self.affine_params = {
             'degrees': 0.0,
             'translate': 0.2,

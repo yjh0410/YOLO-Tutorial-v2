@@ -2,7 +2,6 @@ import random
 import cv2
 import math
 import numpy as np
-import albumentations as albu
 
 import torch
 import torchvision.transforms.functional as F
@@ -99,31 +98,6 @@ def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
 
     return img
 
-## Ablu transform
-class Albumentations(object):
-    def __init__(self, img_size=640):
-        self.img_size = img_size
-        self.transform = albu.Compose(
-            [albu.Blur(p=0.01),
-             albu.MedianBlur(p=0.01),
-             albu.ToGray(p=0.01),
-             albu.CLAHE(p=0.01),
-             ],
-             bbox_params=albu.BboxParams(format='pascal_voc', label_fields=['labels'])
-        )
-
-    def __call__(self, image, target=None):
-        labels = target['labels']
-        bboxes = target['boxes']
-        if len(labels) > 0:
-            new = self.transform(image=image, bboxes=bboxes, labels=labels)
-            if len(new["labels"]) > 0:
-                image = new['image']
-                target['labels'] = np.array(new["labels"], dtype=labels.dtype)
-                target['boxes'] = np.array(new["bboxes"], dtype=bboxes.dtype)
-
-        return image, target
-
 
 # ------------------------- Preprocessers -------------------------
 ## YOLO-style Transform for Train
@@ -131,7 +105,6 @@ class YOLOAugmentation(object):
     def __init__(self,
                  img_size=640,
                  affine_params=None,
-                 use_ablu=False,
                  pixel_mean = [0., 0., 0.],
                  pixel_std  = [255., 255., 255.],
                  box_format='xyxy',
@@ -144,8 +117,6 @@ class YOLOAugmentation(object):
         self.affine_params = affine_params
         self.normalize_coords = normalize_coords
         self.color_format = 'bgr'
-        # Albumentations
-        self.ablu_trans = Albumentations(img_size) if use_ablu else None
 
     def __call__(self, image, target, mosaic=False):
         # --------------- Resize image ---------------
@@ -159,17 +130,6 @@ class YOLOAugmentation(object):
         # rescale bbox
         target["boxes"][..., [0, 2]] = target["boxes"][..., [0, 2]] / orig_w * img_w
         target["boxes"][..., [1, 3]] = target["boxes"][..., [1, 3]] / orig_h * img_h
-
-        # --------------- Filter bad targets ---------------
-        tgt_boxes_wh = target["boxes"][..., 2:] - target["boxes"][..., :2]
-        min_tgt_size = np.min(tgt_boxes_wh, axis=-1)
-        keep = (min_tgt_size > 1)
-        target["boxes"]  = target["boxes"][keep]
-        target["labels"] = target["labels"][keep]
-
-        # --------------- Albumentations ---------------
-        if self.ablu_trans is not None:
-            image, target = self.ablu_trans(image, target)
 
         # --------------- HSV augmentations ---------------
         image = augment_hsv(image,
