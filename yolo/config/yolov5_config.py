@@ -76,9 +76,9 @@ class Yolov5BaseConfig(object):
         # ---------------- Optimizer config ----------------
         self.trainer      = 'yolo'
         self.optimizer    = 'adamw'
-        self.per_image_lr = 0.001 / 64
-        self.base_lr      = None      # base_lr = per_image_lr * batch_size
+        self.base_lr      = 0.001     # base_lr = per_image_lr * batch_size
         self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
+        self.batch_size_base = 64
         self.momentum     = 0.9
         self.weight_decay = 0.05
         self.clip_max_norm   = 35.0
