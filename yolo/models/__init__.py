@@ -11,6 +11,7 @@ from .yolov6.build     import build_yolov6
 from .yolov8.build     import build_yolov8
 from .yolov8_e2e.build import build_yolov8_e2e
 from .gelan.build      import build_gelan
+from .rtcdet.build     import build_rtcdet
 from .rtdetr.build     import build_rtdetr
 
 
@@ -44,6 +45,9 @@ def build_model(args, cfg, is_val=False):
     ## GElan
     elif 'gelan' in args.model:
         model, criterion = build_gelan(cfg, is_val)
+    ## RTCDet
+    elif 'rtcdet' in args.model:
+        model, criterion = build_rtcdet(cfg, is_val)
     ## RT-DETR
     elif 'rtdetr' in args.model:
         model, criterion = build_rtdetr(cfg, is_val)

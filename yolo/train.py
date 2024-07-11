@@ -13,7 +13,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 # ----------------- Extra Components -----------------
 from utils import distributed_utils
-from utils.misc import compute_flops, build_dataloader, CollateFunc, ModelEMA
+from utils.misc import compute_flops, build_dataloader, CollateFunc
+from utils.ema  import ModelEMA
 
 # ----------------- Config Components -----------------
 from config import build_config

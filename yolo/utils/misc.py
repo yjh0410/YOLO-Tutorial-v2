@@ -354,7 +354,12 @@ def load_weight(model, path_to_ckpt, fuse_cbn=False, rep_conv=False):
         print('Epoch: {}'.format(checkpoint["epoch"]))
         print('mAP: {}'.format(checkpoint["mAP"]))
         print('--------------------------------------')
-        checkpoint_state_dict = checkpoint["model"]
+        if "model_ema" in checkpoint:
+            print("Load the model from the ModelEMA state dict ...")
+            checkpoint_state_dict = checkpoint["model_ema"]
+        else:
+            print("Load the model state dict ...")
+            checkpoint_state_dict = checkpoint["model"]
         model.load_state_dict(checkpoint_state_dict)
 
         print('Finished loading model!')
