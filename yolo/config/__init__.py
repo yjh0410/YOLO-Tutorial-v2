@@ -8,7 +8,6 @@ from .yolov6_config     import build_yolov6_config
 from .yolov8_config     import build_yolov8_config
 from .yolov8_e2e_config import build_yolov8_e2e_config
 from .gelan_config      import build_gelan_config
-from .rtcdet_config     import build_rtcdet_config
 from .rtdetr_config     import build_rtdetr_config
 
 
@@ -34,8 +33,6 @@ def build_config(args):
         cfg = build_yolov8_config(args)
     elif 'gelan' in args.model:
         cfg = build_gelan_config(args)
-    elif 'rtcdet' in args.model:
-        cfg = build_rtcdet_config(args)
         
     # ----------- RT-DETR -----------
     elif 'rtdetr' in args.model:
