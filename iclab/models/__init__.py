@@ -2,6 +2,7 @@ from .elandarknet.build import build_elandarknet
 from .cspdarknet.build  import build_cspdarknet
 from .darknet.build     import build_darknet
 from .gelan.build       import build_gelan
+from .vit.build         import build_vit
 
 
 def build_model(args):
@@ -14,6 +15,8 @@ def build_model(args):
         model = build_darknet(args)
     elif 'gelan' in args.model:
         model = build_gelan(args)
+    elif 'vit' in args.model:
+        model = build_vit(args)
     else:
         raise NotImplementedError("Unknown model: {}".format(args.model))
 
