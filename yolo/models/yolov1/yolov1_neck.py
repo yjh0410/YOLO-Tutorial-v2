@@ -52,7 +52,7 @@ if __name__=='__main__':
     from thop import profile
     # Model config
     
-    # YOLOv8-Base config
+    # YOLOv1 configuration
     class Yolov1BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
@@ -64,22 +64,23 @@ if __name__=='__main__':
             self.neck_depthwise = False
             self.neck_expand_ratio = 0.5
             self.spp_pooling_size  = 5
-
     cfg = Yolov1BaseConfig()
-    # Build a head
+
+    # Build a neck
     in_dim  = 512
     out_dim = 512
-    neck = SPPF(cfg, 512, 512)
+    model = SPPF(cfg, 512, 512)
+
+    # Randomly generate a input data
+    x = torch.randn(2, in_dim, 20, 20)
 
     # Inference
-    x = torch.randn(1, in_dim, 20, 20)
-    t0 = time.time()
-    output = neck(x)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    print('Neck output: ', output.shape)
+    output = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of output : ', output.shape)
 
-    flops, params = profile(neck, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
+    x = torch.randn(1, in_dim, 20, 20)
+    flops, params = profile(model, inputs=(x, ), verbose=False)
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))
