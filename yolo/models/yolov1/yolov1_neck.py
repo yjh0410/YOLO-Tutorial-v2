@@ -48,9 +48,7 @@ class SPPF(nn.Module):
 
 
 if __name__=='__main__':
-    import time
     from thop import profile
-    # Model config
     
     # YOLOv1 configuration
     class Yolov1BaseConfig(object):
