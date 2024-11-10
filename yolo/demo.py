@@ -16,7 +16,7 @@ from utils.box_ops import rescale_bboxes
 from utils.vis_tools import visualize
 
 from models import build_model
-from config import build_config\
+from config import build_config
 
 from dataset.voc  import voc_class_labels
 from dataset.coco import coco_class_labels

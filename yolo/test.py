@@ -21,7 +21,7 @@ from models import build_model
 def parse_args():
     parser = argparse.ArgumentParser(description='Real-time Object Detection LAB')
     # Basic setting
-    parser.add_argument('-size', '--img_size', default=640, type=int,
+    parser.add_argument('--img_size', default=640, type=int,
                         help='the max size of input image')
     parser.add_argument('--show', action='store_true', default=False,
                         help='show the visulization results.')
@@ -35,19 +35,17 @@ def parse_args():
                         help='resize window of cv2 for visualization.')
 
     # Model setting
-    parser.add_argument('-m', '--model', default='yolo_n', type=str,
+    parser.add_argument('--model', default='yolo_n', type=str,
                         help='build yolo')
     parser.add_argument('--weight', default=None,
                         type=str, help='Trained state_dict file path to open')
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
                         help='fuse Conv & BN')
-    parser.add_argument('--rep_conv', action='store_true', default=False,
-                        help='fuse Rep VGG block')
 
     # Data setting
     parser.add_argument('--root', default='D:/python_work/dataset/COCO/',
                         help='data root')
-    parser.add_argument('-d', '--dataset', default='coco',
+    parser.add_argument('--dataset', default='coco',
                         help='coco, voc.')
 
     return parser.parse_args()
@@ -129,7 +127,7 @@ if __name__ == '__main__':
     model = build_model(args, cfg, is_val=False)
 
     # Load trained weight
-    model = load_weight(model, args.weight, args.fuse_conv_bn, args.rep_conv)
+    model = load_weight(model, args.weight, args.fuse_conv_bn)
     model.to(device).eval()
 
     # Compute FLOPs and Params

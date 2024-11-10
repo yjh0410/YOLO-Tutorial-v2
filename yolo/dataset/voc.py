@@ -3,7 +3,7 @@ import cv2
 import time
 import random
 import numpy as np
-from torch.utils.data import Dataset
+import torch
 from pycocotools.coco import COCO
 
 try:
@@ -16,7 +16,7 @@ voc_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
 voc_class_labels = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
 
 
-class VOCDataset(Dataset):
+class VOCDataset(torch.utils.data.Dataset):
     def __init__(self, 
                  cfg,
                  data_dir  :str = None, 
@@ -39,12 +39,18 @@ class VOCDataset(Dataset):
         # ----------- Transform parameters -----------
         self.transform = transform
         if is_train:
+            if cfg.mosaic_prob == 0.:
+                self.mosaic_augment = None
+            else:
+                self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
             self.mosaic_prob = cfg.mosaic_prob
+            if cfg.mixup_prob == 0.:
+                self.mixup_augment = None
+            else:
+                self.mixup_augment = MixupAugment(cfg.train_img_size)
+        else:
             self.mixup_prob  = cfg.mixup_prob
             self.copy_paste  = cfg.copy_paste
-            self.mosaic_augment = None if cfg.mosaic_prob == 0. else MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
-            self.mixup_augment  = None if cfg.mixup_prob == 0. and cfg.copy_paste == 0.  else MixupAugment(cfg.train_img_size)
-        else:
             self.mosaic_prob = 0.0
             self.mixup_prob  = 0.0
             self.copy_paste  = 0.0

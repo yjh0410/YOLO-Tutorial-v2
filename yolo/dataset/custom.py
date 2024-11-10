@@ -1,22 +1,22 @@
 import os
 import cv2
 import time
-import random
 import numpy as np
-from torch.utils.data import Dataset
 from pycocotools.coco import COCO
 
 try:
     from .data_augment.strong_augment import MosaicAugment, MixupAugment
+    from .coco import COCODataset
 except:
     from  data_augment.strong_augment import MosaicAugment, MixupAugment
+    from  coco import COCODataset
 
 
 custom_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 custom_class_labels = ('bird', 'butterfly', 'cat', 'cow', 'dog', 'lion', 'person', 'pig', 'tiger', )
 
 
-class CustomDataset(Dataset):
+class CustomDataset(COCODataset):
     def __init__(self, 
                  cfg,
                  data_dir     :str = None, 
@@ -40,105 +40,28 @@ class CustomDataset(Dataset):
         # ----------- Transform parameters -----------
         self.transform = transform
         if is_train:
+            if cfg.mosaic_prob == 0.:
+                self.mosaic_augment = None
+            else:
+                self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
             self.mosaic_prob = cfg.mosaic_prob
+            if cfg.mixup_prob == 0.:
+                self.mixup_augment = None
+            else:
+                self.mixup_augment = MixupAugment(cfg.train_img_size)
             self.mixup_prob  = cfg.mixup_prob
             self.copy_paste  = cfg.copy_paste
-            self.mosaic_augment = None if cfg.mosaic_prob == 0. else MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
-            self.mixup_augment  = None if cfg.mixup_prob == 0. and cfg.copy_paste == 0.  else MixupAugment(cfg.train_img_size)
         else:
             self.mosaic_prob = 0.0
             self.mixup_prob  = 0.0
             self.copy_paste  = 0.0
             self.mosaic_augment = None
             self.mixup_augment  = None
+
         print(' ============ Strong augmentation info. ============ ')
         print('use Mosaic Augmentation: {}'.format(self.mosaic_prob))
         print('use Mixup Augmentation: {}'.format(self.mixup_prob))
         print('use Copy-paste Augmentation: {}'.format(self.copy_paste))
-
-    # ------------ Basic dataset function ------------
-    def __len__(self):
-        return len(self.ids)
-
-    def __getitem__(self, index):
-        return self.pull_item(index)
-
-    # ------------ Mosaic & Mixup ------------
-    def load_mosaic(self, index):
-        # ------------ Prepare 4 indexes of images ------------
-        ## Load 4x mosaic image
-        index_list = np.arange(index).tolist() + np.arange(index+1, len(self.ids)).tolist()
-        id1 = index
-        id2, id3, id4 = random.sample(index_list, 3)
-        indexs = [id1, id2, id3, id4]
-
-        ## Load images and targets
-        image_list = []
-        target_list = []
-        for index in indexs:
-            img_i, target_i = self.load_image_target(index)
-            image_list.append(img_i)
-            target_list.append(target_i)
-
-        # ------------ Mosaic augmentation ------------
-        image, target = self.mosaic_augment(image_list, target_list)
-
-        return image, target
-
-    def load_mixup(self, origin_image, origin_target, yolox_style=False):
-        # ------------ Load a new image & target ------------
-        if yolox_style:
-            new_index = np.random.randint(0, len(self.ids))
-            new_image, new_target = self.load_image_target(new_index)
-        else:
-            new_index = np.random.randint(0, len(self.ids))
-            new_image, new_target = self.load_mosaic(new_index)
-            
-        # ------------ Mixup augmentation ------------
-        image, target = self.mixup_augment(origin_image, origin_target, new_image, new_target, yolox_style)
-
-        return image, target
-    
-    # ------------ Load data function ------------
-    def load_image_target(self, index):
-        # load an image
-        image, _ = self.pull_image(index)
-        height, width, channels = image.shape
-
-        # load a target
-        bboxes, labels = self.pull_anno(index)
-        target = {
-            "boxes": bboxes,
-            "labels": labels,
-            "orig_size": [height, width]
-        }
-
-        return image, target
-
-    def pull_item(self, index):
-        if random.random() < self.mosaic_prob:
-            # load a mosaic image
-            mosaic = True
-            image, target = self.load_mosaic(index)
-        else:
-            mosaic = False
-            # load an image and target
-            image, target = self.load_image_target(index)
-
-        # Yolov5-MixUp
-        mixup = False
-        if random.random() < self.mixup_prob:
-            mixup = True
-            image, target = self.load_mixup(image, target)
-
-        # Copy-paste (use Yolox-Mixup to approximate copy-paste)
-        if not mixup and random.random() < self.copy_paste:
-            image, target = self.load_mixup(image, target, yolox_style=True)
-
-        # augment
-        image, target, deltas = self.transform(image, target, mosaic)
-
-        return image, target, deltas
 
     def pull_image(self, index):
         id_ = self.ids[index]
@@ -192,7 +115,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RT-ODLab')
 
     # opt
-    parser.add_argument('--root', default='D:/python_work/dataset/COCO/',
+    parser.add_argument('--root', default='D:/python_work/dataset/AnimalDataset/',
                         help='data root')
     parser.add_argument('--is_train', action="store_true", default=False,
                         help='mixup augmentation.')
@@ -262,7 +185,7 @@ if __name__ == "__main__":
 
     for i in range(1000):
         t0 = time.time()
-        image, target = dataset.pull_item(i)
+        image, target, deltas = dataset.pull_item(i)
         print("Load data: {} s".format(time.time() - t0))
 
         # to numpy
