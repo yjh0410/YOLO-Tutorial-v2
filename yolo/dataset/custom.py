@@ -20,19 +20,18 @@ class CustomDataset(Dataset):
     def __init__(self, 
                  cfg,
                  data_dir     :str = None, 
-                 image_set    :str = 'train2017',
                  transform    = None,
                  is_train     :bool =False,
                  ):
         # ----------- Basic parameters -----------
-        self.image_set = image_set
+        self.image_set = "train" if is_train else "val"
         self.is_train  = is_train
         self.num_classes = len(custom_class_labels)
         # ----------- Path parameters -----------
         self.data_dir = data_dir
-        self.json_file = '{}.json'.format(image_set)
+        self.json_file = '{}.json'.format(self.image_set)
         # ----------- Data parameters -----------
-        self.coco = COCO(os.path.join(self.data_dir, image_set, 'annotations', self.json_file))
+        self.coco = COCO(os.path.join(self.data_dir, self.image_set, 'annotations', self.json_file))
         self.ids = self.coco.getImgIds()
         self.class_ids = sorted(self.coco.getCatIds())
         self.dataset_size = len(self.ids)
@@ -53,7 +52,7 @@ class CustomDataset(Dataset):
             self.mosaic_augment = None
             self.mixup_augment  = None
         print('==============================')
-        print('Image Set: {}'.format(image_set))
+        print('Image Set: {}'.format(self.image_set))
         print('Json file: {}'.format(self.json_file))
         print('use Mosaic Augmentation: {}'.format(self.mosaic_prob))
         print('use Mixup Augmentation: {}'.format(self.mixup_prob))
@@ -255,7 +254,7 @@ if __name__ == "__main__":
         cfg = SSDBaseConfig()
 
     transform = build_transform(cfg, args.is_train)
-    dataset = CustomDataset(cfg, args.root, 'val', transform, args.is_train)
+    dataset = CustomDataset(cfg, args.root, transform, args.is_train)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

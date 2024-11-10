@@ -4,13 +4,13 @@ import torch
 from pycocotools.cocoeval import COCOeval
 
 from dataset.coco import COCODataset
+from dataset.voc  import VOCDataset
 from utils.box_ops import rescale_bboxes
 
 
-class COCOAPIEvaluator():
-    def __init__(self, cfg, data_dir, device, transform=None):
+class MapEvaluator():
+    def __init__(self, dataset_name, cfg, data_dir, device, transform=None):
         # ----------------- Basic parameters -----------------
-        self.image_set = 'val2017'
         self.transform = transform
         self.device = device
         # ----------------- Metrics -----------------
@@ -18,7 +18,12 @@ class COCOAPIEvaluator():
         self.ap50_95 = 0.
         self.ap50 = 0.
         # ----------------- Dataset -----------------
-        self.dataset = COCODataset(cfg=cfg, data_dir=data_dir, image_set=self.image_set, transform=None, is_train=False)
+        if   dataset_name == "coco":
+            self.dataset = COCODataset(cfg=cfg, data_dir=data_dir, transform=None, is_train=False)
+        elif dataset_name == "voc":
+            self.dataset = VOCDataset(cfg=cfg, data_dir=data_dir, transform=None, is_train=False)
+        else:
+            raise NotImplementedError("Unknown dataset name.")
 
     @torch.no_grad()
     def evaluate(self, model):

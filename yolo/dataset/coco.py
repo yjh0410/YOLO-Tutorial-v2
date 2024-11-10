@@ -25,19 +25,18 @@ class COCODataset(Dataset):
     def __init__(self, 
                  cfg,
                  data_dir  :str = None, 
-                 image_set :str = 'train2017',
                  transform = None,
                  is_train  :bool = False,
                  use_mask  :bool = False,
                  ):
         # ----------- Basic parameters -----------
         self.data_dir  = data_dir
-        self.image_set = image_set
+        self.image_set = "train2017" if is_train else "val2017"
         self.is_train  = is_train
         self.use_mask  = use_mask
         self.num_classes = 80
         # ----------- Data parameters -----------
-        self.json_file = coco_json_files['{}'.format(image_set)]
+        self.json_file = coco_json_files['{}'.format(self.image_set)]
         self.coco = COCO(os.path.join(self.data_dir, 'annotations', self.json_file))
         self.ids = self.coco.getImgIds()
         self.class_ids = sorted(self.coco.getCatIds())
@@ -148,19 +147,18 @@ class COCODataset(Dataset):
         return image, target, deltas
 
     def pull_image(self, index):
-        img_id = self.ids[index]
-        img_file = os.path.join(self.data_dir, self.image_set,
-                                '{:012}'.format(img_id) + '.jpg')
-        image = cv2.imread(img_file)
+        # get the image file name
+        image_dict = self.coco.dataset['images'][index]
+        image_id = image_dict["id"]
+        filename = image_dict["file_name"]
 
-        if self.json_file == 'instances_val5k.json' and image is None:
-            img_file = os.path.join(self.data_dir, 'train2017',
-                                    '{:012}'.format(img_id) + '.jpg')
-            image = cv2.imread(img_file)
+        # load the image
+        image_path = os.path.join(self.data_dir, self.image_set, filename)
+        image = cv2.imread(image_path)
 
         assert image is not None
 
-        return image, img_id
+        return image, image_id
 
     def pull_anno(self, index):
         img_id = self.ids[index]
@@ -265,7 +263,7 @@ if __name__ == "__main__":
         cfg = SSDBaseConfig()
 
     transform = build_transform(cfg, args.is_train)
-    dataset = COCODataset(cfg, args.root, 'val2017', transform, args.is_train)
+    dataset = COCODataset(cfg, args.root, transform, args.is_train)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

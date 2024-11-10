@@ -1,9 +1,10 @@
+import os
 import cv2
+import time
 import random
 import numpy as np
-import os.path as osp
-import xml.etree.ElementTree as ET
-import torch.utils.data as data
+from torch.utils.data import Dataset
+from pycocotools.coco import COCO
 
 try:
     from .data_augment.strong_augment import MosaicAugment, MixupAugment
@@ -11,65 +12,31 @@ except:
     from  data_augment.strong_augment import MosaicAugment, MixupAugment
 
 
-VOC_CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
 voc_class_indexs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 voc_class_labels = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
 
 
-class VOCAnnotationTransform(object):
-    def __init__(self, class_to_ind=None, keep_difficult=False):
-        self.class_to_ind = class_to_ind or dict(
-            zip(VOC_CLASSES, range(len(VOC_CLASSES))))
-        self.keep_difficult = keep_difficult
-
-    def __call__(self, target):
-        res = []
-        for obj in target.iter('object'):
-            difficult = int(obj.find('difficult').text) == 1
-            if not self.keep_difficult and difficult:
-                continue
-            name = obj.find('name').text.lower().strip()
-            bbox = obj.find('bndbox')
-
-            pts = ['xmin', 'ymin', 'xmax', 'ymax']
-            bndbox = []
-            for i, pt in enumerate(pts):
-                cur_pt = int(bbox.find(pt).text) - 1
-                bndbox.append(cur_pt)
-            label_idx = self.class_to_ind[name]
-            bndbox.append(label_idx)
-            res += [bndbox]  # [x1, y1, x2, y2, label_ind]
-
-        return res  # [[x1, y1, x2, y2, label_ind], ... ]
-
-
-class VOCDataset(data.Dataset):
+class VOCDataset(Dataset):
     def __init__(self, 
                  cfg,
-                 data_dir   :str = None, 
-                 image_set  = [('2007', 'trainval'), ('2012', 'trainval')],
-                 transform  = None,
-                 is_train   :bool =False,
+                 data_dir  :str = None, 
+                 transform = None,
+                 is_train  :bool = False,
                  ):
         # ----------- Basic parameters -----------
-        self.image_set = image_set
+        self.data_dir  = data_dir
+        self.image_set = "train" if is_train else "val"
         self.is_train  = is_train
         self.num_classes = 20
-        # ----------- Path parameters -----------
-        self.root = data_dir
-        self._annopath = osp.join('%s', 'Annotations', '%s.xml')
-        self._imgpath = osp.join('%s', 'JPEGImages', '%s.jpg')
         # ----------- Data parameters -----------
-        self.ids = list()
-        for (year, name) in image_set:
-            rootpath = osp.join(self.root, 'VOC' + year)
-            for line in open(osp.join(rootpath, 'ImageSets', 'Main', name + '.txt')):
-                self.ids.append((rootpath, line.strip()))
+        self.json_file = "instances_{}.json".format(self.image_set)
+        self.coco = COCO(os.path.join(self.data_dir, 'annotations', self.json_file))
+        self.ids = self.coco.getImgIds()
+        self.class_ids = sorted(self.coco.getCatIds())
         self.dataset_size = len(self.ids)
         self.class_labels = voc_class_labels
         self.class_indexs = voc_class_indexs
         # ----------- Transform parameters -----------
-        self.target_transform = VOCAnnotationTransform()
         self.transform = transform
         if is_train:
             self.mosaic_prob = cfg.mosaic_prob
@@ -85,16 +52,15 @@ class VOCDataset(data.Dataset):
             self.mixup_augment  = None
         print('==============================')
         print('use Mosaic Augmentation: {}'.format(self.mosaic_prob))
-        print('use Mixup Augmentation:  {}'.format(self.mixup_prob))
+        print('use Mixup Augmentation: {}'.format(self.mixup_prob))
         print('use Copy-paste Augmentation: {}'.format(self.copy_paste))
 
     # ------------ Basic dataset function ------------
-    def __getitem__(self, index):
-        image, target, deltas = self.pull_item(index)
-        return image, target, deltas
-
     def __len__(self):
-        return self.dataset_size
+        return len(self.ids)
+
+    def __getitem__(self, index):
+        return self.pull_item(index)
 
     # ------------ Mosaic & Mixup ------------
     def load_mosaic(self, index):
@@ -138,17 +104,14 @@ class VOCDataset(data.Dataset):
         image, _ = self.pull_image(index)
         height, width, channels = image.shape
 
-        # laod an annotation
-        anno, _ = self.pull_anno(index)
-
-        # guard against no boxes via resizing
-        anno = np.array(anno).reshape(-1, 5)
+        # load a target
+        bboxes, labels = self.pull_anno(index)
         target = {
-            "boxes": anno[:, :4],
-            "labels": anno[:, 4],
+            "boxes": bboxes,
+            "labels": labels,
             "orig_size": [height, width]
         }
-        
+
         return image, target
 
     def pull_item(self, index):
@@ -177,17 +140,54 @@ class VOCDataset(data.Dataset):
         return image, target, deltas
 
     def pull_image(self, index):
-        img_id = self.ids[index]
-        image = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
+        # get the image file name
+        image_dict = self.coco.dataset['images'][index]
+        image_id = image_dict["id"]
+        filename = image_dict["file_name"]
 
-        return image, img_id
+        # load the image
+        image_path = os.path.join(self.data_dir, "images", filename)
+        image = cv2.imread(image_path)
+
+        assert image is not None
+
+        return image, image_id
 
     def pull_anno(self, index):
-        img_id = self.ids[index]
-        anno = ET.parse(self._annopath % img_id).getroot()
-        anno = self.target_transform(anno)
+        img_id = self.ids[index]        
+        # image infor
+        im_ann = self.coco.loadImgs(img_id)[0]
+        width = im_ann['width']
+        height = im_ann['height']
 
-        return anno, img_id
+        # annotation infor
+        anno_ids = self.coco.getAnnIds(imgIds=[int(img_id)], iscrowd=None)
+        annotations = self.coco.loadAnns(anno_ids)
+
+        
+        #load a target
+        bboxes = []
+        labels = []
+        for anno in annotations:
+            if 'bbox' in anno and anno['area'] > 0:
+                # bbox
+                x1 = np.max((0, anno['bbox'][0]))
+                y1 = np.max((0, anno['bbox'][1]))
+                x2 = np.min((width - 1, x1 + np.max((0, anno['bbox'][2] - 1))))
+                y2 = np.min((height - 1, y1 + np.max((0, anno['bbox'][3] - 1))))
+                if x2 < x1 or y2 < y1:
+                    continue
+                # class label
+                cls_id = self.class_ids.index(anno['category_id'])
+                
+                bboxes.append([x1, y1, x2, y2])
+                labels.append(cls_id)
+
+        # guard against no boxes via resizing
+        bboxes = np.array(bboxes).reshape(-1, 4)
+        labels = np.array(labels).reshape(-1)
+        
+        return bboxes, labels
 
 
 if __name__ == "__main__":
@@ -195,16 +195,16 @@ if __name__ == "__main__":
     import argparse
     from build import build_transform
     
-    parser = argparse.ArgumentParser(description='VOC-Dataset')
+    parser = argparse.ArgumentParser(description='COCO-Dataset')
 
     # opt
-    parser.add_argument('--root', default='D:/python_work/dataset/VOCdevkit/',
+    parser.add_argument('--root', default="D:/python_work/dataset/VOCdevkit/",
                         help='data root')
     parser.add_argument('--is_train', action="store_true", default=False,
-                        help='train or not.')
+                        help='mixup augmentation.')
     parser.add_argument('--aug_type', default="yolo", type=str, choices=["yolo", "ssd"],
                         help='yolo, ssd.')
-    
+
     args = parser.parse_args()
 
     class YoloBaseConfig(object):
@@ -258,7 +258,7 @@ if __name__ == "__main__":
         cfg = SSDBaseConfig()
 
     transform = build_transform(cfg, args.is_train)
-    dataset = VOCDataset(cfg, args.root, [('2007', 'test')], transform, args.is_train)
+    dataset = VOCDataset(cfg, args.root, transform, args.is_train)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

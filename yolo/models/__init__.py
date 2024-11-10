@@ -50,7 +50,7 @@ def build_model(args, cfg, is_val=False):
 
     if is_val:
         # ------------ Load pretrained weight ------------
-        if args.pretrained is not None:
+        if hasattr(args, "pretrained") and args.pretrained is not None:
             print('Loading COCO pretrained weight ...')
             checkpoint = torch.load(args.pretrained, map_location='cpu')
             # checkpoint state dict
@@ -72,7 +72,7 @@ def build_model(args, cfg, is_val=False):
             model.load_state_dict(checkpoint_state_dict, strict=False)
 
         # ------------ Keep training from the given checkpoint ------------
-        if args.resume and args.resume != "None":
+        if hasattr(args, "resume") and args.resume and args.resume != "None":
             checkpoint = torch.load(args.resume, map_location='cpu')
             # checkpoint state dict
             try:

@@ -2,9 +2,7 @@ import argparse
 import torch
 
 # evaluators
-from evaluator.voc_evaluator    import VOCAPIEvaluator
-from evaluator.coco_evaluator   import COCOAPIEvaluator
-from evaluator.custom_evaluator import CustomEvaluator
+from evaluator.map_evaluator import MapEvaluator
 
 # load transform
 from dataset.build import build_dataset, build_transform
@@ -47,40 +45,6 @@ def parse_args():
     return parser.parse_args()
 
 
-
-def voc_test(cfg, model, data_dir, device, transform):
-    evaluator = VOCAPIEvaluator(cfg=cfg,
-                                data_dir=data_dir,
-                                device=device,
-                                transform=transform,
-                                display=True)
-
-    # VOC evaluation
-    evaluator.evaluate(model)
-
-def coco_test(cfg, model, data_dir, device, transform):
-    # eval
-    evaluator = COCOAPIEvaluator(
-                    cfg=cfg,
-                    data_dir=data_dir,
-                    device=device,
-                    transform=transform)
-
-    # COCO evaluation
-    evaluator.evaluate(model)
-
-def custom_test(cfg, model, data_dir, device, transform):
-    evaluator = CustomEvaluator(
-        cfg=cfg,
-        data_dir=data_dir,
-        device=device,
-        image_set='val',
-        transform=transform)
-
-    # WiderFace evaluation
-    evaluator.evaluate(model)
-
-
 if __name__ == '__main__':
     args = parse_args()
     # cuda
@@ -107,10 +71,10 @@ if __name__ == '__main__':
     model.to(device).eval()
 
     # evaluation
-    with torch.no_grad():
-        if args.dataset == 'voc':
-            voc_test(cfg, model, args.root, device, transform)
-        elif args.dataset == 'coco':
-            coco_test(cfg, model, args.root, device, transform)
-        elif args.dataset == 'custom':
-            custom_test(cfg, model, args.root, device, transform)
+    evaluator = MapEvaluator(cfg = cfg,
+                             dataset_name = args.dataset,
+                             data_dir  = args.root,
+                             device    = device,
+                             transform = transform
+                             )
+    evaluator.evaluate(model)

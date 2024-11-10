@@ -23,7 +23,7 @@ from config import build_config
 from dataset.build import build_dataset, build_transform
 
 # ----------------- Evaluator Components -----------------
-from evaluator.build import build_evluator
+from evaluator.map_evaluator import MapEvaluator
 
 # ----------------- Model Components -----------------
 from models import build_model
@@ -149,7 +149,12 @@ def train():
     train_loader = build_dataloader(args, dataset, args.batch_size // world_size, CollateFunc())
 
     # ---------------------------- Build Evaluator ----------------------------
-    evaluator = build_evluator(args, cfg, val_transform, device)
+    evaluator = MapEvaluator(cfg = cfg,
+                             dataset_name = args.dataset,
+                             data_dir     = args.root,
+                             device       = device,
+                             transform    = val_transform
+                             )
 
     # ---------------------------- Build model ----------------------------
     ## Build model
