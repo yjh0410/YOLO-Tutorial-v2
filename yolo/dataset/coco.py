@@ -57,7 +57,7 @@ class COCODataset(Dataset):
             self.copy_paste  = 0.0
             self.mosaic_augment = None
             self.mixup_augment  = None
-        print('==============================')
+        print(' ============ Strong augmentation info. ============ ')
         print('use Mosaic Augmentation: {}'.format(self.mosaic_prob))
         print('use Mixup Augmentation: {}'.format(self.mixup_prob))
         print('use Copy-paste Augmentation: {}'.format(self.copy_paste))
@@ -162,15 +162,14 @@ class COCODataset(Dataset):
 
     def pull_anno(self, index):
         img_id = self.ids[index]
-        im_ann = self.coco.loadImgs(img_id)[0]
-        anno_ids = self.coco.getAnnIds(imgIds=[int(img_id)], iscrowd=False)
-        annotations = self.coco.loadAnns(anno_ids)
-
         # image infor
+        im_ann = self.coco.loadImgs(img_id)[0]
         width = im_ann['width']
         height = im_ann['height']
-        
-        #load a target
+ 
+        # load a target
+        anno_ids = self.coco.getAnnIds(imgIds=[int(img_id)], iscrowd=False)
+        annotations = self.coco.loadAnns(anno_ids)
         bboxes = []
         labels = []
         for anno in annotations:

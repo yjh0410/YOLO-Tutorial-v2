@@ -60,27 +60,27 @@ def parse_args():
                         help="Adopting mix precision training.")
     
     # Batchsize
-    parser.add_argument('-bs', '--batch_size', default=16, type=int, 
+    parser.add_argument('--batch_size', default=16, type=int, 
                         help='batch size on all the GPUs.')
 
     # Model
-    parser.add_argument('-m', '--model', default='yolo_n', type=str,
+    parser.add_argument('--model', default='yolo_n', type=str,
                         help='build yolo')
-    parser.add_argument('-p', '--pretrained', default=None, type=str,
+    parser.add_argument('--pretrained', default=None, type=str,
                         help='load pretrained weight')
-    parser.add_argument('-r', '--resume', default=None, type=str,
+    parser.add_argument('--resume', default=None, type=str,
                         help='keep training')
 
     # Dataset
     parser.add_argument('--root', default='D:/python_work/dataset/VOCdevkit/',
                         help='data root')
-    parser.add_argument('-d', '--dataset', default='coco',
+    parser.add_argument('--dataset', default='voc',
                         help='coco, voc')
     parser.add_argument('--num_workers', default=4, type=int, 
                         help='Number of workers used in dataloading')
     
     # DDP train
-    parser.add_argument('-dist', '--distributed', action='store_true', default=False,
+    parser.add_argument('--distributed', action='store_true', default=False,
                         help='distributed training')
     parser.add_argument('--dist_url', default='env://', 
                         help='url used to set up distributed training')

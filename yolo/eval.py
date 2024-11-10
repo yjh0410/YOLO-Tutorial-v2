@@ -1,13 +1,8 @@
 import argparse
 import torch
 
-# evaluators
 from evaluator.map_evaluator import MapEvaluator
-
-# load transform
 from dataset.build import build_dataset, build_transform
-
-# load some utils
 from utils.misc import load_weight
 
 from config import build_config
@@ -17,17 +12,17 @@ from models import build_model
 def parse_args():
     parser = argparse.ArgumentParser(description='Real-time Object Detection LAB')
     # Basic setting
-    parser.add_argument('-size', '--img_size', default=640, type=int,
+    parser.add_argument('--img_size', default=640, type=int,
                         help='the max size of input image')
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='Use cuda')
 
     # Model setting
-    parser.add_argument('-m', '--model', default='yolov1', type=str,
+    parser.add_argument('--model', default='yolov1', type=str,
                         help='build yolo')
     parser.add_argument('--weight', default=None,
                         type=str, help='Trained state_dict file path to open')
-    parser.add_argument('-r', '--resume', default=None, type=str,
+    parser.add_argument('--resume', default=None, type=str,
                         help='keep training')
     parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
                         help='fuse Conv & BN')
@@ -37,10 +32,6 @@ def parse_args():
                         help='data root')
     parser.add_argument('-d', '--dataset', default='coco',
                         help='coco, voc.')
-
-    # TTA
-    parser.add_argument('-tta', '--test_aug', action='store_true', default=False,
-                        help='use test augmentation.')
 
     return parser.parse_args()
 

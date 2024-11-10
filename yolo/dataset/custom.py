@@ -51,9 +51,7 @@ class CustomDataset(Dataset):
             self.copy_paste  = 0.0
             self.mosaic_augment = None
             self.mixup_augment  = None
-        print('==============================')
-        print('Image Set: {}'.format(self.image_set))
-        print('Json file: {}'.format(self.json_file))
+        print(' ============ Strong augmentation info. ============ ')
         print('use Mosaic Augmentation: {}'.format(self.mosaic_prob))
         print('use Mixup Augmentation: {}'.format(self.mixup_prob))
         print('use Copy-paste Augmentation: {}'.format(self.copy_paste))
