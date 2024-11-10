@@ -48,9 +48,9 @@ class VOCDataset(torch.utils.data.Dataset):
                 self.mixup_augment = None
             else:
                 self.mixup_augment = MixupAugment(cfg.train_img_size)
-        else:
             self.mixup_prob  = cfg.mixup_prob
             self.copy_paste  = cfg.copy_paste
+        else:
             self.mosaic_prob = 0.0
             self.mixup_prob  = 0.0
             self.copy_paste  = 0.0
