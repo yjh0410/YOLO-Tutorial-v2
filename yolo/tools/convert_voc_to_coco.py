@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # exit()
 
     # opt
-    is_train = False
+    is_train = True
     dataset = VOCDataset(root='D:/python_work/dataset/VOCdevkit/',
                          image_set=[('2007', 'trainval'), ('2012', 'trainval')] if is_train else [('2007', 'test')],
                          is_train=is_train,
@@ -157,7 +157,7 @@ if __name__ == "__main__":
             })
             anno_id += 1
 
-    json_file = "D:\\python_work\\dataset\\VOCdevkit\\annotations\\instances_val.json"
+    json_file = "D:\\python_work\\dataset\\VOCdevkit\\annotations\\instances_train.json"
     with open(json_file, 'w') as f:
         json.dump(coco_dict, f, indent=4)
     print(f"Data saved to {json_file}")
