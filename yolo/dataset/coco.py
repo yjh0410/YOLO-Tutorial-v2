@@ -46,15 +46,9 @@ class COCODataset(VOCDataset):
         # ----------- Transform parameters -----------
         self.transform = transform
         if is_train:
-            if cfg.mosaic_prob == 0.:
-                self.mosaic_augment = None
-            else:
-                self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
+            self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
+            self.mixup_augment = MixupAugment(cfg.train_img_size)
             self.mosaic_prob = cfg.mosaic_prob
-            if cfg.mixup_prob == 0.:
-                self.mixup_augment = None
-            else:
-                self.mixup_augment = MixupAugment(cfg.train_img_size)
             self.mixup_prob  = cfg.mixup_prob
             self.copy_paste  = cfg.copy_paste
         else:

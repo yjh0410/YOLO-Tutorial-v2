@@ -553,3 +553,42 @@ class SSDBaseTransform(object):
         image, target = self.transform(image, target)
 
         return image, target, ratio
+
+
+if __name__ == "__main__":
+    image_path = "voc_image.jpg"
+    is_train = True
+
+    if is_train:
+        ssd_augment = SSDAugmentation(img_size=512,
+                                      pixel_mean=[0., 0., 0.],
+                                      pixel_std=[255., 255., 255.],
+                                      box_format="xyxy",
+                                      normalize_coords=False,
+                                      )
+    else:
+        ssd_augment = SSDBaseTransform(img_size=512,
+                                       pixel_mean=[0., 0., 0.],
+                                       pixel_std=[255., 255., 255.],
+                                       box_format="xyxy",
+                                       normalize_coords=False,
+                                       )
+        
+    image = cv2.imread(image_path)
+    cv2.imshow("original image", image)
+    cv2.waitKey(0)
+
+    target = {
+        "boxes": np.array([[86, 96, 256, 425], [132, 71, 243, 282]], dtype=np.float32),
+        "labels": np.array([12, 14], dtype=np.int32),
+    }
+
+    image, target, _ = ssd_augment(image, target)
+    # [c, h, w] -> [h, w, c]
+    image = image.permute(1, 2, 0).contiguous().numpy()
+    image = np.clip(image * 255, 0, 255).astype(np.uint8)
+
+    # to bgr
+    image = image[:, :, (2, 1, 0)]
+    cv2.imshow("processed image", image)
+    cv2.waitKey(0)

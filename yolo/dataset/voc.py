@@ -39,15 +39,9 @@ class VOCDataset(torch.utils.data.Dataset):
         # ----------- Transform parameters -----------
         self.transform = transform
         if is_train:
-            if cfg.mosaic_prob == 0.:
-                self.mosaic_augment = None
-            else:
-                self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
+            self.mosaic_augment = MosaicAugment(cfg.train_img_size, cfg.affine_params, is_train)
+            self.mixup_augment = MixupAugment(cfg.train_img_size)
             self.mosaic_prob = cfg.mosaic_prob
-            if cfg.mixup_prob == 0.:
-                self.mixup_augment = None
-            else:
-                self.mixup_augment = MixupAugment(cfg.train_img_size)
             self.mixup_prob  = cfg.mixup_prob
             self.copy_paste  = cfg.copy_paste
         else:
@@ -170,7 +164,6 @@ class VOCDataset(torch.utils.data.Dataset):
         anno_ids = self.coco.getAnnIds(imgIds=[int(img_id)], iscrowd=None)
         annotations = self.coco.loadAnns(anno_ids)
 
-        
         #load a target
         bboxes = []
         labels = []
@@ -192,7 +185,7 @@ class VOCDataset(torch.utils.data.Dataset):
         # guard against no boxes via resizing
         bboxes = np.array(bboxes).reshape(-1, 4)
         labels = np.array(labels).reshape(-1)
-        
+                
         return bboxes, labels
 
 
@@ -204,7 +197,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COCO-Dataset')
 
     # opt
-    parser.add_argument('--root', default="D:/python_work/dataset/VOCdevkit/",
+    parser.add_argument('--root', default="D:/python_work/dataset/VOC0712/",
                         help='data root')
     parser.add_argument('--is_train', action="store_true", default=False,
                         help='mixup augmentation.')
