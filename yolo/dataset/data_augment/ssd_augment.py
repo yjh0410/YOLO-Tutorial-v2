@@ -573,22 +573,22 @@ if __name__ == "__main__":
                                        box_format="xyxy",
                                        normalize_coords=False,
                                        )
-        
+    
+    # 展示输入图像数据和标签信息
     image = cv2.imread(image_path)
-    cv2.imshow("original image", image)
-    cv2.waitKey(0)
-
     target = {
         "boxes": np.array([[86, 96, 256, 425], [132, 71, 243, 282]], dtype=np.float32),
         "labels": np.array([12, 14], dtype=np.int32),
     }
+    cv2.imshow("original image", image)
+    cv2.waitKey(0)
 
+    # 展示预处理后的输入图像数据和标签信息
     image, target, _ = ssd_augment(image, target)
     # [c, h, w] -> [h, w, c]
     image = image.permute(1, 2, 0).contiguous().numpy()
     image = np.clip(image * 255, 0, 255).astype(np.uint8)
 
-    # to bgr
-    image = image[:, :, (2, 1, 0)]
+    image = image[:, :, (2, 1, 0)]  # 切换为CV2默认的BGR通道顺序
     cv2.imshow("processed image", image)
     cv2.waitKey(0)
