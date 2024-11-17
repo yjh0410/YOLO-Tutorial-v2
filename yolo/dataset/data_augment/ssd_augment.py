@@ -143,20 +143,26 @@ class RandomDistort(object):
             distortions = np.random.permutation(functions)[:self.count]
             for func in distortions:
                 image, target = func(image, target)
+                image = np.clip(image, 0.0, 255.)
 
             return image, target
 
         image, target = self.apply_brightness(image, target)
+        image = np.clip(image, 0.0, 255.)
         mode = np.random.randint(0, 2)
 
         if mode:
             image, target = self.apply_contrast(image, target)
+            image = np.clip(image, 0.0, 255.)
 
         image, target = self.apply_saturation(image, target)
+        image = np.clip(image, 0.0, 255.)
         image, target = self.apply_hue(image, target)
+        image = np.clip(image, 0.0, 255.)
 
         if not mode:
             image, target = self.apply_contrast(image, target)
+            image = np.clip(image, 0.0, 255.)
 
         if self.random_channel:
             if np.random.randint(0, 2):
@@ -560,35 +566,46 @@ if __name__ == "__main__":
     is_train = True
 
     if is_train:
-        ssd_augment = SSDAugmentation(img_size=512,
+        ssd_augment = SSDAugmentation(img_size=416,
                                       pixel_mean=[0., 0., 0.],
                                       pixel_std=[255., 255., 255.],
                                       box_format="xyxy",
                                       normalize_coords=False,
                                       )
     else:
-        ssd_augment = SSDBaseTransform(img_size=512,
+        ssd_augment = SSDBaseTransform(img_size=416,
                                        pixel_mean=[0., 0., 0.],
                                        pixel_std=[255., 255., 255.],
                                        box_format="xyxy",
                                        normalize_coords=False,
                                        )
     
-    # 展示输入图像数据和标签信息
-    image = cv2.imread(image_path)
+    # 读取图像数据
+    orig_image = cv2.imread(image_path)
     target = {
         "boxes": np.array([[86, 96, 256, 425], [132, 71, 243, 282]], dtype=np.float32),
         "labels": np.array([12, 14], dtype=np.int32),
     }
-    cv2.imshow("original image", image)
+
+    # 绘制原始数据的边界框
+    image_copy = orig_image.copy()
+    for box in target["boxes"]:
+        x1, y1, x2, y2 = box
+        image_copy = cv2.rectangle(image_copy, (int(x1), int(y1)), (int(x2), int(y2)), [0, 0, 255], 2)
+    cv2.imshow("original image", image_copy)
     cv2.waitKey(0)
 
     # 展示预处理后的输入图像数据和标签信息
-    image, target, _ = ssd_augment(image, target)
+    image_aug, target_aug, _ = ssd_augment(orig_image, target)
     # [c, h, w] -> [h, w, c]
-    image = image.permute(1, 2, 0).contiguous().numpy()
-    image = np.clip(image * 255, 0, 255).astype(np.uint8)
+    image_aug = image_aug.permute(1, 2, 0).contiguous().numpy()
+    image_aug = np.clip(image_aug * 255, 0, 255).astype(np.uint8)
+    image_aug = image_aug[:, :, (2, 1, 0)]  # 切换为CV2默认的BGR通道顺序
+    image_aug = image_aug.copy()
 
-    image = image[:, :, (2, 1, 0)]  # 切换为CV2默认的BGR通道顺序
-    cv2.imshow("processed image", image)
+    # 绘制处理后的边界框
+    for box in target_aug["boxes"]:
+        x1, y1, x2, y2 = box
+        image_aug = cv2.rectangle(image_aug, (int(x1), int(y1)), (int(x2), int(y2)), [0, 0, 255], 2)
+    cv2.imshow("processed image", image_aug)
     cv2.waitKey(0)

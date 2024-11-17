@@ -252,3 +252,66 @@ class YOLOBaseTransform(object):
         pad_image = F.normalize(pad_image, self.pixel_mean, self.pixel_std)
 
         return pad_image, target, ratio
+
+
+if __name__ == "__main__":
+    image_path = "voc_image.jpg"
+    is_train = False
+
+    affine_params = {
+        'degrees': 0.0,
+        'translate': 0.2,
+        'scale': [0.1, 2.0],
+        'shear': 0.0,
+        'perspective': 0.0,
+        'hsv_h': 0.015,
+        'hsv_s': 0.7,
+        'hsv_v': 0.4,
+    }
+
+
+    if is_train:
+        ssd_augment = YOLOAugmentation(img_size=416,
+                                       affine_params=affine_params,
+                                       pixel_mean=[0., 0., 0.],
+                                       pixel_std=[255., 255., 255.],
+                                       box_format="xyxy",
+                                       normalize_coords=False,
+                                       )
+    else:
+        ssd_augment = YOLOBaseTransform(img_size=416,
+                                        max_stride=32,
+                                        pixel_mean=[0., 0., 0.],
+                                        pixel_std=[255., 255., 255.],
+                                        box_format="xyxy",
+                                        normalize_coords=False,
+                                        )
+    
+    # 读取图像数据
+    orig_image = cv2.imread(image_path)
+    target = {
+        "boxes": np.array([[86, 96, 256, 425], [132, 71, 243, 282]], dtype=np.float32),
+        "labels": np.array([12, 14], dtype=np.int32),
+    }
+
+    # 绘制原始数据的边界框
+    image_copy = orig_image.copy()
+    for box in target["boxes"]:
+        x1, y1, x2, y2 = box
+        image_copy = cv2.rectangle(image_copy, (int(x1), int(y1)), (int(x2), int(y2)), [0, 0, 255], 2)
+    cv2.imshow("original image", image_copy)
+    cv2.waitKey(0)
+
+    # 展示预处理后的输入图像数据和标签信息
+    image_aug, target_aug, _ = ssd_augment(orig_image, target)
+    # [c, h, w] -> [h, w, c]
+    image_aug = image_aug.permute(1, 2, 0).contiguous().numpy()
+    image_aug = np.clip(image_aug * 255, 0, 255).astype(np.uint8)
+    image_aug = image_aug.copy()
+
+    # 绘制处理后的边界框
+    for box in target_aug["boxes"]:
+        x1, y1, x2, y2 = box
+        image_aug = cv2.rectangle(image_aug, (int(x1), int(y1)), (int(x2), int(y2)), [0, 0, 255], 2)
+    cv2.imshow("processed image", image_aug)
+    cv2.waitKey(0)
