@@ -250,6 +250,7 @@ if __name__ == "__main__":
             self.train_img_size = 640
             self.test_img_size  = 640
             self.aug_type = 'ssd'
+            self.affine_params = None
 
     if args.aug_type == "yolo":
         cfg = YoloBaseConfig()
