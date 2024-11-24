@@ -9,7 +9,6 @@ from .yolov5.build     import build_yolov5
 from .yolov5_af.build  import build_yolov5af
 from .yolov6.build     import build_yolov6
 from .yolov8.build     import build_yolov8
-from .yolov8_e2e.build import build_yolov8_e2e
 from .gelan.build      import build_gelan
 from .rtdetr.build     import build_rtdetr
 
@@ -35,9 +34,6 @@ def build_model(args, cfg, is_val=False):
     ## YOLOv6
     elif 'yolov6' in args.model:
         model, criterion = build_yolov6(cfg, is_val)
-    ## YOLOv8
-    elif 'yolov8_e2e' in args.model:
-        model, criterion = build_yolov8_e2e(cfg, is_val)
     ## YOLOv8
     elif 'yolov8' in args.model:
         model, criterion = build_yolov8(cfg, is_val)
