@@ -12,8 +12,6 @@ from models import build_model
 def parse_args():
     parser = argparse.ArgumentParser(description='Real-time Object Detection LAB')
     # Basic setting
-    parser.add_argument('--img_size', default=640, type=int,
-                        help='the max size of input image')
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='Use cuda')
 

@@ -21,8 +21,6 @@ from models import build_model
 def parse_args():
     parser = argparse.ArgumentParser(description='Real-time Object Detection LAB')
     # Basic setting
-    parser.add_argument('--img_size', default=640, type=int,
-                        help='the max size of input image')
     parser.add_argument('--show', action='store_true', default=False,
                         help='show the visulization results.')
     parser.add_argument('--save', action='store_true', default=False,
@@ -31,7 +29,7 @@ def parse_args():
                         help='use cuda.')
     parser.add_argument('--save_folder', default='det_results/', type=str,
                         help='Dir to save results')
-    parser.add_argument('-ws', '--window_scale', default=1.0, type=float,
+    parser.add_argument('--window_scale', default=1.0, type=float,
                         help='resize window of cv2 for visualization.')
 
     # Model setting

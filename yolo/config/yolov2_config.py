@@ -86,6 +86,7 @@ class Yolov2BaseConfig(object):
         ## Transforms
         self.train_img_size = 640
         self.test_img_size  = 640
+        self.affine_params = None
 
     def print_config(self):
         config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}
