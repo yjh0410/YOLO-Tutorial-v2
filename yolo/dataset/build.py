@@ -1,19 +1,15 @@
-import os
-
 try:
     # dataset class
-    from .voc     import VOCDataset
-    from .coco    import COCODataset
-    from .custom  import CustomDataset
+    from .voc  import VOCDataset
+    from .coco import COCODataset
     # transform class
     from .data_augment.yolo_augment import YOLOAugmentation, YOLOBaseTransform
     from .data_augment.ssd_augment  import SSDAugmentation, SSDBaseTransform
 
 except:
     # dataset class
-    from voc     import VOCDataset
-    from coco    import COCODataset
-    from custom  import CustomDataset
+    from voc  import VOCDataset
+    from coco import COCODataset
     # transform class
     from data_augment.yolo_augment import YOLOAugmentation, YOLOBaseTransform
     from data_augment.ssd_augment  import SSDAugmentation, SSDBaseTransform
@@ -36,15 +32,6 @@ def build_dataset(args, cfg, transform=None, is_train=False):
                               transform = transform,
                               is_train  = is_train,
                               )
-    ## Custom dataset
-    elif args.dataset == 'custom':
-        image_set = 'train' if is_train else 'val'
-        dataset = CustomDataset(cfg       = cfg,
-                                  data_dir  = args.root,
-                                  image_set = image_set,
-                                  transform = transform,
-                                  is_train  = is_train,
-                                  )
 
     cfg.class_labels = dataset.class_labels
     cfg.class_indexs = dataset.class_indexs
