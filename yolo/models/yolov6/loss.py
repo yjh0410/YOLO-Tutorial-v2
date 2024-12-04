@@ -69,16 +69,6 @@ class SetCriterion(object):
             tgt_labels = targets[bid]["labels"].to(device)     # [Mp,]
             tgt_boxs = targets[bid]["boxes"].to(device)        # [Mp, 4]
 
-            if self.cfg.normalize_coords:
-                img_h, img_w = outputs['image_size']
-                tgt_boxs[..., [0, 2]] *= img_w
-                tgt_boxs[..., [1, 3]] *= img_h
-            
-            if self.cfg.box_format == 'xywh':
-                tgt_boxs_x1y1 = tgt_boxs[..., :2] - 0.5 * tgt_boxs[..., 2:]
-                tgt_boxs_x2y2 = tgt_boxs[..., :2] + 0.5 * tgt_boxs[..., 2:]
-                tgt_boxs = torch.cat([tgt_boxs_x1y1, tgt_boxs_x2y2], dim=-1)
-
             # check target
             if len(tgt_labels) == 0 or tgt_boxs.max().item() == 0.:
                 # There is no valid gt
