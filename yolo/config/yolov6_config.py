@@ -87,8 +87,6 @@ class Yolov6BaseConfig(object):
 
         # ---------------- Data process config ----------------
         self.aug_type = 'yolo'
-        self.box_format = 'xyxy'
-        self.normalize_coords = False
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.15
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
