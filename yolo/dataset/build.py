@@ -50,15 +50,13 @@ def build_transform(cfg, is_train=False):
                                          cfg.affine_params,
                                          cfg.pixel_mean,
                                          cfg.pixel_std,
-                                         cfg.box_format,
-                                         cfg.normalize_coords)
+                                         )
         else:
             transform = YOLOBaseTransform(cfg.test_img_size,
                                           cfg.max_stride,
                                           cfg.pixel_mean,
                                           cfg.pixel_std,
-                                          cfg.box_format,
-                                          cfg.normalize_coords)
+                                          )
 
     ## RT-DETR style transform
     elif cfg.aug_type == 'ssd':
@@ -66,13 +64,11 @@ def build_transform(cfg, is_train=False):
             transform = SSDAugmentation(cfg.train_img_size,
                                            cfg.pixel_mean,
                                            cfg.pixel_std,
-                                           cfg.box_format,
-                                           cfg.normalize_coords)
+                                           )
         else:
             transform = SSDBaseTransform(cfg.test_img_size,
                                             cfg.pixel_mean,
                                             cfg.pixel_std,
-                                            cfg.box_format,
-                                            cfg.normalize_coords)
+                                            )
 
     return transform

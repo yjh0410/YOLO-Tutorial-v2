@@ -107,15 +107,12 @@ class YOLOAugmentation(object):
                  affine_params=None,
                  pixel_mean = [0., 0., 0.],
                  pixel_std  = [255., 255., 255.],
-                 box_format='xyxy',
-                 normalize_coords=False):
+                 ):
         # Basic parameters
         self.img_size   = img_size
         self.pixel_mean = pixel_mean
         self.pixel_std  = pixel_std
-        self.box_format = box_format
         self.affine_params = affine_params
-        self.normalize_coords = normalize_coords
         self.color_format = 'bgr'
 
     def __call__(self, image, target, mosaic=False):
@@ -166,17 +163,6 @@ class YOLOAugmentation(object):
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
 
-            # normalize coords
-            if self.normalize_coords:
-                target["boxes"][..., [0, 2]] /= img_w
-                target["boxes"][..., [1, 3]] /= img_h
-
-            # xyxy -> xywh
-            if self.box_format == "xywh":
-                box_cxcy = (target["boxes"][..., :2] + target["boxes"][..., 2:]) * 0.5
-                box_bwbh =  target["boxes"][..., 2:] - target["boxes"][..., :2]
-                target["boxes"] = torch.cat([box_cxcy, box_bwbh], dim=-1)
-
         # --------------- Pad Image ---------------
         img_h0, img_w0 = image.shape[1:]
         pad_image = torch.ones([image.size(0), self.img_size, self.img_size]).float() * 114.
@@ -194,14 +180,11 @@ class YOLOBaseTransform(object):
                  max_stride=32,
                  pixel_mean = [0., 0., 0.],
                  pixel_std  = [255., 255., 255.],
-                 box_format='xyxy',
-                 normalize_coords=False):
+                 ):
         self.img_size = img_size
         self.max_stride = max_stride
         self.pixel_mean = pixel_mean
         self.pixel_std  = pixel_std
-        self.box_format = box_format
-        self.normalize_coords = normalize_coords
         self.color_format = 'bgr'
 
     def __call__(self, image, target=None, mosaic=False):
@@ -224,17 +207,6 @@ class YOLOBaseTransform(object):
         if target is not None:
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
-
-            # normalize coords
-            if self.normalize_coords:
-                target["boxes"][..., [0, 2]] /= img_w
-                target["boxes"][..., [1, 3]] /= img_h
-            
-            # xyxy -> xywh
-            if self.box_format == "xywh":
-                box_cxcy = (target["boxes"][..., :2] + target["boxes"][..., 2:]) * 0.5
-                box_bwbh =  target["boxes"][..., 2:] - target["boxes"][..., :2]
-                target["boxes"] = torch.cat([box_cxcy, box_bwbh], dim=-1)
 
         # --------------- Pad image ---------------
         img_h0, img_w0 = image.shape[1:]

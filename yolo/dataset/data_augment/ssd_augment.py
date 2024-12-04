@@ -430,20 +430,13 @@ class Resize(object):
 
 ## Normalize tensor image
 class Normalize(object):
-    def __init__(self, pixel_mean, pixel_std, normalize_coords=False):
+    def __init__(self, pixel_mean, pixel_std):
         self.pixel_mean = pixel_mean
         self.pixel_std = pixel_std
-        self.normalize_coords = normalize_coords
 
     def __call__(self, image, target=None):
         # normalize image
         image = (image - self.pixel_mean) / self.pixel_std
-
-        # normalize bbox
-        if target is not None and self.normalize_coords:
-            img_h, img_w = image.shape[:2]
-            target["boxes"][..., [0, 2]] = target["boxes"][..., [0, 2]] / float(img_w)
-            target["boxes"][..., [1, 3]] = target["boxes"][..., [1, 3]] / float(img_h)
 
         return image, target
 
@@ -489,14 +482,11 @@ class SSDAugmentation(object):
                  img_size   = 640,
                  pixel_mean = [123.675, 116.28, 103.53],
                  pixel_std  = [58.395, 57.12, 57.375],
-                 box_format = 'xywh',
-                 normalize_coords = False):
+                 ):
         # ----------------- Basic parameters -----------------
         self.img_size = img_size
-        self.box_format = box_format
         self.pixel_mean = pixel_mean   # RGB format
         self.pixel_std  = pixel_std    # RGB format
-        self.normalize_coords = normalize_coords
         self.color_format = 'rgb'
         print("================= Pixel Statistics =================")
         print("Pixel mean: {}".format(self.pixel_mean))
@@ -510,9 +500,8 @@ class SSDAugmentation(object):
             RandomHorizontalFlip(p=0.5),
             Resize(img_size=self.img_size),
             ConvertColorFormat(self.color_format),
-            Normalize(self.pixel_mean, self.pixel_std, normalize_coords),
+            Normalize(self.pixel_mean, self.pixel_std),
             ToTensor(),
-            ConvertBoxFormat(self.box_format),
         ])
 
     def __call__(self, image, target, mosaic=False):
@@ -529,14 +518,11 @@ class SSDBaseTransform(object):
                  img_size   = 640,
                  pixel_mean = [123.675, 116.28, 103.53],
                  pixel_std  = [58.395, 57.12, 57.375],
-                 box_format = 'xywh',
-                 normalize_coords = False):
+                 ):
         # ----------------- Basic parameters -----------------
         self.img_size = img_size
-        self.box_format = box_format
         self.pixel_mean = pixel_mean  # RGB format
         self.pixel_std  = pixel_std    # RGB format
-        self.normalize_coords = normalize_coords
         self.color_format = 'rgb'
         print("================= Pixel Statistics =================")
         print("Pixel mean: {}".format(self.pixel_mean))
@@ -546,9 +532,8 @@ class SSDBaseTransform(object):
         self.transform = Compose([
             Resize(img_size=self.img_size),
             ConvertColorFormat(self.color_format),
-            Normalize(self.pixel_mean, self.pixel_std, self.normalize_coords),
+            Normalize(self.pixel_mean, self.pixel_std),
             ToTensor(),
-            ConvertBoxFormat(self.box_format),
         ])
 
 
@@ -569,15 +554,11 @@ if __name__ == "__main__":
         ssd_augment = SSDAugmentation(img_size=416,
                                       pixel_mean=[0., 0., 0.],
                                       pixel_std=[255., 255., 255.],
-                                      box_format="xyxy",
-                                      normalize_coords=False,
                                       )
     else:
         ssd_augment = SSDBaseTransform(img_size=416,
                                        pixel_mean=[0., 0., 0.],
                                        pixel_std=[255., 255., 255.],
-                                       box_format="xyxy",
-                                       normalize_coords=False,
                                        )
     
     # 读取图像数据

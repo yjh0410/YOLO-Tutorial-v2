@@ -238,8 +238,6 @@ if __name__ == "__main__":
         def __init__(self) -> None:
             self.max_stride = 32
             # ---------------- Data process config ----------------
-            self.box_format = 'xywh'
-            self.normalize_coords = False
             self.mosaic_prob = 0.0
             self.mixup_prob  = 0.0
             self.copy_paste  = 0.0
@@ -290,21 +288,8 @@ if __name__ == "__main__":
         labels = target["labels"]
 
         for box, label in zip(boxes, labels):
-            if cfg.box_format == 'xyxy':
-                x1, y1, x2, y2 = box
-            elif cfg.box_format == 'xywh':
-                cx, cy, bw, bh = box
-                x1 = cx - 0.5 * bw
-                y1 = cy - 0.5 * bh
-                x2 = cx + 0.5 * bw
-                y2 = cy + 0.5 * bh
+            x1, y1, x2, y2 = box
             
-            if cfg.normalize_coords:
-                x1 *= img_w
-                y1 *= img_h
-                x2 *= img_w
-                y2 *= img_h
-
             cls_id = int(label)
             color = class_colors[cls_id]
             # class name
