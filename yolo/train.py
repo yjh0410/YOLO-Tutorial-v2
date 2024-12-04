@@ -29,7 +29,7 @@ from evaluator.map_evaluator import MapEvaluator
 from models import build_model
 
 # ----------------- Train Components -----------------
-from engine import build_trainer
+from engine import YoloTrainer
 
 
 def parse_args():
@@ -193,8 +193,16 @@ def train():
         dist.barrier()
 
     # ---------------------------- Build Trainer ----------------------------
-    trainer = build_trainer(args, cfg, device, model, model_ema, criterion, train_transform, val_transform, dataset, train_loader, evaluator)
-
+    trainer = YoloTrainer(args = args,
+                          cfg = cfg,
+                          device = device,
+                          model = model,
+                          model_ema = model_ema,
+                          criterion = criterion,
+                          train_loader = train_loader,
+                          evaluator = evaluator,
+                          )
+    
     ## Eval before training
     if args.eval_first and distributed_utils.is_main_process():
         # to check whether the evaluator can work
@@ -202,14 +210,11 @@ def train():
         trainer.eval(model_eval)
         return
 
-    # garbage = torch.randn(640, 1024, 73, 73).to(device) # 15 G
-
     # ---------------------------- Train pipeline ----------------------------
     trainer.train(model)
 
     # Empty cache after train loop
     del trainer
-    del garbage
     if args.cuda:
         torch.cuda.empty_cache()
 
