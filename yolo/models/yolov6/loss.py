@@ -23,16 +23,26 @@ class SetCriterion(object):
                                            beta            = cfg.tal_beta
                                            )
 
-    def loss_classes(self, pred_logits, gt_score):
-        alpha, gamma = 0.75, 2.0
-        pred_sigmoid = pred_logits.sigmoid()
-        focal_weight = gt_score * (gt_score > 0.0).float() + \
-            alpha * (pred_sigmoid - gt_score).abs().pow(gamma) * \
-            (gt_score <= 0.0).float()
+    def loss_classes(self, pred_cls, labels, scores):
+        # compute bce loss
+        alpha = 0.75
+        gamma = 2.0
+        # pred and target should be of the same size
+        bg_class_ind = pred_cls.shape[-1]
+        pos_inds = ((labels >= 0) & (labels < bg_class_ind)).nonzero().squeeze(1)
+
+        new_scores = pred_cls.new_zeros(pred_cls.shape)
+        pos_labels = labels[pos_inds]
+        new_scores[pos_inds, pos_labels] = scores[pos_inds].clone().detach()
+
+        pred_sigmoid = pred_cls.sigmoid()
+        focal_weight = new_scores * (new_scores > 0.0).float() + \
+            alpha * (pred_sigmoid - new_scores).abs().pow(gamma) * \
+            (new_scores <= 0.0).float()
         
         loss_cls = F.binary_cross_entropy_with_logits(
-            pred_logits, gt_score, reduction='none') * focal_weight
-
+            pred_cls, new_scores, reduction='none') * focal_weight
+    
         return loss_cls
     
     def loss_bboxes(self, pred_box, gt_box, bbox_weight):
@@ -62,12 +72,13 @@ class SetCriterion(object):
         anchors = torch.cat(outputs['anchors'], dim=0)
         
         # --------------- label assignment ---------------
+        gt_label_targets = []
         gt_score_targets = []
         gt_bbox_targets = []
         fg_masks = []
-        for bid in range(bs):
-            tgt_labels = targets[bid]["labels"].to(device)     # [Mp,]
-            tgt_boxs = targets[bid]["boxes"].to(device)        # [Mp, 4]
+        for batch_idx in range(bs):
+            tgt_labels = targets[batch_idx]["labels"].to(device)     # [Mp,]
+            tgt_boxs = targets[batch_idx]["boxes"].to(device)        # [Mp, 4]
 
             # check target
             if len(tgt_labels) == 0 or tgt_boxs.max().item() == 0.:
@@ -80,36 +91,42 @@ class SetCriterion(object):
                 tgt_labels = tgt_labels[None, :, None]      # [1, Mp, 1]
                 tgt_boxs = tgt_boxs[None]                   # [1, Mp, 4]
                 (
-                    _,          # [1, M]
+                    gt_label,   # 
                     gt_box,     # [1, M, 4]
                     gt_score,   # [1, M, C]
                     fg_mask,    # [1, M,]
                     _
                 ) = self.matcher(
-                    pd_scores = cls_preds[bid:bid+1].detach().sigmoid(), 
-                    pd_bboxes = box_preds[bid:bid+1].detach(),
+                    pd_scores = cls_preds[batch_idx:batch_idx+1].detach().sigmoid(), 
+                    pd_bboxes = box_preds[batch_idx:batch_idx+1].detach(),
                     anc_points = anchors,
                     gt_labels = tgt_labels,
                     gt_bboxes = tgt_boxs
                     )
+            gt_label_targets.append(gt_label)
             gt_score_targets.append(gt_score)
             gt_bbox_targets.append(gt_box)
             fg_masks.append(fg_mask)
 
         # List[B, 1, M, C] -> Tensor[B, M, C] -> Tensor[BM, C]
         fg_masks = torch.cat(fg_masks, 0).view(-1)                                    # [BM,]
+        gt_label_targets = torch.cat(gt_label_targets, 0).view(-1)                    # [BM,]
         gt_score_targets = torch.cat(gt_score_targets, 0).view(-1, self.num_classes)  # [BM, C]
         gt_bbox_targets = torch.cat(gt_bbox_targets, 0).view(-1, 4)                   # [BM, 4]
         num_fgs = gt_score_targets.sum()
-        
+
         # Average loss normalizer across all the GPUs
         if is_dist_avail_and_initialized():
             torch.distributed.all_reduce(num_fgs)
         num_fgs = (num_fgs / get_world_size()).clamp(1.0)
 
         # ------------------ Classification loss ------------------
+        target_labels = torch.where(fg_masks > 0, gt_label_targets,
+                                    torch.full_like(gt_label_targets, self.num_classes))
+        target_scores = gt_score_targets.new_zeros(gt_score_targets.shape[0])
+        target_scores[fg_masks] = gt_score_targets[fg_masks, target_labels[fg_masks]]
         cls_preds = cls_preds.view(-1, self.num_classes)
-        loss_cls = self.loss_classes(cls_preds, gt_score_targets)
+        loss_cls = self.loss_classes(cls_preds, target_labels, target_scores)
         loss_cls = loss_cls.sum() / num_fgs
 
         # ------------------ Regression loss ------------------
