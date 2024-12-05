@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
-from typing import List
 
 
 # --------------------- Basic modules ---------------------
-class BasicConv(nn.Module):
+class ConvModule(nn.Module):
     def __init__(self, 
                  in_dim,                   # in channels
                  out_dim,                  # out channels 
@@ -13,7 +12,7 @@ class BasicConv(nn.Module):
                  stride=1,                 # padding
                  dilation=1,               # dilation
                 ):
-        super(BasicConv, self).__init__()
+        super(ConvModule, self).__init__()
         self.conv = nn.Conv2d(in_dim, out_dim, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, bias=False)
         self.norm = nn.BatchNorm2d(out_dim)
         self.act  = nn.LeakyReLU(0.1, inplace=True)

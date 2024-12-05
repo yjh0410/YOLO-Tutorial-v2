@@ -16,16 +16,7 @@ class Yolov2BaseConfig(object):
         ## Backbone
         self.backbone       = 'resnet50'
         self.use_pretrained = True
-        ## Neck
-        self.neck_act       = 'lrelu'
-        self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
-        self.spp_pooling_size  = 5
         ## Head
-        self.head_act  = 'lrelu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
         self.head_dim  = 512
         self.num_cls_head = 2
         self.num_reg_head = 2

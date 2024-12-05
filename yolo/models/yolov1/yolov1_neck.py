@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import BasicConv
+    from .modules import ConvModule
 except:
-    from  modules import BasicConv
+    from  modules import ConvModule
 
 
 # Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher
@@ -18,8 +18,8 @@ class SPPF(nn.Module):
         inter_dim = in_dim // 2
         self.out_dim = out_dim
         ## ----------- Network Parameters -----------
-        self.cv1 = BasicConv(in_dim, inter_dim, kernel_size=1, padding=0, stride=1)
-        self.cv2 = BasicConv(inter_dim * 4, out_dim, kernel_size=1, padding=0, stride=1)
+        self.cv1 = ConvModule(in_dim, inter_dim, kernel_size=1, padding=0, stride=1)
+        self.cv2 = ConvModule(inter_dim * 4, out_dim, kernel_size=1, padding=0, stride=1)
         self.m = nn.MaxPool2d(kernel_size=5, stride=1, padding=2)
 
         # Initialize all layers

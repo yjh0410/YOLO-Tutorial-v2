@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import BasicConv
+    from .modules import ConvModule
 except:
-    from  modules import BasicConv
+    from  modules import ConvModule
 
 
 class Yolov1DetHead(nn.Module):
@@ -22,16 +22,16 @@ class Yolov1DetHead(nn.Module):
         cls_feats = []
         for i in range(self.num_cls_head):
             if i == 0:
-                cls_feats.append(BasicConv(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
+                cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                cls_feats.append(BasicConv(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
+                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
         ## reg head
         reg_feats = []
         for i in range(self.num_reg_head):
             if i == 0:
-                reg_feats.append(BasicConv(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+                reg_feats.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                reg_feats.append(BasicConv(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+                reg_feats.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
         self.cls_feats = nn.Sequential(*cls_feats)
         self.reg_feats = nn.Sequential(*reg_feats)
 
