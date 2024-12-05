@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from .loss import build_criterion
-from .yolov11 import YOLOv7
+from .yolo11 import YOLOv7
 
 
 # build object detector

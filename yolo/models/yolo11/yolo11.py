@@ -3,10 +3,10 @@ import torch.nn as nn
 
 from utils.misc import multiclass_nms
 
-from .yolov11_backbone import build_backbone
-from .yolov11_neck import build_neck
-from .yolov11_pafpn import build_fpn
-from .yolov11_head import build_head
+from .yolo11_backbone import build_backbone
+from .yolo11_neck import build_neck
+from .yolo11_pafpn import build_fpn
+from .yolo11_head import build_head
 
 
 # YOLOv7
