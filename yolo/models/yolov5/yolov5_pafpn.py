@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:
-    from .yolov5_basic import BasicConv, CSPBlock
+    from .modules import ConvModule, CSPBlock
 except:
-    from  yolov5_basic import BasicConv, CSPBlock
+    from  modules import ConvModule, CSPBlock
 
 
 # Yolov5FPN
@@ -18,61 +18,44 @@ class Yolov5PaFPN(nn.Module):
 
         # ---------------------- Yolov5's Top down FPN ----------------------
         ## P5 -> P4
-        self.reduce_layer_1   = BasicConv(c5, round(512*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_1   = ConvModule(c5, round(512*cfg.width), kernel_size=1, padding=0, stride=1)
         self.top_down_layer_1 = CSPBlock(in_dim     = c4 + round(512*cfg.width),
                                          out_dim    = round(512*cfg.width),
                                          num_blocks = round(3*cfg.depth),
                                          expansion  = 0.5,
                                          shortcut   = False,
-                                         act_type   = cfg.fpn_act,
-                                         norm_type  = cfg.fpn_norm,
-                                         depthwise  = cfg.fpn_depthwise)
+                                         )
 
         ## P4 -> P3
-        self.reduce_layer_2   = BasicConv(round(512*cfg.width), round(256*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+        self.reduce_layer_2   = ConvModule(round(512*cfg.width), round(256*cfg.width), kernel_size=1, padding=0, stride=1)
         self.top_down_layer_2 = CSPBlock(in_dim     = c3 + round(256*cfg.width),
                                          out_dim    = round(256*cfg.width),
                                          num_blocks = round(3*cfg.depth),
                                          expansion  = 0.5,
                                          shortcut   = False,
-                                         act_type   = cfg.fpn_act,
-                                         norm_type  = cfg.fpn_norm,
-                                         depthwise  = cfg.fpn_depthwise)
+                                         )
         
         # ---------------------- Yolov5's Bottom up PAN ----------------------
         ## P3 -> P4
-        self.downsample_layer_1 = BasicConv(round(256*cfg.width), round(256*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+        self.downsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, padding=1, stride=2)
         self.bottom_up_layer_1  = CSPBlock(in_dim     = round(256*cfg.width) + round(256*cfg.width),
                                            out_dim    = round(512*cfg.width),
                                            num_blocks = round(3*cfg.depth),
                                            expansion  = 0.5,
                                            shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise)
+                                           )
         ## P4 -> P5
-        self.downsample_layer_2 = BasicConv(round(512*cfg.width), round(512*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+        self.downsample_layer_2 = ConvModule(round(512*cfg.width), round(512*cfg.width), kernel_size=3, padding=1, stride=2)
         self.bottom_up_layer_2  = CSPBlock(in_dim     = round(512*cfg.width) + round(512*cfg.width),
                                            out_dim    = round(1024*cfg.width),
                                            num_blocks = round(3*cfg.depth),
                                            expansion  = 0.5,
                                            shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise)
+                                           )
 
         # ---------------------- Yolov5's output projection ----------------------
         self.out_layers = nn.ModuleList([
-            BasicConv(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1,
-                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+            ConvModule(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1)
                       for in_dim in [round(256*cfg.width), round(512*cfg.width), round(1024*cfg.width)]
                       ])
         self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
@@ -84,8 +67,6 @@ class Yolov5PaFPN(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def forward(self, features):
@@ -135,10 +116,6 @@ if __name__=='__main__':
             self.out_stride = [8, 16, 32]
             self.max_stride = 32
             self.num_levels = 3
-            ## FPN
-            self.fpn_act  = 'silu'
-            self.fpn_norm = 'BN'
-            self.fpn_depthwise = False
             ## Head
             self.head_dim = 256
 

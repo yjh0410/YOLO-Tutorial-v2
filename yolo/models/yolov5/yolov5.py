@@ -34,14 +34,14 @@ class Yolov5(nn.Module):
         self.backbone = Yolov5Backbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
-        self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
+        self.neck     = SPPF(self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
         self.pyramid_feat_dims[-1] = self.neck.out_dim
         ## Neck: FPN
-        self.fpn      = Yolov5PaFPN(cfg, self.pyramid_feat_dims)
+        self.fpn = Yolov5PaFPN(cfg, self.pyramid_feat_dims)
         ## Head
-        self.head     = Yolov5DetHead(cfg, self.fpn.out_dims)
+        self.head = Yolov5DetHead(cfg, self.fpn.out_dims)
         ## Pred
-        self.pred     = Yolov5DetPredLayer(cfg)
+        self.pred = Yolov5DetPredLayer(cfg)
 
     def post_process(self, obj_preds, cls_preds, box_preds):
         """
