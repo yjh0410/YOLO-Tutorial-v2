@@ -1,22 +1,22 @@
 # yolo Config
 
 
-def build_yolov5af_config(args):
-    if   args.model == 'yolov5_af_n':
-        return Yolov5AFNConfig()
-    elif args.model == 'yolov5_af_s':
-        return Yolov5AFSConfig()
-    elif args.model == 'yolov5_af_m':
-        return Yolov5AFMConfig()
-    elif args.model == 'yolov5_af_l':
-        return Yolov5AFLConfig()
-    elif args.model == 'yolov5_af_':
-        return Yolov5AFXConfig()
+def build_yolox_config(args):
+    if   args.model == 'yolox_n':
+        return YoloxNConfig()
+    elif args.model == 'yolox_s':
+        return YoloxSConfig()
+    elif args.model == 'yolox_m':
+        return YoloxMConfig()
+    elif args.model == 'yolox_l':
+        return YoloxLConfig()
+    elif args.model == 'yolox_':
+        return YoloxXConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
-# YOLOv5AF-Base config
-class Yolov5AFBaseConfig(object):
+# YOLOx-Base config
+class YoloxBaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
         self.width    = 1.0
@@ -26,24 +26,8 @@ class Yolov5AFBaseConfig(object):
         self.num_levels = 3
         self.scale      = "b"
         ## Backbone
-        self.bk_act   = 'silu'
-        self.bk_norm  = 'BN'
-        self.bk_depthwise = False
         self.use_pretrained = True
-        ## Neck
-        self.neck_act       = 'silu'
-        self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
-        self.spp_pooling_size  = 5
-        ## FPN
-        self.fpn_act  = 'silu'
-        self.fpn_norm = 'BN'
-        self.fpn_depthwise = False
         ## Head
-        self.head_act  = 'silu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
         self.head_dim       = 256
         self.num_cls_head   = 2
         self.num_reg_head   = 2
@@ -118,8 +102,8 @@ class Yolov5AFBaseConfig(object):
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
 
-# YOLOv5AF-N
-class Yolov5AFNConfig(Yolov5AFBaseConfig):
+# YOLOx-N
+class YoloxNConfig(YoloxBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -132,8 +116,8 @@ class Yolov5AFNConfig(Yolov5AFBaseConfig):
         self.mixup_prob  = 0.0
         self.copy_paste  = 0.5
 
-# YOLOv5AF-S
-class Yolov5AFSConfig(Yolov5AFBaseConfig):
+# YOLOx-S
+class YoloxSConfig(YoloxBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -146,8 +130,8 @@ class Yolov5AFSConfig(Yolov5AFBaseConfig):
         self.mixup_prob  = 0.0
         self.copy_paste  = 0.5
 
-# YOLOv5AF-M
-class Yolov5AFMConfig(Yolov5AFBaseConfig):
+# YOLOx-M
+class YoloxMConfig(YoloxBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -160,8 +144,8 @@ class Yolov5AFMConfig(Yolov5AFBaseConfig):
         self.mixup_prob  = 0.1
         self.copy_paste  = 0.5
 
-# YOLOv5AF-L
-class Yolov5AFLConfig(Yolov5AFBaseConfig):
+# YOLOx-L
+class YoloxLConfig(YoloxBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
@@ -174,8 +158,8 @@ class Yolov5AFLConfig(Yolov5AFBaseConfig):
         self.mixup_prob  = 0.1
         self.copy_paste  = 0.5
 
-# YOLOv5AF-X
-class Yolov5AFXConfig(Yolov5AFBaseConfig):
+# YOLOx-X
+class YoloxXConfig(YoloxBaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------

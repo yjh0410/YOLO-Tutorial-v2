@@ -3,23 +3,23 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .yolov5_af_backbone import Yolov5Backbone
-from .yolov5_af_neck     import SPPF
-from .yolov5_af_pafpn    import Yolov5PaFPN
-from .yolov5_af_head     import Yolov5DetHead
-from .yolov5_af_pred     import Yolov5AFDetPredLayer
+from .yolox_backbone import YoloxBackbone
+from .yolox_neck     import SPPF
+from .yolox_pafpn    import YoloxPaFPN
+from .yolox_head     import YoloxDetHead
+from .yolox_pred     import YoloxDetPredLayer
 
 # --------------- External components ---------------
 from utils.misc import multiclass_nms
 
 
-# Yolov5AF
-class Yolov5AF(nn.Module):
+# Yolox
+class Yolox(nn.Module):
     def __init__(self,
                  cfg,
                  is_val = False,
                  ) -> None:
-        super(Yolov5AF, self).__init__()
+        super(Yolox, self).__init__()
         # ---------------------- Basic setting ----------------------
         self.cfg = cfg
         self.num_classes = cfg.num_classes
@@ -31,17 +31,17 @@ class Yolov5AF(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = Yolov5Backbone(cfg)
+        self.backbone = YoloxBackbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
         ## Neck: SPP
-        self.neck     = SPPF(cfg, self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
+        self.neck = SPPF(self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
         self.pyramid_feat_dims[-1] = self.neck.out_dim
         ## Neck: FPN
-        self.fpn      = Yolov5PaFPN(cfg, self.pyramid_feat_dims)
+        self.fpn = YoloxPaFPN(cfg, self.pyramid_feat_dims)
         ## Head
-        self.head     = Yolov5DetHead(cfg, self.fpn.out_dims)
+        self.head = YoloxDetHead(cfg, self.fpn.out_dims)
         ## Pred
-        self.pred     = Yolov5AFDetPredLayer(cfg)
+        self.pred = YoloxDetPredLayer(cfg)
 
     def post_process(self, obj_preds, cls_preds, box_preds):
         """

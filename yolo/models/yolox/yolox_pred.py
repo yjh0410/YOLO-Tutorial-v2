@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from typing import List
 
 # -------------------- Detection Pred Layer --------------------
 ## Single-level pred layer
@@ -97,7 +96,7 @@ class AFDetPredLayer(nn.Module):
         return outputs
 
 ## Multi-level pred layer
-class Yolov5AFDetPredLayer(nn.Module):
+class YoloxDetPredLayer(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         # --------- Basic Parameters ----------
@@ -165,7 +164,7 @@ if __name__=='__main__':
     cfg = Yolov5AFBaseConfig()
     cfg.num_classes = 20
     # Build a pred layer
-    pred = Yolov5AFDetPredLayer(cfg)
+    pred = YoloxDetPredLayer(cfg)
 
     # Inference
     cls_feats = [torch.randn(1, cfg.head_dim, 80, 80),

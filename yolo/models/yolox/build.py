@@ -1,13 +1,13 @@
 import torch.nn as nn
 
 from .loss import SetCriterion
-from .yolov5_af import Yolov5AF
+from .yolox import Yolox
 
 
 # build object detector
-def build_yolov5af(cfg, is_val=False):
+def build_yolox(cfg, is_val=False):
     # -------------- Build YOLO --------------
-    model = Yolov5AF(cfg, is_val)
+    model = Yolox(cfg, is_val)
 
     # -------------- Initialize YOLO --------------
     for m in model.modules():

@@ -2,15 +2,15 @@
 # -*- coding:utf-8 -*-
 
 import torch
-from .yolov1.build     import build_yolov1
-from .yolov2.build     import build_yolov2
-from .yolov3.build     import build_yolov3
-from .yolov5.build     import build_yolov5
-from .yolov5_af.build  import build_yolov5af
-from .yolov6.build     import build_yolov6
-from .yolov8.build     import build_yolov8
-from .yolov9.build     import build_gelan
-from .rtdetr.build     import build_rtdetr
+from .yolov1.build import build_yolov1
+from .yolov2.build import build_yolov2
+from .yolov3.build import build_yolov3
+from .yolov5.build import build_yolov5
+from .yolox.build  import build_yolox
+from .yolov6.build import build_yolov6
+from .yolov8.build import build_yolov8
+from .yolov9.build import build_gelan
+from .rtdetr.build import build_rtdetr
 
 
 # build object detector
@@ -26,8 +26,8 @@ def build_model(args, cfg, is_val=False):
     elif 'yolov3' in args.model:
         model, criterion = build_yolov3(cfg, is_val)
     ## Anchor-free YOLOv5
-    elif 'yolov5_af' in args.model:
-        model, criterion = build_yolov5af(cfg, is_val)
+    elif 'yolox' in args.model:
+        model, criterion = build_yolox(cfg, is_val)
     ## Modified YOLOv5
     elif 'yolov5' in args.model:
         model, criterion = build_yolov5(cfg, is_val)
