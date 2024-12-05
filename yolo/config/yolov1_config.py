@@ -4,6 +4,8 @@
 def build_yolov1_config(args):
     if args.model == 'yolov1_r18':
         return Yolov1R18Config()
+    if args.model == 'yolov1_r50':
+        return Yolov1R50Config()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
     
@@ -14,21 +16,12 @@ class Yolov1BaseConfig(object):
         self.out_stride = 32
         self.max_stride = 32
         ## Backbone
-        self.backbone       = 'resnet50'
+        self.backbone = 'resnet50'
         self.use_pretrained = True
-        ## Neck
-        self.neck_act       = 'lrelu'
-        self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
-        self.spp_pooling_size  = 5
         ## Head
-        self.head_act  = 'lrelu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
         self.head_dim  = 512
-        self.num_cls_head   = 2
-        self.num_reg_head   = 2
+        self.num_cls_head = 2
+        self.num_reg_head = 2
 
         # ---------------- Post-process config ----------------
         ## Post process

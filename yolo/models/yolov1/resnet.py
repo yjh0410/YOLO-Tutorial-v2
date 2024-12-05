@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
 try:
-    from .yolov1_basic import conv1x1, BasicBlock, Bottleneck
+    from .modules import conv1x1, BasicBlock, Bottleneck
 except:
-    from  yolov1_basic import conv1x1, BasicBlock, Bottleneck
+    from  modules import conv1x1, BasicBlock, Bottleneck
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']

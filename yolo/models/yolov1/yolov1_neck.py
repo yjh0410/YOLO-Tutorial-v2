@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov1_basic import BasicConv
+    from .modules import BasicConv
 except:
-    from  yolov1_basic import BasicConv
+    from  modules import BasicConv
 
 
 # Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher
@@ -12,31 +12,22 @@ class SPPF(nn.Module):
     """
         This code referenced to https://github.com/ultralytics/yolov5
     """
-    def __init__(self, cfg, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim):
         super().__init__()
         ## ----------- Basic Parameters -----------
-        inter_dim = round(in_dim * cfg.neck_expand_ratio)
+        inter_dim = in_dim // 2
         self.out_dim = out_dim
         ## ----------- Network Parameters -----------
-        self.cv1 = BasicConv(in_dim, inter_dim,
-                             kernel_size=1, padding=0, stride=1,
-                             act_type=cfg.neck_act, norm_type=cfg.neck_norm)
-        self.cv2 = BasicConv(inter_dim * 4, out_dim,
-                             kernel_size=1, padding=0, stride=1,
-                             act_type=cfg.neck_act, norm_type=cfg.neck_norm)
-        self.m = nn.MaxPool2d(kernel_size=cfg.spp_pooling_size,
-                              stride=1,
-                              padding=cfg.spp_pooling_size // 2)
+        self.cv1 = BasicConv(in_dim, inter_dim, kernel_size=1, padding=0, stride=1)
+        self.cv2 = BasicConv(inter_dim * 4, out_dim, kernel_size=1, padding=0, stride=1)
+        self.m = nn.MaxPool2d(kernel_size=5, stride=1, padding=2)
 
         # Initialize all layers
         self.init_weights()
 
     def init_weights(self):
-        """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def forward(self, x):
@@ -57,9 +48,6 @@ if __name__=='__main__':
             self.out_stride = 32
             self.max_stride = 32
             ## Neck
-            self.neck_act       = 'lrelu'
-            self.neck_norm      = 'BN'
-            self.neck_depthwise = False
             self.neck_expand_ratio = 0.5
             self.spp_pooling_size  = 5
     cfg = Yolov1BaseConfig()
