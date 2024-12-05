@@ -6,7 +6,7 @@ from .yolov5_config     import build_yolov5_config
 from .yolov5_af_config  import build_yolov5af_config
 from .yolov6_config     import build_yolov6_config
 from .yolov8_config     import build_yolov8_config
-from .gelan_config      import build_gelan_config
+from .yolov9_config     import build_gelan_config
 from .rtdetr_config     import build_rtdetr_config
 
 

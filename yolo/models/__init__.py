@@ -9,7 +9,7 @@ from .yolov5.build     import build_yolov5
 from .yolov5_af.build  import build_yolov5af
 from .yolov6.build     import build_yolov6
 from .yolov8.build     import build_yolov8
-from .gelan.build      import build_gelan
+from .yolov9.build     import build_gelan
 from .rtdetr.build     import build_rtdetr
 
 
