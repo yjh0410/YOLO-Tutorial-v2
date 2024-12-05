@@ -8,4 +8,4 @@ weights
 __pycache__
 det_results
 .vscode
-_odlab/
+odlab/
