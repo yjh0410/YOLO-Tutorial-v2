@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:
-    from .yolov6_basic import BasicConv, RepBlock, RepCSPBlock
+    from .modules import BasicConv, RepBlock, RepCSPBlock
 except:
-    from  yolov6_basic import BasicConv, RepBlock, RepCSPBlock
+    from  modules import BasicConv, RepBlock, RepCSPBlock
 
 
 # Yolov6FPN

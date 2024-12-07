@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov6_basic import RepBlock, RepVGGBlock, RepCSPBlock
+    from .modules import RepBlock, RepVGGBlock, RepCSPBlock
 except:
-    from  yolov6_basic import RepBlock, RepVGGBlock, RepCSPBlock
+    from  modules import RepBlock, RepVGGBlock, RepCSPBlock
 
 # IN1K pretrained weight
 pretrained_urls = {

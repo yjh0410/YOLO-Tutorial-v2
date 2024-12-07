@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov6_basic import BasicConv
+    from .modules import BasicConv
 except:
-    from  yolov6_basic import BasicConv
+    from  modules import BasicConv
     
 
 # Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher

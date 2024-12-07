@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov6_basic import BasicConv
+    from .modules import BasicConv
 except:
-    from  yolov6_basic import BasicConv
+    from  modules import BasicConv
 
 
 ## Single-level Detection Head
