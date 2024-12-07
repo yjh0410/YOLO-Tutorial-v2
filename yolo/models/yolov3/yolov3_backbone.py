@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov3_basic import BasicConv, ResBlock
+    from .modules import ConvModule, ResBlock
 except:
-    from  yolov3_basic import BasicConv, ResBlock
+    from  modules import ConvModule, ResBlock
 
 # IN1K pretrained weight
 pretrained_urls = {
@@ -21,7 +21,7 @@ class Yolov3Backbone(nn.Module):
     def __init__(self, cfg):
         super(Yolov3Backbone, self).__init__()
         # ------------------ Basic setting ------------------
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         self.feat_dims = [round(64   * cfg.width),
                           round(128  * cfg.width),
                           round(256  * cfg.width),
@@ -30,64 +30,46 @@ class Yolov3Backbone(nn.Module):
         
         # ------------------ Network setting ------------------
         ## P1/2
-        self.layer_1 = BasicConv(3, self.feat_dims[0],
-                                 kernel_size=6, padding=2, stride=2,
-                                 act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise)
+        self.layer_1 = ConvModule(3, self.feat_dims[0], kernel_size=6, padding=2, stride=2)
         # P2/4
         self.layer_2 = nn.Sequential(
-            BasicConv(self.feat_dims[0], self.feat_dims[1],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ConvModule(self.feat_dims[0], self.feat_dims[1], kernel_size=3, padding=1, stride=2),
             ResBlock(in_dim     = self.feat_dims[1],
                      out_dim    = self.feat_dims[1],
                      num_blocks = round(3*cfg.depth),
                      expansion  = 0.5,
                      shortcut   = True,
-                     act_type   = cfg.bk_act,
-                     norm_type  = cfg.bk_norm,
-                     depthwise  = cfg.bk_depthwise)
+                     )
         )
         # P3/8
         self.layer_3 = nn.Sequential(
-            BasicConv(self.feat_dims[1], self.feat_dims[2],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ConvModule(self.feat_dims[1], self.feat_dims[2], kernel_size=3, padding=1, stride=2),
             ResBlock(in_dim     = self.feat_dims[2],
                      out_dim    = self.feat_dims[2],
                      num_blocks = round(9*cfg.depth),
                      expansion  = 0.5,
                      shortcut   = True,
-                     act_type   = cfg.bk_act,
-                     norm_type  = cfg.bk_norm,
-                     depthwise  = cfg.bk_depthwise)
+                     )
         )
         # P4/16
         self.layer_4 = nn.Sequential(
-            BasicConv(self.feat_dims[2], self.feat_dims[3],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ConvModule(self.feat_dims[2], self.feat_dims[3], kernel_size=3, padding=1, stride=2),
             ResBlock(in_dim     = self.feat_dims[3],
                      out_dim    = self.feat_dims[3],
                      num_blocks = round(9*cfg.depth),
                      expansion  = 0.5,
                      shortcut   = True,
-                     act_type   = cfg.bk_act,
-                     norm_type  = cfg.bk_norm,
-                     depthwise  = cfg.bk_depthwise)
+                     )
         )
         # P5/32
         self.layer_5 = nn.Sequential(
-            BasicConv(self.feat_dims[3], self.feat_dims[4],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ConvModule(self.feat_dims[3], self.feat_dims[4], kernel_size=3, padding=1, stride=2),
             ResBlock(in_dim     = self.feat_dims[4],
                      out_dim    = self.feat_dims[4],
                      num_blocks = round(3*cfg.depth),
                      expansion  = 0.5,
                      shortcut   = True,
-                     act_type   = cfg.bk_act,
-                     norm_type  = cfg.bk_norm,
-                     depthwise  = cfg.bk_depthwise)
+                     )
         )
 
         # Initialize all layers
@@ -101,8 +83,6 @@ class Yolov3Backbone(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def load_pretrained(self):
@@ -146,12 +126,9 @@ if __name__ == '__main__':
     from thop import profile
     class BaseConfig(object):
         def __init__(self) -> None:
-            self.bk_act = 'silu'
-            self.bk_norm = 'BN'
-            self.bk_depthwise = False
             self.width = 0.5
             self.depth = 0.34
-            self.scale = "s"
+            self.model_scale = "s"
             self.use_pretrained = True
 
     cfg = BaseConfig()

@@ -116,6 +116,7 @@ class Yolov3DetPredLayer(nn.Module):
         super().__init__()
         # --------- Basic Parameters ----------
         self.cfg = cfg
+        self.num_levels = len(cfg.out_stride)
 
         # ----------- Network Parameters -----------
         ## pred layers
@@ -125,7 +126,7 @@ class Yolov3DetPredLayer(nn.Module):
                           stride       = cfg.out_stride[level],
                           anchor_sizes = cfg.anchor_size[level],
                           num_classes  = cfg.num_classes,)
-                          for level in range(cfg.num_levels)
+                          for level in range(self.num_levels)
                           ])
 
     def forward(self, cls_feats, reg_feats):
@@ -136,7 +137,7 @@ class Yolov3DetPredLayer(nn.Module):
         all_cls_preds = []
         all_reg_preds = []
         all_box_preds = []
-        for level in range(self.cfg.num_levels):
+        for level in range(self.num_levels):
             # -------------- Single-level prediction --------------
             outputs = self.multi_level_preds[level](cls_feats[level], reg_feats[level])
 

@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov3_basic import BasicConv
+    from .modules import ConvModule
 except:
-    from  yolov3_basic import BasicConv
+    from  modules import ConvModule
 
 
 ## Single-level Detection Head
@@ -15,17 +15,12 @@ class DetHead(nn.Module):
                  reg_head_dim :int  = 256,
                  num_cls_head :int  = 2,
                  num_reg_head :int  = 2,
-                 act_type     :str  = "silu",
-                 norm_type    :str  = "BN",
-                 depthwise    :bool = False):
+                 ):
         super().__init__()
         # --------- Basic Parameters ----------
         self.in_dim = in_dim
         self.num_cls_head = num_cls_head
         self.num_reg_head = num_reg_head
-        self.act_type = act_type
-        self.norm_type = norm_type
-        self.depthwise = depthwise
         
         # --------- Network Parameters ----------
         ## cls head
@@ -33,53 +28,19 @@ class DetHead(nn.Module):
         self.cls_head_dim = cls_head_dim
         for i in range(num_cls_head):
             if i == 0:
-                cls_feats.append(
-                    BasicConv(in_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=act_type,
-                              norm_type=norm_type,
-                              depthwise=depthwise)
-                              )
+                cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                cls_feats.append(
-                    BasicConv(self.cls_head_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=act_type,
-                              norm_type=norm_type,
-                              depthwise=depthwise)
-                              )
+                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
         ## reg head
         reg_feats = []
         self.reg_head_dim = reg_head_dim
         for i in range(num_reg_head):
             if i == 0:
-                reg_feats.append(
-                    BasicConv(in_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=act_type,
-                              norm_type=norm_type,
-                              depthwise=depthwise)
-                              )
+                reg_feats.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                reg_feats.append(
-                    BasicConv(self.reg_head_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=act_type,
-                              norm_type=norm_type,
-                              depthwise=depthwise)
-                              )
+                reg_feats.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
         self.cls_feats = nn.Sequential(*cls_feats)
         self.reg_feats = nn.Sequential(*reg_feats)
-
-        self.init_weights()
-        
-    def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
-                m.reset_parameters()
 
     def forward(self, x):
         """
@@ -101,15 +62,22 @@ class Yolov3DetHead(nn.Module):
                      reg_head_dim = round(cfg.head_dim * cfg.width),
                      num_cls_head = cfg.num_cls_head,
                      num_reg_head = cfg.num_reg_head,
-                     act_type     = cfg.head_act,
-                     norm_type    = cfg.head_norm,
-                     depthwise    = cfg.head_depthwise)
-                     for level in range(cfg.num_levels)
-                     ])
+                     ) for level in range(len(cfg.out_stride))])
         # --------- Basic Parameters ----------
         self.in_dims = in_dims
         self.cls_head_dim = cfg.head_dim
         self.reg_head_dim = cfg.head_dim
+
+        # Initialize all layers
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                # In order to be consistent with the source code,
+                # reset the Conv2d initialization parameters
+                m.reset_parameters()
 
     def forward(self, feats):
         """
@@ -142,9 +110,6 @@ if __name__=='__main__':
             self.max_stride = 32
             self.num_levels = 3
             ## Head
-            self.head_act  = 'lrelu'
-            self.head_norm = 'BN'
-            self.head_depthwise = False
             self.head_dim  = 256
             self.num_cls_head   = 2
             self.num_reg_head   = 2
@@ -169,4 +134,4 @@ if __name__=='__main__':
     flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    
+    print('Params : {:.2f} M'.format(params / 1e6))

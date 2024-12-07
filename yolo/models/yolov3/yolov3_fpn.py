@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:
-    from .yolov3_basic import BasicConv, ResBlock
+    from .modules import ConvModule, ResBlock
 except:
-    from  yolov3_basic import BasicConv, ResBlock
+    from  modules import ConvModule, ResBlock
 
 
 # Yolov3FPN
@@ -19,30 +19,22 @@ class Yolov3FPN(nn.Module):
 
         # ---------------------- Yolov3's Top down FPN ----------------------
         ## P5 -> P4
+        self.reduce_layer_1   = ConvModule(round(512*cfg.width), round(256*cfg.width), kernel_size=1, padding=0, stride=1)
         self.top_down_layer_1 = ResBlock(in_dim     = c5,
                                          out_dim    = round(512*cfg.width),
                                          num_blocks = round(3*cfg.depth),
                                          expansion  = 0.5,
                                          shortcut   = False,
-                                         act_type   = cfg.fpn_act,
-                                         norm_type  = cfg.fpn_norm,
-                                         depthwise  = cfg.fpn_depthwise)
-        self.reduce_layer_1   = BasicConv(round(512*cfg.width), round(256*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+                                         )
 
         ## P4 -> P3
+        self.reduce_layer_2   = ConvModule(round(256*cfg.width), round(128*cfg.width), kernel_size=1, padding=0, stride=1)
         self.top_down_layer_2 = ResBlock(in_dim     = c4 + round(256*cfg.width),
                                          out_dim    = round(256*cfg.width),
                                          num_blocks = round(3*cfg.depth),
                                          expansion  = 0.5,
                                          shortcut   = False,
-                                         act_type   = cfg.fpn_act,
-                                         norm_type  = cfg.fpn_norm,
-                                         depthwise  = cfg.fpn_depthwise)
-        self.reduce_layer_2   = BasicConv(round(256*cfg.width), round(128*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+                                         )
         
         ## P3
         self.top_down_layer_3 = ResBlock(in_dim     = c3 + round(128*cfg.width),
@@ -50,14 +42,11 @@ class Yolov3FPN(nn.Module):
                                          num_blocks = round(3*cfg.depth),
                                          expansion  = 0.5,
                                          shortcut   = False,
-                                         act_type   = cfg.fpn_act,
-                                         norm_type  = cfg.fpn_norm,
-                                         depthwise  = cfg.fpn_depthwise)
+                                         )
 
         # ---------------------- Yolov3's output projection ----------------------
         self.out_layers = nn.ModuleList([
-            BasicConv(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1,
-                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+            ConvModule(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1)
                       for in_dim in [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
                       ])
         self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
@@ -69,8 +58,6 @@ class Yolov3FPN(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def forward(self, features):
@@ -111,10 +98,6 @@ if __name__=='__main__':
             self.out_stride = [8, 16, 32]
             self.max_stride = 32
             self.num_levels = 3
-            ## FPN
-            self.fpn_act  = 'silu'
-            self.fpn_norm = 'BN'
-            self.fpn_depthwise = False
             ## Head
             self.head_dim = 256
 
