@@ -1,35 +1,33 @@
 import torch
 import torch.nn.functional as F
-from .matcher import Yolov4Matcher
+
 from utils.box_ops import get_ious
 from utils.distributed_utils import get_world_size, is_dist_avail_and_initialized
 
+from .matcher import Yolov3Matcher
 
-class Criterion(object):
-    def __init__(self, cfg, device, num_classes=80):
+
+class SetCriterion(object):
+    def __init__(self, cfg):
         self.cfg = cfg
-        self.device = device
-        self.num_classes = num_classes
-        # loss weight
-        self.loss_obj_weight = cfg['loss_obj_weight']
-        self.loss_cls_weight = cfg['loss_cls_weight']
-        self.loss_box_weight = cfg['loss_box_weight']
+        self.num_classes = cfg.num_classes
+        self.loss_obj_weight = cfg.loss_obj
+        self.loss_cls_weight = cfg.loss_cls
+        self.loss_box_weight = cfg.loss_box
 
         # matcher
-        self.matcher = Yolov4Matcher(num_classes, 3, cfg['anchor_size'], cfg['iou_thresh'])
-
+        anchor_size = cfg.anchor_size[0] + cfg.anchor_size[1] + cfg.anchor_size[2]
+        self.matcher = Yolov3Matcher(cfg.num_classes, 3, anchor_size, cfg.iou_thresh)
 
     def loss_objectness(self, pred_obj, gt_obj):
         loss_obj = F.binary_cross_entropy_with_logits(pred_obj, gt_obj, reduction='none')
 
         return loss_obj
     
-
     def loss_classes(self, pred_cls, gt_label):
         loss_cls = F.binary_cross_entropy_with_logits(pred_cls, gt_label, reduction='none')
 
         return loss_cls
-
 
     def loss_bboxes(self, pred_box, gt_box):
         # regression loss
@@ -41,8 +39,7 @@ class Criterion(object):
 
         return loss_box, ious
 
-
-    def __call__(self, outputs, targets, epoch=0):
+    def __call__(self, outputs, targets):
         device = outputs['pred_cls'][0].device
         fpn_strides = outputs['strides']
         fmp_sizes = outputs['fmp_sizes']
@@ -99,16 +96,6 @@ class Criterion(object):
 
         return loss_dict
     
-
-def build_criterion(cfg, device, num_classes):
-    criterion = Criterion(
-        cfg=cfg,
-        device=device,
-        num_classes=num_classes
-        )
-
-    return criterion
-
     
 if __name__ == "__main__":
     pass

@@ -3,7 +3,6 @@ import torch.nn as nn
 from typing import List
 
 # -------------------- Detection Pred Layer --------------------
-## Single-level pred layer
 class DetPredLayer(nn.Module):
     def __init__(self,
                  cls_dim      :int,
@@ -26,6 +25,7 @@ class DetPredLayer(nn.Module):
         self.obj_pred = nn.Conv2d(self.cls_dim, 1 * self.num_anchors, kernel_size=1)
         self.cls_pred = nn.Conv2d(self.cls_dim, num_classes * self.num_anchors, kernel_size=1)
         self.reg_pred = nn.Conv2d(self.reg_dim, 4 * self.num_anchors, kernel_size=1)                
+
         self.init_bias()
         
     def init_bias(self):
@@ -52,14 +52,17 @@ class DetPredLayer(nn.Module):
         """
             fmp_size: (List) [H, W]
         """
+        # 特征图的宽和高
         fmp_h, fmp_w = fmp_size
+
+        # 生成网格的x坐标和y坐标
         anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
 
-        # [H, W, 2] -> [HW, 2]
+        # 将xy两部分的坐标拼起来：[H, W, 2] -> [HW, 2]
         anchor_xy = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2)
-
         # [HW, 2] -> [HW, A, 2] -> [M, 2], M=HWA
-        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1).view(-1, 2)
+        anchor_xy = anchor_xy.unsqueeze(1).repeat(1, self.num_anchors, 1)
+        anchor_xy = anchor_xy.view(-1, 2)
 
         # [A, 2] -> [1, A, 2] -> [HW, A, 2] -> [M, 2], M=HWA
         anchor_wh = self.anchor_size.unsqueeze(0).repeat(fmp_h*fmp_w, 1, 1)
@@ -88,7 +91,7 @@ class DetPredLayer(nn.Module):
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
         
         # 解算边界框坐标
-        cxcy_pred = (torch.sigmoid(reg_pred[..., :2]) * 2.0 - 0.5 + anchors[..., :2]) * self.stride
+        cxcy_pred = (torch.sigmoid(reg_pred[..., :2]) + anchors[..., :2]) * self.stride
         bwbh_pred = torch.exp(reg_pred[..., 2:]) * anchors[..., 2:]
         pred_x1y1 = cxcy_pred - bwbh_pred * 0.5
         pred_x2y2 = cxcy_pred + bwbh_pred * 0.5
@@ -106,8 +109,7 @@ class DetPredLayer(nn.Module):
 
         return outputs
 
-## Multi-level pred layer
-class Yolov5DetPredLayer(nn.Module):
+class Yolov4DetPredLayer(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         # --------- Basic Parameters ----------
@@ -127,6 +129,7 @@ class Yolov5DetPredLayer(nn.Module):
 
     def forward(self, cls_feats, reg_feats):
         all_anchors = []
+        all_strides = []
         all_fmp_sizes = []
         all_obj_preds = []
         all_cls_preds = []
@@ -163,7 +166,7 @@ if __name__=='__main__':
     # Model config
     
     # YOLOv8-Base config
-    class Yolov5BaseConfig(object):
+    class Yolov4BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
             self.width    = 1.0
@@ -177,10 +180,10 @@ if __name__=='__main__':
                                 1: [[30, 61],   [62, 45],   [59, 119]],
                                 2: [[116, 90],  [156, 198], [373, 326]]}
 
-    cfg = Yolov5BaseConfig()
+    cfg = Yolov4BaseConfig()
     cfg.num_classes = 20
     # Build a pred layer
-    pred = Yolov5DetPredLayer(cfg)
+    pred = Yolov4DetPredLayer(cfg)
 
     # Inference
     cls_feats = [torch.randn(1, cfg.head_dim, 80, 80),
@@ -200,7 +203,7 @@ if __name__=='__main__':
     pred_box = output["pred_box"]
     anchors  = output["anchors"]
     
-    for level in range(len(cfg.out_stride)):
+    for level in range(cfg.num_levels):
         print("- Level-{} : objectness       -> {}".format(level, pred_obj[level].shape))
         print("- Level-{} : classification   -> {}".format(level, pred_cls[level].shape))
         print("- Level-{} : delta regression -> {}".format(level, pred_reg[level].shape))

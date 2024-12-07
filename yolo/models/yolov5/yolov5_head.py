@@ -62,7 +62,7 @@ class Yolov5DetHead(nn.Module):
                      reg_head_dim = round(cfg.head_dim * cfg.width),
                      num_cls_head = cfg.num_cls_head,
                      num_reg_head = cfg.num_reg_head,
-                     ) for level in range(cfg.num_levels)])
+                     ) for level in range(len(cfg.out_stride))])
         # --------- Basic Parameters ----------
         self.in_dims = in_dims
         self.cls_head_dim = cfg.head_dim
@@ -134,4 +134,4 @@ if __name__=='__main__':
     flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
     print('==============================')
     print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    
+    print('Params : {:.2f} M'.format(params / 1e6))
