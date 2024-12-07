@@ -22,7 +22,7 @@ class Yolov6Backbone(nn.Module):
         super(Yolov6Backbone, self).__init__()
         # ------------------ Basic setting ------------------
         self.cfg = cfg
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         self.feat_dims = [round(64   * cfg.width),
                           round(128  * cfg.width),
                           round(256  * cfg.width),
@@ -125,7 +125,7 @@ if __name__ == '__main__':
             self.bk_depthwise = False
             self.width = 0.50
             self.depth = 0.34
-            self.scale = "s"
+            self.model_scale = "s"
             self.use_pretrained = True
 
     cfg = BaseConfig()

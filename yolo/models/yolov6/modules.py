@@ -33,7 +33,7 @@ def get_norm(norm_type, dim):
     else:
         raise NotImplementedError
 
-class BasicConv(nn.Module):
+class ConvModule(nn.Module):
     def __init__(self, 
                  in_dim,                   # in channels
                  out_dim,                  # out channels 
@@ -45,7 +45,7 @@ class BasicConv(nn.Module):
                  norm_type :str = 'BN',    # normalization
                  depthwise :bool = False
                 ):
-        super(BasicConv, self).__init__()
+        super(ConvModule, self).__init__()
         self.depthwise = depthwise
         if not depthwise:
             self.conv = get_conv2d(in_dim, out_dim, k=kernel_size, p=padding, s=stride, d=dilation, g=1, bias=True)
@@ -93,8 +93,8 @@ class RepVGGBlock(nn.Module):
                                          padding=padding, dilation=dilation, groups=groups, bias=True)
         else:
             self.rbr_identity = nn.BatchNorm2d(num_features=in_channels) if out_channels == in_channels and stride == 1 else None
-            self.rbr_dense    = BasicConv(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride, act_type=None)
-            self.rbr_1x1      = BasicConv(in_channels, out_channels, kernel_size=1, padding=padding_11, stride=stride, act_type=None)
+            self.rbr_dense    = ConvModule(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride, act_type=None)
+            self.rbr_1x1      = ConvModule(in_channels, out_channels, kernel_size=1, padding=padding_11, stride=stride, act_type=None)
         self.nonlinearity = nn.ReLU()
 
     def forward(self, inputs):
@@ -133,7 +133,7 @@ class RepVGGBlock(nn.Module):
     def _fuse_bn_tensor(self, branch):
         if branch is None:
             return 0, 0
-        if isinstance(branch, BasicConv):
+        if isinstance(branch, ConvModule):
             kernel = branch.conv.weight
             bias   = branch.conv.bias
             return kernel, bias
@@ -219,9 +219,9 @@ class RepCSPBlock(nn.Module):
     def __init__(self, in_channels, out_channels, num_blocks=1, expansion=0.5):
         super().__init__()
         inter_dim = round(out_channels * expansion)  # hidden channels
-        self.cv1 = BasicConv(in_channels, inter_dim, kernel_size=1, act_type='relu')
-        self.cv2 = BasicConv(in_channels, inter_dim, kernel_size=1, act_type='relu')
-        self.cv3 = BasicConv(2 * inter_dim, out_channels, kernel_size=1, act_type='relu')
+        self.cv1 = ConvModule(in_channels, inter_dim, kernel_size=1, act_type='relu')
+        self.cv2 = ConvModule(in_channels, inter_dim, kernel_size=1, act_type='relu')
+        self.cv3 = ConvModule(2 * inter_dim, out_channels, kernel_size=1, act_type='relu')
 
         self.module = RepBlock(inter_dim, inter_dim, num_blocks, block=BottleRep)
 

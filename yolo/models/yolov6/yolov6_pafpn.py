@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:
-    from .modules import BasicConv, RepBlock, RepCSPBlock
+    from .modules import ConvModule, RepBlock, RepCSPBlock
 except:
-    from  modules import BasicConv, RepBlock, RepCSPBlock
+    from  modules import ConvModule, RepBlock, RepCSPBlock
 
 
 # Yolov6FPN
@@ -19,7 +19,7 @@ class Yolov6PaFPN(nn.Module):
 
         # ---------------------- Yolov6's Top down FPN ----------------------
         ## P5 -> P4
-        self.reduce_layer_1   = BasicConv(c5, round(256*cfg.width),
+        self.reduce_layer_1   = ConvModule(c5, round(256*cfg.width),
                                           kernel_size=1, padding=0, stride=1,
                                           act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
         self.top_down_layer_1 = self.make_block(in_dim     = c4 + round(256*cfg.width),
@@ -27,7 +27,7 @@ class Yolov6PaFPN(nn.Module):
                                                 num_blocks = round(12*cfg.depth))
 
         ## P4 -> P3
-        self.reduce_layer_2   = BasicConv(round(256*cfg.width), round(128*cfg.width),
+        self.reduce_layer_2   = ConvModule(round(256*cfg.width), round(128*cfg.width),
                                           kernel_size=1, padding=0, stride=1,
                                           act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
         self.top_down_layer_2 = self.make_block(in_dim     = c3 + round(128*cfg.width),
@@ -36,7 +36,7 @@ class Yolov6PaFPN(nn.Module):
         
         # ---------------------- Yolov6's Bottom up PAN ----------------------
         ## P3 -> P4
-        self.downsample_layer_1 = BasicConv(round(128*cfg.width), round(128*cfg.width),
+        self.downsample_layer_1 = ConvModule(round(128*cfg.width), round(128*cfg.width),
                                             kernel_size=3, padding=1, stride=2,
                                             act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
         self.bottom_up_layer_1  = self.make_block(in_dim     = round(128*cfg.width) + round(128*cfg.width),
@@ -44,7 +44,7 @@ class Yolov6PaFPN(nn.Module):
                                                   num_blocks = round(12*cfg.depth))
 
         ## P4 -> P5
-        self.downsample_layer_2 = BasicConv(round(256*cfg.width), round(256*cfg.width),
+        self.downsample_layer_2 = ConvModule(round(256*cfg.width), round(256*cfg.width),
                                             kernel_size=3, padding=1, stride=2,
                                             act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
         self.bottom_up_layer_2  = self.make_block(in_dim     = round(256*cfg.width) + round(256*cfg.width),
@@ -53,7 +53,7 @@ class Yolov6PaFPN(nn.Module):
 
         # ---------------------- Yolov6's output projection ----------------------
         self.out_layers = nn.ModuleList([
-            BasicConv(in_dim, in_dim, kernel_size=1,
+            ConvModule(in_dim, in_dim, kernel_size=1,
                       act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
                       for in_dim in [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
                       ])

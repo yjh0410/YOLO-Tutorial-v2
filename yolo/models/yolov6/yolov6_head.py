@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import BasicConv
+    from .modules import ConvModule
 except:
-    from  modules import BasicConv
+    from  modules import ConvModule
 
 
 ## Single-level Detection Head
@@ -34,7 +34,7 @@ class DetHead(nn.Module):
         for i in range(num_cls_head):
             if i == 0:
                 cls_feats.append(
-                    BasicConv(in_dim, self.cls_head_dim,
+                    ConvModule(in_dim, self.cls_head_dim,
                               kernel_size=3, padding=1, stride=1, 
                               act_type=act_type,
                               norm_type=norm_type,
@@ -42,7 +42,7 @@ class DetHead(nn.Module):
                               )
             else:
                 cls_feats.append(
-                    BasicConv(self.cls_head_dim, self.cls_head_dim,
+                    ConvModule(self.cls_head_dim, self.cls_head_dim,
                               kernel_size=3, padding=1, stride=1, 
                               act_type=act_type,
                               norm_type=norm_type,
@@ -54,7 +54,7 @@ class DetHead(nn.Module):
         for i in range(num_reg_head):
             if i == 0:
                 reg_feats.append(
-                    BasicConv(in_dim, self.reg_head_dim,
+                    ConvModule(in_dim, self.reg_head_dim,
                               kernel_size=3, padding=1, stride=1, 
                               act_type=act_type,
                               norm_type=norm_type,
@@ -62,7 +62,7 @@ class DetHead(nn.Module):
                               )
             else:
                 reg_feats.append(
-                    BasicConv(self.reg_head_dim, self.reg_head_dim,
+                    ConvModule(self.reg_head_dim, self.reg_head_dim,
                               kernel_size=3, padding=1, stride=1, 
                               act_type=act_type,
                               norm_type=norm_type,
