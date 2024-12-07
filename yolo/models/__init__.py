@@ -8,6 +8,7 @@ from .yolov3.build import build_yolov3
 from .yolov5.build import build_yolov5
 from .yolox.build  import build_yolox
 from .yolov6.build import build_yolov6
+from .yolov7.build import build_yolov7
 from .yolov8.build import build_yolov8
 from .yolov9.build import build_gelan
 from .rtdetr.build import build_rtdetr
@@ -34,6 +35,9 @@ def build_model(args, cfg, is_val=False):
     ## YOLOv6
     elif 'yolov6' in args.model:
         model, criterion = build_yolov6(cfg, is_val)
+    ## YOLOv7
+    elif 'yolov7' in args.model:
+        model, criterion = build_yolov7(cfg, is_val)
     ## YOLOv8
     elif 'yolov8' in args.model:
         model, criterion = build_yolov8(cfg, is_val)
