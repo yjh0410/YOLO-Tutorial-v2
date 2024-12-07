@@ -4,20 +4,15 @@ import torch.nn.functional as F
 from typing import List
 
 try:
-    from .gelan_basic import RepGElanLayer, ADown
+    from .modules import RepGElanLayer, ADown
 except:
-    from  gelan_basic import RepGElanLayer, ADown
+    from  modules import RepGElanLayer, ADown
 
 
 # PaFPN-ELAN
 class GElanPaFPN(nn.Module):
-    def __init__(self,
-                 cfg,
-                 in_dims :List = [256, 512, 256],
-                 ) -> None:
+    def __init__(self, cfg, in_dims :List = [256, 512, 256]):
         super(GElanPaFPN, self).__init__()
-        print('==============================')
-        print('FPN: {}'.format("GELAN PaFPN"))
         # --------------------------- Basic Parameters ---------------------------
         self.in_dims = in_dims[::-1]
         self.out_dims = [cfg.fpn_feats_td["p3"][1], cfg.fpn_feats_bu["p4"][1], cfg.fpn_feats_bu["p5"][1]]
@@ -29,9 +24,6 @@ class GElanPaFPN(nn.Module):
                                               out_dim    = cfg.fpn_feats_td["p4"][1],
                                               num_blocks = cfg.fpn_depth,
                                               shortcut   = False,
-                                              act_type   = cfg.fpn_act,
-                                              norm_type  = cfg.fpn_norm,
-                                              depthwise  = cfg.fpn_depthwise,
                                               )
         ## P4 -> P3
         self.top_down_layer_2 = RepGElanLayer(in_dim     = cfg.fpn_feats_td["p4"][1] + self.in_dims[2],
@@ -39,34 +31,23 @@ class GElanPaFPN(nn.Module):
                                               out_dim    = cfg.fpn_feats_td["p3"][1],
                                               num_blocks = cfg.fpn_depth,
                                               shortcut   = False,
-                                              act_type   = cfg.fpn_act,
-                                              norm_type  = cfg.fpn_norm,
-                                              depthwise  = cfg.fpn_depthwise,
                                               )
         # ---------------- Bottom up ----------------
         ## P3 -> P4
-        self.dowmsample_layer_1 = ADown(cfg.fpn_feats_td["p3"][1], cfg.fpn_feats_td["p3"][1],
-                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+        self.dowmsample_layer_1 = ADown(cfg.fpn_feats_td["p3"][1], cfg.fpn_feats_td["p3"][1])
         self.bottom_up_layer_1  = RepGElanLayer(in_dim     = cfg.fpn_feats_td["p3"][1] + cfg.fpn_feats_td["p4"][1],
                                                 inter_dims = cfg.fpn_feats_bu["p4"][0],
                                                 out_dim    = cfg.fpn_feats_bu["p4"][1],
                                                 num_blocks = cfg.fpn_depth,
                                                 shortcut   = False,
-                                                act_type   = cfg.fpn_act,
-                                                norm_type  = cfg.fpn_norm,
-                                                depthwise  = cfg.fpn_depthwise,
                                                 )
         ## P4 -> P5
-        self.dowmsample_layer_2 = ADown(cfg.fpn_feats_bu["p4"][1], cfg.fpn_feats_bu["p4"][1],
-                                        act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+        self.dowmsample_layer_2 = ADown(cfg.fpn_feats_bu["p4"][1], cfg.fpn_feats_bu["p4"][1])
         self.bottom_up_layer_2  = RepGElanLayer(in_dim     = cfg.fpn_feats_td["p4"][1] + self.in_dims[0],
                                                 inter_dims = cfg.fpn_feats_bu["p5"][0],
                                                 out_dim    = cfg.fpn_feats_bu["p5"][1],
                                                 num_blocks = cfg.fpn_depth,
                                                 shortcut   = False,
-                                                act_type   = cfg.fpn_act,
-                                                norm_type  = cfg.fpn_norm,
-                                                depthwise  = cfg.fpn_depthwise,
                                                 )
         
         self.init_weights()
@@ -75,8 +56,6 @@ class GElanPaFPN(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def forward(self, features):
@@ -117,14 +96,10 @@ if __name__=='__main__':
             self.width    = 0.50
             self.depth    = 0.34
             self.ratio    = 2.0
+
             self.out_stride = [8, 16, 32]
             self.max_stride = 32
-            self.num_levels = 3
             ## FPN
-            self.fpn      = 'gelan_pafpn'
-            self.fpn_act  = 'silu'
-            self.fpn_norm = 'BN'
-            self.fpn_depthwise = False
             self.fpn_depth    = 3
             self.fpn_feats_td = {
                 "p4": [[256, 128], 256],

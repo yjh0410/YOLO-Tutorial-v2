@@ -24,7 +24,7 @@ class YoloxBaseConfig(object):
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
         self.num_levels = 3
-        self.scale      = "b"
+        self.model_scale = "l"
         ## Backbone
         self.use_pretrained = True
         ## Head
@@ -109,7 +109,7 @@ class YoloxNConfig(YoloxBaseConfig):
         # ---------------- Model config ----------------
         self.width = 0.25
         self.depth = 0.34
-        self.scale = "n"
+        self.model_scale = "n"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -123,7 +123,7 @@ class YoloxSConfig(YoloxBaseConfig):
         # ---------------- Model config ----------------
         self.width = 0.50
         self.depth = 0.34
-        self.scale = "s"
+        self.model_scale = "s"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -137,7 +137,7 @@ class YoloxMConfig(YoloxBaseConfig):
         # ---------------- Model config ----------------
         self.width = 0.75
         self.depth = 0.67
-        self.scale = "m"
+        self.model_scale = "m"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -151,7 +151,7 @@ class YoloxLConfig(YoloxBaseConfig):
         # ---------------- Model config ----------------
         self.width = 1.0
         self.depth = 1.0
-        self.scale = "l"
+        self.model_scale = "l"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -165,7 +165,7 @@ class YoloxXConfig(YoloxBaseConfig):
         # ---------------- Model config ----------------
         self.width = 1.25
         self.depth = 1.34
-        self.scale = "x"
+        self.model_scale = "x"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0

@@ -28,7 +28,7 @@ class YoloBottleneck(nn.Module):
                  kernel_size :List  = [1, 3],
                  expansion   :float = 0.5,
                  shortcut    :bool  = False,
-                 ) -> None:
+                 ):
         super(YoloBottleneck, self).__init__()
         inter_dim = int(out_dim * expansion)
         # ----------------- Network setting -----------------
@@ -41,36 +41,35 @@ class YoloBottleneck(nn.Module):
 
         return x + h if self.shortcut else h
 
-class CSPBlock(nn.Module):
+class C2fBlock(nn.Module):
     def __init__(self,
-                 in_dim,
-                 out_dim,
-                 num_blocks :int   = 1,
-                 expansion  :float = 0.5,
-                 shortcut   :bool  = False,
+                 in_dim: int,
+                 out_dim: int,
+                 expansion : float = 0.5,
+                 num_blocks : int = 1,
+                 shortcut  : bool = False,
                  ):
-        super(CSPBlock, self).__init__()
-        # ---------- Basic parameters ----------
-        self.num_blocks = num_blocks
-        self.expansion = expansion
-        self.shortcut = shortcut
+        super(C2fBlock, self).__init__()
         inter_dim = round(out_dim * expansion)
-        # ---------- Model parameters ----------
-        self.conv_layer_1 = ConvModule(in_dim, inter_dim, kernel_size=1)
-        self.conv_layer_2 = ConvModule(in_dim, inter_dim, kernel_size=1)
-        self.conv_layer_3 = ConvModule(inter_dim * 2, out_dim, kernel_size=1)
-        self.module = nn.Sequential(*[
-            YoloBottleneck(inter_dim,
-                           inter_dim,
-                           kernel_size = [1, 3],
-                           expansion   = 1.0,
-                           shortcut    = shortcut,
+        self.input_proj  = ConvModule(in_dim, inter_dim * 2, kernel_size=1)
+        self.output_proj = ConvModule((2 + num_blocks) * inter_dim, out_dim, kernel_size=1)
+        self.module = nn.ModuleList([
+            YoloBottleneck(in_dim = inter_dim,
+                           out_dim = inter_dim,
+                           kernel_size = [3, 3],
+                           expansion = 1.0,
+                           shortcut = shortcut,
                            ) for _ in range(num_blocks)])
 
     def forward(self, x):
-        x1 = self.conv_layer_1(x)
-        x2 = self.module(self.conv_layer_2(x))
-        out = self.conv_layer_3(torch.cat([x1, x2], dim=1))
+        # Input proj
+        x1, x2 = torch.chunk(self.input_proj(x), 2, dim=1)
+        out = list([x1, x2])
+
+        # Bottlenecl
+        out.extend(m(out[-1]) for m in self.module)
+
+        # Output proj
+        out = self.output_proj(torch.cat(out, dim=1))
 
         return out
-    

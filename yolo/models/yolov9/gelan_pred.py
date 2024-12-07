@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 
 # Single-level pred layer
-class SingleLevelPredLayer(nn.Module):
+class PredLayer(nn.Module):
     def __init__(self,
                  cls_dim     :int = 256,
                  reg_dim     :int = 256,
@@ -84,28 +84,25 @@ class SingleLevelPredLayer(nn.Module):
 
 # Multi-level pred layer
 class GElanPredLayer(nn.Module):
-    def __init__(self,
-                 cfg,
-                 cls_dim,
-                 reg_dim,
-                 ):
+    def __init__(self, cfg, cls_dim: int, reg_dim: int):
         super().__init__()
         # --------- Basic Parameters ----------
         self.cfg = cfg
         self.cls_dim = cls_dim
         self.reg_dim = reg_dim
+        self.num_levels = len(cfg.out_stride)
 
         # ----------- Network Parameters -----------
         ## pred layers
         self.multi_level_preds = nn.ModuleList(
-            [SingleLevelPredLayer(cls_dim     = cls_dim,
-                                  reg_dim     = reg_dim,
-                                  stride      = cfg.out_stride[level],
-                                  reg_max     = cfg.reg_max,
-                                  num_classes = cfg.num_classes,
-                                  num_coords  = 4 * cfg.reg_max)
-                                  for level in range(cfg.num_levels)
-                                  ])
+            [PredLayer(cls_dim     = cls_dim,
+                       reg_dim     = reg_dim,
+                       stride      = cfg.out_stride[level],
+                       reg_max     = cfg.reg_max,
+                       num_classes = cfg.num_classes,
+                       num_coords  = 4 * cfg.reg_max)
+                       for level in range(self.num_levels)
+                       ])
         ## proj conv
         proj_init = torch.arange(cfg.reg_max, dtype=torch.float)
         self.proj_conv = nn.Conv2d(cfg.reg_max, 1, kernel_size=1, bias=False).requires_grad_(False)
@@ -117,7 +114,7 @@ class GElanPredLayer(nn.Module):
         all_cls_preds = []
         all_reg_preds = []
         all_box_preds = []
-        for level in range(self.cfg.num_levels):
+        for level in range(self.num_levels):
             # -------------- Single-level prediction --------------
             outputs = self.multi_level_preds[level](cls_feats[level], reg_feats[level])
 

@@ -22,7 +22,7 @@ class YoloxBackbone(nn.Module):
     def __init__(self, cfg):
         super(YoloxBackbone, self).__init__()
         # ------------------ Basic setting ------------------
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         self.feat_dims = [round(64   * cfg.width),
                           round(128  * cfg.width),
                           round(256  * cfg.width),
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         def __init__(self) -> None:
             self.width = 0.5
             self.depth = 0.34
-            self.scale = "s"
+            self.model_scale = "s"
             self.use_pretrained = True
 
     cfg = BaseConfig()

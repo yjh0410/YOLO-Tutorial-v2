@@ -19,35 +19,21 @@ def build_yolov8_config(args):
 class Yolov8BaseConfig(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
-        self.width    = 1.0
-        self.depth    = 1.0
-        self.ratio    = 1.0
-        self.reg_max  = 16
+        self.model_scale = "l"
+        self.width   = 1.0
+        self.depth   = 1.0
+        self.ratio   = 1.0
+        self.reg_max = 16
+
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
-        self.num_levels = 3
-        self.scale      = "b"
+
         ## Backbone
-        self.bk_act   = 'silu'
-        self.bk_norm  = 'BN'
-        self.bk_depthwise = False
         self.use_pretrained = True
-        ## Neck
-        self.neck_act       = 'silu'
-        self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
-        self.spp_pooling_size  = 5
-        ## FPN
-        self.fpn_act  = 'silu'
-        self.fpn_norm = 'BN'
-        self.fpn_depthwise = False
+
         ## Head
-        self.head_act  = 'silu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
-        self.num_cls_head   = 2
-        self.num_reg_head   = 2
+        self.num_cls_head = 2
+        self.num_reg_head = 2
 
         # ---------------- Post-process config ----------------
         ## Post process
@@ -125,10 +111,10 @@ class Yolov8NConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
+        self.model_scale = "n"
         self.width = 0.25
         self.depth = 0.34
         self.ratio = 2.0
-        self.scale = "n"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -140,10 +126,10 @@ class Yolov8SConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
+        self.model_scale = "s"
         self.width = 0.50
         self.depth = 0.34
         self.ratio = 2.0
-        self.scale = "s"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -155,10 +141,10 @@ class Yolov8MConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
+        self.model_scale = "m"
         self.width = 0.75
         self.depth = 0.67
         self.ratio = 1.5
-        self.scale = "m"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -170,10 +156,10 @@ class Yolov8LConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
+        self.model_scale = "l"
         self.width = 1.0
         self.depth = 1.0
         self.ratio = 1.0
-        self.scale = "l"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -185,10 +171,10 @@ class Yolov8XConfig(Yolov8BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         # ---------------- Model config ----------------
+        self.model_scale = "x"
         self.width = 1.25
         self.depth = 1.0
         self.ratio = 1.0
-        self.scale = "x"
 
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0

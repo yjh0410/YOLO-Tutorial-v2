@@ -85,16 +85,13 @@ class DetPredLayer(nn.Module):
 
 ## Multi-level pred layer
 class Yolov8DetPredLayer(nn.Module):
-    def __init__(self,
-                 cfg,
-                 cls_dim,
-                 reg_dim,
-                 ):
+    def __init__(self, cfg, cls_dim: int, reg_dim: int):
         super().__init__()
         # --------- Basic Parameters ----------
         self.cfg = cfg
         self.cls_dim = cls_dim
         self.reg_dim = reg_dim
+        self.num_levels = len(cfg.out_stride)
 
         # ----------- Network Parameters -----------
         ## pred layers
@@ -105,7 +102,7 @@ class Yolov8DetPredLayer(nn.Module):
                           reg_max     = cfg.reg_max,
                           num_classes = cfg.num_classes,
                           num_coords  = 4 * cfg.reg_max)
-                          for level in range(cfg.num_levels)
+                          for level in range(self.num_levels)
                           ])
         ## proj conv
         proj_init = torch.arange(cfg.reg_max, dtype=torch.float)
@@ -118,7 +115,7 @@ class Yolov8DetPredLayer(nn.Module):
         all_cls_preds = []
         all_reg_preds = []
         all_box_preds = []
-        for level in range(self.cfg.num_levels):
+        for level in range(self.num_levels):
             # -------------- Single-level prediction --------------
             outputs = self.multi_level_preds[level](cls_feats[level], reg_feats[level])
 

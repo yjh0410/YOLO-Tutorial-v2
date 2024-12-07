@@ -123,6 +123,7 @@ if __name__ == '__main__':
 
     # Build model
     model = build_model(args, cfg, is_val=False)
+    print(model)
 
     # Load trained weight
     model = load_weight(model, args.weight, args.fuse_conv_bn)

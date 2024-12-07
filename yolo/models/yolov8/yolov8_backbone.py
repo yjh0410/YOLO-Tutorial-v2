@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .yolov8_basic import BasicConv, ELANLayer
+    from .modules import ConvModule, C2fBlock
 except:
-    from  yolov8_basic import BasicConv, ELANLayer
+    from  modules import ConvModule, C2fBlock
 
 # IN1K pretrained weight
 pretrained_urls = {
@@ -20,7 +20,7 @@ class Yolov8Backbone(nn.Module):
     def __init__(self, cfg):
         super(Yolov8Backbone, self).__init__()
         # ------------------ Basic setting ------------------
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         self.feat_dims = [round(64  * cfg.width),
                           round(128 * cfg.width),
                           round(256 * cfg.width),
@@ -29,64 +29,46 @@ class Yolov8Backbone(nn.Module):
         
         # ------------------ Network setting ------------------
         ## P1/2
-        self.layer_1 = BasicConv(3, self.feat_dims[0],
-                                 kernel_size=3, padding=1, stride=2,
-                                 act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise)
+        self.layer_1 = ConvModule(3, self.feat_dims[0], kernel_size=3, padding=1, stride=2)
         # P2/4
         self.layer_2 = nn.Sequential(
-            BasicConv(self.feat_dims[0], self.feat_dims[1],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ELANLayer(in_dim     = self.feat_dims[1],
-                      out_dim    = self.feat_dims[1],
-                      num_blocks = round(3*cfg.depth),
-                      expansion  = 0.5,
-                      shortcut   = True,
-                      act_type   = cfg.bk_act,
-                      norm_type  = cfg.bk_norm,
-                      depthwise  = cfg.bk_depthwise)
+            ConvModule(self.feat_dims[0], self.feat_dims[1], kernel_size=3, padding=1, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[1],
+                     out_dim    = self.feat_dims[1],
+                     num_blocks = round(3*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     )
         )
         # P3/8
         self.layer_3 = nn.Sequential(
-            BasicConv(self.feat_dims[1], self.feat_dims[2],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ELANLayer(in_dim     = self.feat_dims[2],
-                      out_dim    = self.feat_dims[2],
-                      num_blocks = round(6*cfg.depth),
-                      expansion  = 0.5,
-                      shortcut   = True,
-                      act_type   = cfg.bk_act,
-                      norm_type  = cfg.bk_norm,
-                      depthwise  = cfg.bk_depthwise)
+            ConvModule(self.feat_dims[1], self.feat_dims[2], kernel_size=3, padding=1, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[2],
+                     out_dim    = self.feat_dims[2],
+                     num_blocks = round(6*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     )
         )
         # P4/16
         self.layer_4 = nn.Sequential(
-            BasicConv(self.feat_dims[2], self.feat_dims[3],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ELANLayer(in_dim     = self.feat_dims[3],
-                      out_dim    = self.feat_dims[3],
-                      num_blocks = round(6*cfg.depth),
-                      expansion  = 0.5,
-                      shortcut   = True,
-                      act_type   = cfg.bk_act,
-                      norm_type  = cfg.bk_norm,
-                      depthwise  = cfg.bk_depthwise)
+            ConvModule(self.feat_dims[2], self.feat_dims[3], kernel_size=3, padding=1, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[3],
+                     out_dim    = self.feat_dims[3],
+                     num_blocks = round(6*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     )
         )
         # P5/32
         self.layer_5 = nn.Sequential(
-            BasicConv(self.feat_dims[3], self.feat_dims[4],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
-            ELANLayer(in_dim     = self.feat_dims[4],
-                      out_dim    = self.feat_dims[4],
-                      num_blocks = round(3*cfg.depth),
-                      expansion  = 0.5,
-                      shortcut   = True,
-                      act_type   = cfg.bk_act,
-                      norm_type  = cfg.bk_norm,
-                      depthwise  = cfg.bk_depthwise)
+            ConvModule(self.feat_dims[3], self.feat_dims[4], kernel_size=3, padding=1, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[4],
+                     out_dim    = self.feat_dims[4],
+                     num_blocks = round(3*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     )
         )
 
         # Initialize all layers
@@ -100,8 +82,6 @@ class Yolov8Backbone(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def load_pretrained(self):
@@ -140,31 +120,19 @@ class Yolov8Backbone(nn.Module):
         return outputs
 
 
-# ---------------------------- Functions ----------------------------
-## build Yolo's Backbone
-def build_backbone(cfg): 
-    # model
-    backbone = Yolov8Backbone(cfg)
-        
-    return backbone
-
-
 if __name__ == '__main__':
     import time
     from thop import profile
     class BaseConfig(object):
         def __init__(self) -> None:
-            self.bk_act = 'silu'
-            self.bk_norm = 'BN'
-            self.bk_depthwise = False
             self.use_pretrained = True
             self.width = 0.50
             self.depth = 0.34
             self.ratio = 2.0
-            self.scale = "s"
+            self.model_scale = "s"
 
     cfg = BaseConfig()
-    model = build_backbone(cfg)
+    model = Yolov8Backbone(cfg)
     x = torch.randn(1, 3, 640, 640)
     t0 = time.time()
     outputs = model(x)

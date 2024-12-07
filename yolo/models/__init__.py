@@ -38,7 +38,7 @@ def build_model(args, cfg, is_val=False):
     elif 'yolov8' in args.model:
         model, criterion = build_yolov8(cfg, is_val)
     ## GElan
-    elif 'gelan' in args.model:
+    elif 'yolov9' in args.model:
         model, criterion = build_gelan(cfg, is_val)
     ## RT-DETR
     elif 'rtdetr' in args.model:

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 # --------------- Model components ---------------
-from .gelan_backbone import build_backbone
+from .gelan_backbone import GElanBackbone
 from .gelan_neck     import SPPElan
 from .gelan_pafpn    import GElanPaFPN
 from .gelan_head     import GElanDetHead
@@ -33,14 +33,14 @@ class GElan(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         ## Backbone
-        self.backbone = build_backbone(cfg)
-        self.neck     = SPPElan(cfg, self.backbone.feat_dims[-1])
+        self.backbone = GElanBackbone(cfg)
+        self.neck = SPPElan(cfg, self.backbone.feat_dims[-1])
         self.backbone.feat_dims[-1] = self.neck.out_dim
         ## PaFPN
-        self.fpn      = GElanPaFPN(cfg, self.backbone.feat_dims)
+        self.fpn = GElanPaFPN(cfg, self.backbone.feat_dims)
         ## Detection head
-        self.head     = GElanDetHead(cfg, self.fpn.out_dims)
-        self.pred     = GElanPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+        self.head = GElanDetHead(cfg, self.fpn.out_dims)
+        self.pred = GElanPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
 
     def switch_to_deploy(self,):
         for m in self.modules():

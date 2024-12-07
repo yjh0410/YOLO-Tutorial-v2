@@ -1,10 +1,10 @@
 # Gelan (proposed by yolov9) config
 
 
-def build_gelan_config(args):
-    if   args.model == 'gelan_s':
+def build_yolov9_config(args):
+    if   args.model == 'yolov9_s':
         return GElanSConfig()
-    elif args.model == 'gelan_c':
+    elif args.model == 'yolov9_c':
         return GElanCConfig()
     else:
         raise NotImplementedError("No config for model: {}".format(args.model))
@@ -16,12 +16,8 @@ class GElanBaseConfig(object):
         self.reg_max  = 16
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
-        self.num_levels = 3
+
         ## Backbone
-        self.backbone = 'gelan'
-        self.bk_act   = 'silu'
-        self.bk_norm  = 'BN'
-        self.bk_depthwise = False
         self.use_pretrained = True
         self.backbone_feats = {
             "c1": [64],
@@ -30,20 +26,14 @@ class GElanBaseConfig(object):
             "c4": [512, [512, 256], 512],
             "c5": [512, [512, 256], 512],
         }
-        self.scale = "l"
+        self.model_scale = "l"
         self.backbone_depth = 1
+
         ## Neck
-        self.neck           = 'spp_elan'
-        self.neck_act       = 'silu'
-        self.neck_norm      = 'BN'
-        self.spp_pooling_size  = 5
         self.spp_inter_dim     = 256
         self.spp_out_dim       = 512
+
         ## FPN
-        self.fpn      = 'gelan_pafpn'
-        self.fpn_act  = 'silu'
-        self.fpn_norm = 'BN'
-        self.fpn_depthwise = False
         self.fpn_depth    = 1
         self.fpn_feats_td = {
             "p4": [[512, 256], 512],
@@ -53,13 +43,10 @@ class GElanBaseConfig(object):
             "p4": [[512, 256], 512],
             "p5": [[512, 256], 512],
         }
+
         ## Head
-        self.head      = 'gelan_head'
-        self.head_act  = 'silu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
-        self.num_cls_head   = 2
-        self.num_reg_head   = 2
+        self.num_cls_head = 2
+        self.num_reg_head = 2
 
         # ---------------- Post-process config ----------------
         ## Post process
@@ -136,9 +123,8 @@ class GElanBaseConfig(object):
 class GElanCConfig(GElanBaseConfig):
     def __init__(self) -> None:
         super().__init__()
-        self.backbone = 'gelan'
         self.use_pretrained = True
-        self.scale = "c"
+        self.model_scale = "c"
      
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
@@ -151,7 +137,6 @@ class GElanSConfig(GElanBaseConfig):
         super().__init__()
         # ---------------- Model config ----------------
         ## Backbone
-        self.backbone = 'gelan'
         self.use_pretrained = True
         self.backbone_feats = {
             "c1": [32],
@@ -160,7 +145,7 @@ class GElanSConfig(GElanBaseConfig):
             "c4": [128, [128, 64],  256],
             "c5": [256, [256, 128], 256],
         }
-        self.scale = "s"
+        self.model_scale = "s"
         self.backbone_depth = 3
         ## Neck
         self.spp_inter_dim = 128

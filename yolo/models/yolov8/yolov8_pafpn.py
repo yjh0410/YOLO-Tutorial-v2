@@ -4,72 +4,51 @@ import torch.nn.functional as F
 from typing import List
 
 try:
-    from .yolov8_basic import BasicConv, ELANLayer
+    from .modules import ConvModule, C2fBlock
 except:
-    from  yolov8_basic import BasicConv, ELANLayer
+    from  modules import ConvModule, C2fBlock
 
 
 # YOLOv8's PaFPN
 class Yolov8PaFPN(nn.Module):
-    def __init__(self,
-                 cfg,
-                 in_dims :List = [256, 512, 1024],
-                 ) -> None:
+    def __init__(self, cfg, in_dims :List = [256, 512, 1024]) -> None:
         super(Yolov8PaFPN, self).__init__()
-        print('==============================')
-        print('FPN: {}'.format("Yolo PaFPN"))
         # --------------------------- Basic Parameters ---------------------------
         self.in_dims = in_dims[::-1]
         self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
 
         # ----------------------------- Yolov8's Top-down FPN -----------------------------
         ## P5 -> P4
-        self.top_down_layer_1 = ELANLayer(in_dim     = self.in_dims[0] + self.in_dims[1],
+        self.top_down_layer_1 = C2fBlock(in_dim     = self.in_dims[0] + self.in_dims[1],
+                                         out_dim    = round(512*cfg.width),
+                                         expansion  = 0.5,
+                                         num_blocks = round(3 * cfg.depth),
+                                         shortcut   = False,
+                                         )
+        ## P4 -> P3
+        self.top_down_layer_2 = C2fBlock(in_dim     = self.in_dims[2] + round(512*cfg.width),
+                                         out_dim    = round(256*cfg.width),
+                                         expansion  = 0.5,
+                                         num_blocks = round(3 * cfg.depth),
+                                         shortcut   = False,
+                                         )
+        # ----------------------------- Yolov8's Bottom-up PAN -----------------------------
+        ## P3 -> P4
+        self.dowmsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, padding=1, stride=2)
+        self.bottom_up_layer_1 = C2fBlock(in_dim     = round(256*cfg.width) + round(512*cfg.width),
                                           out_dim    = round(512*cfg.width),
                                           expansion  = 0.5,
                                           num_blocks = round(3 * cfg.depth),
                                           shortcut   = False,
-                                          act_type   = cfg.fpn_act,
-                                          norm_type  = cfg.fpn_norm,
-                                          depthwise  = cfg.fpn_depthwise,
                                           )
-        ## P4 -> P3
-        self.top_down_layer_2 = ELANLayer(in_dim     = self.in_dims[2] + round(512*cfg.width),
-                                          out_dim    = round(256*cfg.width),
+        ## P4 -> P5
+        self.dowmsample_layer_2 = ConvModule(round(512*cfg.width), round(512*cfg.width), kernel_size=3, padding=1, stride=2)
+        self.bottom_up_layer_2 = C2fBlock(in_dim     = round(512*cfg.width) + self.in_dims[0],
+                                          out_dim    = round(512*cfg.width*cfg.ratio),
                                           expansion  = 0.5,
                                           num_blocks = round(3 * cfg.depth),
                                           shortcut   = False,
-                                          act_type   = cfg.fpn_act,
-                                          norm_type  = cfg.fpn_norm,
-                                          depthwise  = cfg.fpn_depthwise,
                                           )
-        # ----------------------------- Yolov8's Bottom-up PAN -----------------------------
-        ## P3 -> P4
-        self.dowmsample_layer_1 = BasicConv(round(256*cfg.width), round(256*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_1 = ELANLayer(in_dim     = round(256*cfg.width) + round(512*cfg.width),
-                                           out_dim    = round(512*cfg.width),
-                                           expansion  = 0.5,
-                                           num_blocks = round(3 * cfg.depth),
-                                           shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise,
-                                           )
-        ## P4 -> P5
-        self.dowmsample_layer_2 = BasicConv(round(512*cfg.width), round(512*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
-        self.bottom_up_layer_2 = ELANLayer(in_dim     = round(512*cfg.width) + self.in_dims[0],
-                                           out_dim    = round(512*cfg.width*cfg.ratio),
-                                           expansion  = 0.5,
-                                           num_blocks = round(3 * cfg.depth),
-                                           shortcut   = False,
-                                           act_type   = cfg.fpn_act,
-                                           norm_type  = cfg.fpn_norm,
-                                           depthwise  = cfg.fpn_depthwise,
-                                           )
 
         self.init_weights()
         
@@ -77,8 +56,6 @@ class Yolov8PaFPN(nn.Module):
         """Initialize the parameters."""
         for m in self.modules():
             if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
     def forward(self, features):
@@ -122,10 +99,6 @@ if __name__=='__main__':
             self.out_stride = [8, 16, 32]
             self.max_stride = 32
             self.num_levels = 3
-            ## FPN
-            self.fpn_act  = 'silu'
-            self.fpn_norm = 'BN'
-            self.fpn_depthwise = False
             ## Head
             self.head_dim = 256
 

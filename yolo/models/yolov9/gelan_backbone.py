@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .gelan_basic import BasicConv, RepGElanLayer, ADown
+    from .modules import ConvModule, RepGElanLayer, ADown
 except:
-    from  gelan_basic import BasicConv, RepGElanLayer, ADown
+    from  modules import ConvModule, RepGElanLayer, ADown
 
 # IN1K pretrained weight
 pretrained_urls = {
@@ -17,7 +17,7 @@ class GElanBackbone(nn.Module):
     def __init__(self, cfg):
         super(GElanBackbone, self).__init__()
         # ---------- Basic setting ----------
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         self.feat_dims = [cfg.backbone_feats["c1"][-1],  # 64
                           cfg.backbone_feats["c2"][-1],  # 128
                           cfg.backbone_feats["c3"][-1],  # 256
@@ -27,61 +27,46 @@ class GElanBackbone(nn.Module):
         
         # ---------- Network setting ----------
         ## P1/2
-        self.layer_1 = BasicConv(3, cfg.backbone_feats["c1"][0],
-                                 kernel_size=3, padding=1, stride=2,
-                                 act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise)
+        self.layer_1 = ConvModule(3, cfg.backbone_feats["c1"][0], kernel_size=3, padding=1, stride=2)
         # P2/4
         self.layer_2 = nn.Sequential(
-            BasicConv(cfg.backbone_feats["c1"][0], cfg.backbone_feats["c2"][0],
-                      kernel_size=3, padding=1, stride=2,
-                      act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ConvModule(cfg.backbone_feats["c1"][0], cfg.backbone_feats["c2"][0], kernel_size=3, padding=1, stride=2),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c2"][0],
                           inter_dims = cfg.backbone_feats["c2"][1],
                           out_dim    = cfg.backbone_feats["c2"][2],
                           num_blocks = cfg.backbone_depth,
                           shortcut   = True,
-                          act_type   = cfg.bk_act,
-                          norm_type  = cfg.bk_norm,
-                          depthwise  = cfg.bk_depthwise)
+                          )
         )
         # P3/8
         self.layer_3 = nn.Sequential(
-            ADown(cfg.backbone_feats["c2"][2], cfg.backbone_feats["c3"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ADown(cfg.backbone_feats["c2"][2], cfg.backbone_feats["c3"][0]),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c3"][0],
                           inter_dims = cfg.backbone_feats["c3"][1],
                           out_dim    = cfg.backbone_feats["c3"][2],
                           num_blocks = cfg.backbone_depth,
                           shortcut   = True,
-                          act_type   = cfg.bk_act,
-                          norm_type  = cfg.bk_norm,
-                          depthwise  = cfg.bk_depthwise)
+                          )
         )
         # P4/16
         self.layer_4 = nn.Sequential(
-            ADown(cfg.backbone_feats["c3"][2], cfg.backbone_feats["c4"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ADown(cfg.backbone_feats["c3"][2], cfg.backbone_feats["c4"][0]),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c4"][0],
                           inter_dims = cfg.backbone_feats["c4"][1],
                           out_dim    = cfg.backbone_feats["c4"][2],
                           num_blocks = cfg.backbone_depth,
                           shortcut   = True,
-                          act_type   = cfg.bk_act,
-                          norm_type  = cfg.bk_norm,
-                          depthwise  = cfg.bk_depthwise)
+                          )
         )
         # P5/32
         self.layer_5 = nn.Sequential(
-            ADown(cfg.backbone_feats["c4"][2], cfg.backbone_feats["c5"][0],
-                  act_type=cfg.bk_act, norm_type=cfg.bk_norm, depthwise=cfg.bk_depthwise),
+            ADown(cfg.backbone_feats["c4"][2], cfg.backbone_feats["c5"][0]),
             RepGElanLayer(in_dim     = cfg.backbone_feats["c5"][0],
                           inter_dims = cfg.backbone_feats["c5"][1],
                           out_dim    = cfg.backbone_feats["c5"][2],
                           num_blocks = cfg.backbone_depth,
                           shortcut   = True,
-                          act_type   = cfg.bk_act,
-                          norm_type  = cfg.bk_norm,
-                          depthwise  = cfg.bk_depthwise)
+                          )
         )
 
         # Initialize all layers
@@ -133,27 +118,12 @@ class GElanBackbone(nn.Module):
         return outputs
 
 
-# ------------ Functions ------------
-def build_backbone(cfg): 
-    # model
-    if   cfg.backbone == "gelan":
-        backbone = GElanBackbone(cfg)
-    else:
-        raise NotImplementedError("Unknown gelan backbone: {}".format(cfg.backbone))
-        
-    return backbone
-
-
 if __name__ == '__main__':
     import time
     from thop import profile
     class BaseConfig(object):
         def __init__(self) -> None:
-            self.backbone = 'gelan'
             self.use_pretrained = True
-            self.bk_act = 'silu'
-            self.bk_norm = 'BN'
-            self.bk_depthwise = False
             # # Gelan-C scale
             # self.backbone_feats = {
             #     "c1": [64],
@@ -162,7 +132,7 @@ if __name__ == '__main__':
             #     "c4": [512, [512, 256], 512],
             #     "c5": [512, [512, 256], 512],
             # }
-            # self.scale = "l"
+            # self.model_scale = "c"
             # self.backbone_depth = 1
             # Gelan-S scale
             self.backbone_feats = {
@@ -172,13 +142,13 @@ if __name__ == '__main__':
                 "c4": [128, [128, 64],  256],
                 "c5": [256, [256, 128], 256],
             }
-            self.scale = "s"
+            self.model_scale = "s"
             self.backbone_depth = 3
     # 定义模型配置文件
     cfg = BaseConfig()
 
     # 构建GELAN主干网络
-    model = build_backbone(cfg)
+    model = GElanBackbone(cfg)
 
     # 随机生成输入数据
     x = torch.randn(1, 3, 640, 640)
