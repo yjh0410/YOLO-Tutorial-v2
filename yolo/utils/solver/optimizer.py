@@ -1,6 +1,58 @@
 import torch
 
 
+def build_simple_optimizer(cfg, model, resume=None):
+    print('==============================')
+    print('Optimizer: {}'.format(cfg.optimizer))
+    print('--base lr: {}'.format(cfg.base_lr))
+    print('--min lr:  {}'.format(cfg.min_lr))
+    print('--momentum: {}'.format(cfg.momentum))
+    print('--weight_decay: {}'.format(cfg.weight_decay))
+
+    # ------------- Divide model's parameters -------------
+    param_dicts = [
+        {"params": [p for n, p in model.named_parameters() if "backbone" not in n and p.requires_grad]},
+        {
+            "params": [p for n, p in model.named_parameters() if "backbone" in n and p.requires_grad],
+            "lr": cfg.base_lr * cfg.bk_lr_ratio,
+        },
+    ]
+
+    if cfg.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(
+            params=param_dicts, 
+            lr=cfg.base_lr,
+            momentum=cfg.momentum,
+            weight_decay=cfg.weight_decay
+            )
+                                
+    elif cfg.optimizer == 'adamw':
+        optimizer = torch.optim.AdamW(
+            params=param_dicts, 
+            lr=cfg.base_lr,
+            weight_decay=cfg.weight_decay
+            )
+
+    start_epoch = 0
+    cfg.best_map = -1.
+    if resume and resume != 'None':
+        checkpoint = torch.load(resume)
+        # checkpoint state dict
+        try:
+            checkpoint_state_dict = checkpoint.pop("optimizer")
+            print('--Load optimizer from the checkpoint: ', resume)
+            optimizer.load_state_dict(checkpoint_state_dict)
+            start_epoch = checkpoint.pop("epoch") + 1
+            if "mAP" in checkpoint:
+                print('--Load best metric from the checkpoint: ', resume)
+                best_map = checkpoint["mAP"]
+                cfg.best_map = best_map
+            del checkpoint, checkpoint_state_dict
+        except:
+            print("No optimzier in the given checkpoint.")
+                                                        
+    return optimizer, start_epoch
+
 def build_yolo_optimizer(cfg, model, resume=None):
     print('==============================')
     print('Optimizer: {}'.format(cfg.optimizer))
@@ -53,7 +105,6 @@ def build_yolo_optimizer(cfg, model, resume=None):
             print("No optimzier in the given checkpoint.")
                                                         
     return optimizer, start_epoch
-
 
 def build_rtdetr_optimizer(cfg, model, resume=None):
     print('==============================')

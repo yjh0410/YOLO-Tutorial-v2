@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+from torch.optim.lr_scheduler import MultiStepLR, CosineAnnealingLR
 
 # ------------------------- WarmUp LR Scheduler -------------------------
 ## Warmup LR Scheduler
@@ -29,10 +29,12 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
     print('LR Scheduler: {}'.format(cfg.lr_scheduler))
 
     if cfg.lr_scheduler == "step":
-        lr_step = [cfg.max_epoch // 3, cfg.max_epoch // 3 * 2]
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_step, gamma=0.1)
+        lr_step = [cfg.max_epoch // 2, cfg.max_epoch // 3 * 4]
+        lr_scheduler = MultiStepLR(optimizer, milestones=lr_step, gamma=0.1)
+
     elif cfg.lr_scheduler == "cosine":
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.max_epoch - cfg.warmup_epoch - 1, eta_min=cfg.min_lr)
+        lr_scheduler = CosineAnnealingLR(optimizer, T_max=cfg.max_epoch - cfg.warmup_epoch - 1, eta_min=cfg.min_lr)
+    
     else:
         raise NotImplementedError("Unknown lr scheduler: {}".format(cfg.lr_scheduler))
         

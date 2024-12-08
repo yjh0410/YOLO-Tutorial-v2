@@ -29,7 +29,7 @@ from evaluator.map_evaluator import MapEvaluator
 from models import build_model
 
 # ----------------- Train Components -----------------
-from engine import YoloTrainer
+from engine import YoloTrainer, SimpleTrainer
 
 
 def parse_args():
@@ -193,15 +193,25 @@ def train():
         dist.barrier()
 
     # ---------------------------- Build Trainer ----------------------------
-    trainer = YoloTrainer(args = args,
-                          cfg = cfg,
-                          device = device,
-                          model = model,
-                          model_ema = model_ema,
-                          criterion = criterion,
-                          train_loader = train_loader,
-                          evaluator = evaluator,
-                          )
+    if cfg.trainer == "simple":
+        trainer = SimpleTrainer(args = args,
+                                cfg = cfg,
+                                device = device,
+                                model = model,
+                                criterion = criterion,
+                                train_loader = train_loader,
+                                evaluator = evaluator,
+                                )
+    else:
+        trainer = YoloTrainer(args = args,
+                              cfg = cfg,
+                              device = device,
+                              model = model,
+                              model_ema = model_ema,
+                              criterion = criterion,
+                              train_loader = train_loader,
+                              evaluator = evaluator,
+                              )
     
     ## Eval before training
     if args.eval_first and distributed_utils.is_main_process():

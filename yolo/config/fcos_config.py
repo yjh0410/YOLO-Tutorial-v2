@@ -33,7 +33,7 @@ class FcosBaseConfig(object):
         # ---------------- Assignment config ----------------
         ## Matcher
         self.center_sampling_radius = 1.5
-        self.object_sizes_of_interest = [[-1, 64], [64, 128], [128, 256], [256, 512], [512, float('inf')]]
+        self.object_sizes_of_interest = [[-1, 64], [64, 128], [128, 256], [256, float('inf')]]
 
         ## Loss weight
         self.focal_loss_alpha = 0.25
@@ -43,12 +43,12 @@ class FcosBaseConfig(object):
         self.loss_ctn = 1.0
 
         # ---------------- ModelEMA config ----------------
-        self.use_ema   = True
+        self.use_ema   = False
         self.ema_decay = 0.9998
         self.ema_tau   = 2000
 
         # ---------------- Optimizer config ----------------
-        self.trainer      = 'yolo'
+        self.trainer      = 'simple'
         self.optimizer    = 'sgd'
         self.base_lr      = 0.01     # base_lr = per_image_lr * batch_size
         self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
@@ -57,10 +57,10 @@ class FcosBaseConfig(object):
         self.weight_decay = 0.0001
         self.clip_max_norm   = 10.0
         self.warmup_bias_lr  = 0.0
-        self.warmup_momentum = 0.8
+        self.warmup_momentum = 0.9
 
         # ---------------- Lr Scheduler config ----------------
-        self.warmup_epoch = 3
+        self.warmup_iters = 500
         self.lr_scheduler = "cosine"
         self.max_epoch    = 150
         self.eval_epoch   = 10
