@@ -51,7 +51,8 @@ class FcosBaseConfig(object):
         self.trainer      = 'simple'
         self.optimizer    = 'sgd'
         self.base_lr      = 0.01     # base_lr = per_image_lr * batch_size
-        self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
+        self.min_lr_ratio = 0.01     # min_lr  = base_lr * min_lr_ratio
+        self.bk_lr_ratio  = 1.0
         self.batch_size_base = 16
         self.momentum     = 0.9
         self.weight_decay = 0.0001
