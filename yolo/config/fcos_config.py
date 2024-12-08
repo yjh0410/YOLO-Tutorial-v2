@@ -49,14 +49,14 @@ class FcosBaseConfig(object):
 
         # ---------------- Optimizer config ----------------
         self.trainer      = 'yolo'
-        self.optimizer    = 'adamw'
-        self.base_lr      = 0.0001     # base_lr = per_image_lr * batch_size
+        self.optimizer    = 'sgd'
+        self.base_lr      = 0.01     # base_lr = per_image_lr * batch_size
         self.min_lr_ratio = 0.01      # min_lr  = base_lr * min_lr_ratio
         self.batch_size_base = 16
         self.momentum     = 0.9
-        self.weight_decay = 0.05
-        self.clip_max_norm   = 35.0
-        self.warmup_bias_lr  = 0.1
+        self.weight_decay = 0.0001
+        self.clip_max_norm   = 10.0
+        self.warmup_bias_lr  = 0.0
         self.warmup_momentum = 0.8
 
         # ---------------- Lr Scheduler config ----------------
