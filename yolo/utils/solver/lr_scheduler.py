@@ -33,7 +33,11 @@ def build_lr_scheduler(cfg, optimizer, resume=None):
         lr_scheduler = MultiStepLR(optimizer, milestones=lr_step, gamma=0.1)
 
     elif cfg.lr_scheduler == "cosine":
-        lr_scheduler = CosineAnnealingLR(optimizer, T_max=cfg.max_epoch - cfg.warmup_epoch - 1, eta_min=cfg.min_lr)
+        if hasattr(cfg, "warmup_epoch"):
+            total_epochs = cfg.max_epoch - cfg.warmup_epoch - 1
+        else:
+            total_epochs = cfg.max_epoch - 1
+        lr_scheduler = CosineAnnealingLR(optimizer, T_max=total_epochs, eta_min=cfg.min_lr)
     
     else:
         raise NotImplementedError("Unknown lr scheduler: {}".format(cfg.lr_scheduler))
