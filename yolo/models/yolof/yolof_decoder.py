@@ -2,62 +2,48 @@ import math
 import torch
 import torch.nn as nn
 
-from .modules import BasicConv
+try:
+    from .modules import ConvModule
+except:
+    from  modules import ConvModule
 
 
 class YolofHead(nn.Module):
-    def __init__(self, cfg, in_dim, out_dim,):
+    def __init__(self, cfg, in_dim: int, out_dim: int,):
         super().__init__()
-        self.fmp_size = None
-        self.ctr_clamp = cfg.center_clamp
+        self.ctr_clamp = 32
         self.DEFAULT_EXP_CLAMP = math.log(1e8)
         self.DEFAULT_SCALE_CLAMP = math.log(1000.0 / 16)
         # ------------------ Basic parameters -------------------
         self.cfg = cfg
         self.in_dim = in_dim
-        self.stride       = cfg.out_stride
+        self.out_stride   = cfg.out_stride
         self.num_classes  = cfg.num_classes
         self.num_cls_head = cfg.num_cls_head
         self.num_reg_head = cfg.num_reg_head
-        self.act_type     = cfg.head_act
-        self.norm_type    = cfg.head_norm
         # Anchor config
         self.anchor_size = torch.as_tensor(cfg.anchor_size)
         self.num_anchors = len(cfg.anchor_size)
 
         # ------------------ Network parameters -------------------
-        ## cls head
+        ## classification head
         cls_heads = []
         self.cls_head_dim = out_dim
         for i in range(self.num_cls_head):
             if i == 0:
-                cls_heads.append(
-                    BasicConv(in_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                cls_heads.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                cls_heads.append(
-                    BasicConv(self.cls_head_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
-        ## reg head
+                cls_heads.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
+
+        ## bbox regression head
         reg_heads = []
         self.reg_head_dim = out_dim
         for i in range(self.num_reg_head):
             if i == 0:
-                reg_heads.append(
-                    BasicConv(in_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                reg_heads.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                reg_heads.append(
-                    BasicConv(self.reg_head_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                reg_heads.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+
         self.cls_heads = nn.Sequential(*cls_heads)
         self.reg_heads = nn.Sequential(*reg_heads)
 
@@ -86,30 +72,25 @@ class YolofHead(nn.Module):
         """fmp_size: list -> [H, W] \n
            stride: int -> output stride
         """
-        # check anchor boxes
-        if self.fmp_size is not None and self.fmp_size == fmp_size:
-            return self.anchor_boxes
-        else:
-            # generate grid cells
-            fmp_h, fmp_w = fmp_size
-            anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
-            # [H, W, 2] -> [HW, 2]
-            anchor_xy = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2) + 0.5
-            # [HW, 2] -> [HW, 1, 2] -> [HW, KA, 2] 
-            anchor_xy = anchor_xy[:, None, :].repeat(1, self.num_anchors, 1)
-            anchor_xy *= self.stride
+        # generate grid cells
+        fmp_h, fmp_w = fmp_size
+        anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
 
-            # [KA, 2] -> [1, KA, 2] -> [HW, KA, 2]
-            anchor_wh = self.anchor_size[None, :, :].repeat(fmp_h*fmp_w, 1, 1)
+        # anchor points: [H, W, 2] -> [HW, 2]
+        anchor_xy = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2) + 0.5
 
-            # [HW, KA, 4] -> [M, 4]
-            anchor_boxes = torch.cat([anchor_xy, anchor_wh], dim=-1)
-            anchor_boxes = anchor_boxes.view(-1, 4)
+        # [HW, 2] -> [HW, 1, 2] -> [HW, KA, 2] 
+        anchor_xy = anchor_xy[:, None, :].repeat(1, self.num_anchors, 1)
+        anchor_xy *= self.out_stride       # [KA, 2] -> [1, KA, 2] -> [HW, KA, 2]
 
-            self.anchor_boxes = anchor_boxes
-            self.fmp_size = fmp_size
+        # anchor boxes: [KA, 2] -> [HW, KA, 2]
+        anchor_wh = self.anchor_size[None, :, :].repeat(fmp_h*fmp_w, 1, 1)
 
-            return anchor_boxes
+        # [HW, KA, 4] -> [M, 4], M = H*W*KA
+        anchor_boxes = torch.cat([anchor_xy, anchor_wh], dim=-1)
+        anchor_boxes = anchor_boxes.view(-1, 4)
+
+        return anchor_boxes
         
     def decode_boxes(self, anchor_boxes, pred_reg):
         """
@@ -135,7 +116,7 @@ class YolofHead(nn.Module):
 
         return pred_box
 
-    def forward(self, x, mask=None):
+    def forward(self, x):
         # ------------------- Decoupled head -------------------
         cls_feats = self.cls_heads(x)
         reg_feats = self.reg_heads(x)
@@ -167,19 +148,11 @@ class YolofHead(nn.Module):
         reg_pred = reg_pred.view(B, -1, 4)
         ## Decode bbox
         box_pred = self.decode_boxes(anchor_boxes[None], reg_pred)  # [B, M, 4]
-        ## adjust mask
-        if mask is not None:
-            # [B, H, W]
-            mask = torch.nn.functional.interpolate(mask[None].float(), size=fmp_size).bool()[0]
-            # [B, H, W] -> [B, HW]
-            mask = mask.flatten(1)
-            # [B, HW] -> [B, HW, KA] -> [BM,], M= HW x KA
-            mask = mask[..., None].repeat(1, 1, self.num_anchors).flatten()
 
         outputs = {"pred_cls": normalized_cls_pred,
                    "pred_reg": reg_pred,
                    "pred_box": box_pred,
                    "anchors": anchor_boxes,
-                   "mask": mask}
+                   }
 
         return outputs 

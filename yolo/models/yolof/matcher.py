@@ -30,7 +30,7 @@ class UniformMatcher(nn.Module):
         anchor_boxes = anchor_boxes.flatten(0, 1)
 
         # Also concat the target boxes
-        tgt_bbox = torch.cat([v['boxes'] for v in targets])
+        tgt_bbox = torch.cat([v['boxes'] for v in targets]).to(out_bbox.device)
 
         # Compute the L1 cost between boxes
         # Note that we use anchors and predict boxes both

@@ -1,23 +1,26 @@
+import torch
 import torch.nn as nn
-from utils import weight_init
 
-from .modules import BasicConv
+try:
+    from .modules import ConvModule
+except:
+    from  modules import ConvModule
 
 
 # BottleNeck
 class Bottleneck(nn.Module):
-    def __init__(self, in_dim, dilation, expand_ratio, act_type='relu', norm_type='BN'):
+    def __init__(self, in_dim: int, dilation: int = 1, expansion: float = 0.5):
         super(Bottleneck, self).__init__()
         # ------------------ Basic parameters -------------------
         self.in_dim = in_dim
         self.dilation = dilation
-        self.expand_ratio = expand_ratio
-        inter_dim = round(in_dim * expand_ratio)
+        self.expansion = expansion
+        inter_dim = round(in_dim * expansion)
         # ------------------ Network parameters -------------------
         self.branch = nn.Sequential(
-            BasicConv(in_dim, inter_dim, kernel_size=1, act_type=act_type, norm_type=norm_type),
-            BasicConv(inter_dim, inter_dim, kernel_size=3, padding=dilation, dilation=dilation, act_type=act_type, norm_type=norm_type),
-            BasicConv(inter_dim, in_dim, kernel_size=1, act_type=act_type, norm_type=norm_type)
+            ConvModule(in_dim, inter_dim, kernel_size=1),
+            ConvModule(inter_dim, inter_dim, kernel_size=3, padding=dilation, dilation=dilation),
+            ConvModule(inter_dim, in_dim, kernel_size=1)
         )
 
     def forward(self, x):
@@ -32,41 +35,56 @@ class DilatedEncoder(nn.Module):
         self.out_dim = out_dim
         self.expand_ratio = cfg.neck_expand_ratio
         self.dilations    = cfg.neck_dilations
-        self.act_type     = cfg.neck_act
-        self.norm_type    = cfg.neck_norm
         # ------------------ Network parameters -------------------
         ## proj layer
         self.projector = nn.Sequential(
-            BasicConv(in_dim, out_dim, kernel_size=1, act_type=None, norm_type=self.norm_type),
-            BasicConv(out_dim, out_dim, kernel_size=3, padding=1, act_type=None, norm_type=self.norm_type)
+            ConvModule(in_dim,  out_dim, kernel_size=1, use_act=False),
+            ConvModule(out_dim, out_dim, kernel_size=3, padding=1, use_act=False)
         )
         ## encoder layers
         self.encoders = nn.Sequential(
-            *[Bottleneck(out_dim, d, self.expand_ratio, self.act_type, self.norm_type) for d in self.dilations])
-
-        self._init_weight()
-
-    def _init_weight(self):
-        for m in self.projector:
-            if isinstance(m, nn.Conv2d):
-                weight_init.c2_xavier_fill(m)
-                weight_init.c2_xavier_fill(m)
-            if isinstance(m, (nn.GroupNorm, nn.BatchNorm2d, nn.SyncBatchNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-
-        for m in self.encoders.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, mean=0, std=0.01)
-                if hasattr(m, 'bias') and m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-
-            if isinstance(m, (nn.GroupNorm, nn.BatchNorm2d, nn.SyncBatchNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+            *[Bottleneck(in_dim = out_dim,
+                         dilation = d,
+                         expansion = self.expand_ratio,
+                         ) for d in self.dilations])
 
     def forward(self, x):
         x = self.projector(x)
         x = self.encoders(x)
 
         return x
+
+
+if __name__=='__main__':
+    from thop import profile
+
+    # YOLOv1 configuration
+    class YolofBaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.out_stride = 32
+            ## Backbone
+            self.backbone = 'resnet18'
+            self.use_pretrained = True
+
+            self.neck_expand_ratio = 0.25
+            self.neck_dilations = [2, 4, 6, 8]
+
+    cfg = YolofBaseConfig()
+
+    # Randomly generate a input data
+    x = torch.randn(2, 512, 20, 20)
+
+    # Build backbone
+    model = DilatedEncoder(cfg, in_dim=512, out_dim=512)
+
+    # Inference
+    output = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of output : ', output.shape)
+
+    x = torch.randn(1, 512, 20, 20)
+    flops, params = profile(model, inputs=(x, ), verbose=False)
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

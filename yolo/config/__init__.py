@@ -9,6 +9,9 @@ from .yolov6_config  import build_yolov6_config
 from .yolov7_config  import build_yolov7_config
 from .yolov8_config  import build_yolov8_config
 from .yolov9_config  import build_yolov9_config
+
+from .yolof_config   import build_yolof_config
+from .fcos_config    import build_fcos_config
 from .rtdetr_config  import build_rtdetr_config
 
 
@@ -38,6 +41,10 @@ def build_config(args):
         cfg = build_yolov9_config(args)
         
     # ----------- RT-DETR -----------
+    elif 'yolof' in args.model:
+        cfg = build_yolof_config(args)
+    elif 'fcos' in args.model:
+        cfg = build_fcos_config(args)
     elif 'rtdetr' in args.model:
         cfg = build_rtdetr_config(args)
 

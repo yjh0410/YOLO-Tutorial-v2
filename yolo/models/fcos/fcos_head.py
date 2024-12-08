@@ -1,7 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-from .modules import BasicConv
+try:
+    from .modules import ConvModule
+except:
+    from  modules import ConvModule
 
 
 class Scale(nn.Module):
@@ -25,53 +29,34 @@ class Scale(nn.Module):
         return x * self.scale
 
 class FcosHead(nn.Module):
-    def __init__(self, cfg, in_dim, out_dim,):
+    def __init__(self, cfg, in_dim: int = 256,):
         super().__init__()
-        self.fmp_size = None
         # ------------------ Basic parameters -------------------
         self.cfg = cfg
         self.in_dim = in_dim
-        self.stride       = cfg.out_stride
-        self.num_classes  = cfg.num_classes
-        self.num_cls_head = cfg.num_cls_head
-        self.num_reg_head = cfg.num_reg_head
-        self.act_type     = cfg.head_act
-        self.norm_type    = cfg.head_norm
+        self.out_dim = cfg.head_dim
+        self.out_stride  = cfg.out_stride
+        self.num_classes = cfg.num_classes
 
         # ------------------ Network parameters -------------------
-        ## cls head
+        ## classification head
         cls_heads = []
-        self.cls_head_dim = out_dim
-        for i in range(self.num_cls_head):
+        self.cls_head_dim = cfg.head_dim
+        for i in range(cfg.num_cls_head):
             if i == 0:
-                cls_heads.append(
-                    BasicConv(in_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                cls_heads.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                cls_heads.append(
-                    BasicConv(self.cls_head_dim, self.cls_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                cls_heads.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
         
-        ## reg head
+        ## bbox regression head
         reg_heads = []
-        self.reg_head_dim = out_dim
-        for i in range(self.num_reg_head):
+        self.reg_head_dim = cfg.head_dim
+        for i in range(cfg.num_reg_head):
             if i == 0:
-                reg_heads.append(
-                    BasicConv(in_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                reg_heads.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
             else:
-                reg_heads.append(
-                    BasicConv(self.reg_head_dim, self.reg_head_dim,
-                              kernel_size=3, padding=1, stride=1, 
-                              act_type=self.act_type, norm_type=self.norm_type)
-                              )
+                reg_heads.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+        
         self.cls_heads = nn.Sequential(*cls_heads)
         self.reg_heads = nn.Sequential(*reg_heads)
 
@@ -82,7 +67,7 @@ class FcosHead(nn.Module):
         
         ## scale layers
         self.scales = nn.ModuleList(
-            Scale() for _ in range(len(self.stride))
+            Scale() for _ in range(len(self.out_stride))
         )
         
         # init bias
@@ -112,8 +97,9 @@ class FcosHead(nn.Module):
         fmp_h, fmp_w = fmp_size
         anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
         # [H, W, 2] -> [HW, 2]
-        anchors = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2) + 0.5
-        anchors *= self.stride[level]
+        anchors = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2)
+        anchors += 0.5
+        anchors *= self.out_stride[level]
 
         return anchors
         
@@ -130,8 +116,7 @@ class FcosHead(nn.Module):
 
         return pred_box
     
-    def forward(self, pyramid_feats, mask=None):
-        all_masks = []
+    def forward(self, pyramid_feats):
         all_anchors = []
         all_cls_preds = []
         all_reg_preds = []
@@ -158,16 +143,10 @@ class FcosHead(nn.Module):
             cls_pred = cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_classes)
             ctn_pred = ctn_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
             reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
-            reg_pred = nn.functional.relu(self.scales[level](reg_pred)) * self.stride[level]
+            reg_pred = F.relu(self.scales[level](reg_pred)) * self.out_stride[level]
+
             ## Decode bbox
             box_pred = self.decode_boxes(reg_pred, anchors)
-            ## Adjust mask
-            if mask is not None:
-                # [B, H, W]
-                mask_i = torch.nn.functional.interpolate(mask[None].float(), size=[H, W]).bool()[0]
-                # [B, H, W] -> [B, M]
-                mask_i = mask_i.flatten(1)     
-                all_masks.append(mask_i)
                 
             all_anchors.append(anchors)
             all_cls_preds.append(cls_pred)
@@ -180,7 +159,52 @@ class FcosHead(nn.Module):
                    "pred_box": all_box_preds,  # List [B, M, 4]
                    "pred_ctn": all_ctn_preds,  # List [B, M, 1]
                    "anchors": all_anchors,     # List [B, M, 2]
-                   "strides": self.stride,
-                   "mask": all_masks}          # List [B, M,]
+                   "strides": self.out_stride,
+                   }
 
         return outputs 
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv3-Base config
+    class FcosBaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width = 0.50
+            self.depth = 0.34
+
+            self.out_stride = [8, 16, 32, 64]
+            self.num_classes = 20
+
+            ## Head
+            self.head_dim  = 256
+            self.num_cls_head = 4
+            self.num_reg_head = 4
+
+    cfg = FcosBaseConfig()
+    feat_dim = 256
+    pyramid_feats = [torch.randn(1, feat_dim, 80, 80),
+                     torch.randn(1, feat_dim, 40, 40),
+                     torch.randn(1, feat_dim, 20, 20),
+                     torch.randn(1, feat_dim, 10, 10)]
+
+    # Build a head
+    head = FcosHead(cfg, feat_dim)
+
+    # Inference
+    t0 = time.time()
+    outputs = head(pyramid_feats)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print("====== FCOS Head output ======")
+    for k in outputs:
+        print(f" - shape of {k}: ", outputs[k].shape )
+
+    flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))
