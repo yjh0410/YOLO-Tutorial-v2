@@ -27,7 +27,7 @@ class FcosBaseConfig(object):
         self.val_conf_thresh = 0.05
         self.val_nms_thresh  = 0.6
         self.test_topk = 100
-        self.test_conf_thresh = 0.3
+        self.test_conf_thresh = 0.45
         self.test_nms_thresh  = 0.45
 
         # ---------------- Assignment config ----------------
