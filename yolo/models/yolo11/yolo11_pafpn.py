@@ -1,146 +1,127 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .modules import Conv, ELANBlockFPN, DownSample
+from typing import List
+
+try:
+    from .modules import ConvModule, C3k2fBlock
+except:
+    from  modules import ConvModule, C3k2fBlock
 
 
-# PaFPN-ELAN (YOLOv7's)
-class Yolov7PaFPN(nn.Module):
-    def __init__(self, 
-                 in_dims=[512, 1024, 512],
-                 out_dim=None,
-                 channel_width : float = 1.0,
-                 branch_width  : int   = 4.0,
-                 branch_depth  : int   = 1.0,
-                 act_type='silu',
-                 norm_type='BN',
-                 depthwise=False):
-        super(Yolov7PaFPN, self).__init__()
-        # ----------------------------- Basic parameters -----------------------------
-        self.fpn_dims = in_dims
-        self.channel_width = channel_width
-        self.branch_width = branch_width
-        self.branch_depth = branch_depth
-        c3, c4, c5 = self.fpn_dims
+class Yolo11PaFPN(nn.Module):
+    def __init__(self, cfg, in_dims :List = [256, 512, 1024]):
+        super(Yolo11PaFPN, self).__init__()
+        # --------------------------- Basic Parameters ---------------------------
+        self.model_scale = cfg.model_scale
+        self.in_dims = in_dims[::-1]
+        self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
 
-        # ----------------------------- Top-down FPN -----------------------------
+        # ----------------------------- Yolo11's Top-down FPN -----------------------------
         ## P5 -> P4
-        self.reduce_layer_1 = Conv(c5, round(256*channel_width), k=1, norm_type=norm_type, act_type=act_type)
-        self.reduce_layer_2 = Conv(c4, round(256*channel_width), k=1, norm_type=norm_type, act_type=act_type)
-        self.top_down_layer_1 = ELANBlockFPN(in_dim=round(256*channel_width) + round(256*channel_width),
-                                             out_dim=round(256*channel_width),
-                                             squeeze_ratio=0.5,
-                                             branch_width=branch_width,
-                                             branch_depth=branch_depth,
-                                             act_type=act_type,
-                                             norm_type=norm_type,
-                                             depthwise=depthwise
-                                             )
+        self.top_down_layer_1 = C3k2fBlock(in_dim     = self.in_dims[0] + self.in_dims[1],
+                                          out_dim    = round(512*cfg.width),
+                                          num_blocks = round(2 * cfg.depth),
+                                          shortcut   = True,
+                                          expansion  = 0.5,
+                                          use_c3k    = False if self.model_scale in "ns" else True,
+                                          )
         ## P4 -> P3
-        self.reduce_layer_3 = Conv(round(256*channel_width), round(128*channel_width), k=1, norm_type=norm_type, act_type=act_type)
-        self.reduce_layer_4 = Conv(c3, round(128*channel_width), k=1, norm_type=norm_type, act_type=act_type)
-        self.top_down_layer_2 = ELANBlockFPN(in_dim=round(128*channel_width) + round(128*channel_width),
-                                             out_dim=round(128*channel_width),
-                                             squeeze_ratio=0.5,
-                                             branch_width=branch_width,
-                                             branch_depth=branch_depth,
-                                             act_type=act_type,
-                                             norm_type=norm_type,
-                                             depthwise=depthwise
-                                             )
-        # ----------------------------- Bottom-up FPN -----------------------------
+        self.top_down_layer_2 = C3k2fBlock(in_dim     = self.in_dims[2] + round(512*cfg.width),
+                                          out_dim    = round(256*cfg.width),
+                                          num_blocks = round(2 * cfg.depth),
+                                          shortcut   = True,
+                                          expansion  = 0.5,
+                                          use_c3k    = False if self.model_scale in "ns" else True,
+                                          )
+        # ----------------------------- Yolo11's Bottom-up PAN -----------------------------
         ## P3 -> P4
-        self.downsample_layer_1 = DownSample(round(128*channel_width), round(256*channel_width), act_type, norm_type, depthwise)
-        self.bottom_up_layer_1 = ELANBlockFPN(in_dim=round(256*channel_width) + round(256*channel_width),
-                                              out_dim=round(256*channel_width),
-                                              squeeze_ratio=0.5,
-                                              branch_width=branch_width,
-                                              branch_depth=branch_depth,
-                                              act_type=act_type,
-                                              norm_type=norm_type,
-                                              depthwise=depthwise
-                                              )
+        self.dowmsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, stride=2)
+        self.bottom_up_layer_1 = C3k2fBlock(in_dim     = round(256*cfg.width) + round(512*cfg.width),
+                                           out_dim    = round(512*cfg.width),
+                                           num_blocks = round(2 * cfg.depth),
+                                           shortcut   = True,
+                                           expansion  = 0.5,
+                                           use_c3k    = False if self.model_scale in "ns" else True,
+                                           )
         ## P4 -> P5
-        self.downsample_layer_2 = DownSample(round(256*channel_width), round(512*channel_width), act_type, norm_type, depthwise)
-        self.bottom_up_layer_2 = ELANBlockFPN(in_dim=round(512*channel_width) + c5,
-                                              out_dim=round(512*channel_width),
-                                              squeeze_ratio=0.5,
-                                              branch_width=branch_width,
-                                              branch_depth=branch_depth,
-                                              act_type=act_type,
-                                              norm_type=norm_type,
-                                              depthwise=depthwise
-                                              )
-        # ----------------------------- Output Proj -----------------------------
-        ## Head convs
-        self.head_conv_1 = Conv(round(128*channel_width), round(256*channel_width), k=3, s=1, p=1, act_type=act_type, norm_type=norm_type)
-        self.head_conv_2 = Conv(round(256*channel_width), round(512*channel_width), k=3, s=1, p=1, act_type=act_type, norm_type=norm_type)
-        self.head_conv_3 = Conv(round(512*channel_width), round(1024*channel_width), k=3, s=1, p=1, act_type=act_type, norm_type=norm_type)
-        ## Output projs
-        if out_dim is not None:
-            self.out_layers = nn.ModuleList([
-                Conv(in_dim, out_dim, k=1, act_type=act_type, norm_type=norm_type)
-                for in_dim in [round(256*channel_width), round(512*channel_width), round(1024*channel_width)]
-                ])
-            self.out_dim = [out_dim] * 3
-        else:
-            self.out_layers = None
-            self.out_dim = [round(256*channel_width), round(512*channel_width), round(1024*channel_width)]
+        self.dowmsample_layer_2 = ConvModule(round(512*cfg.width), round(512*cfg.width), kernel_size=3, stride=2)
+        self.bottom_up_layer_2 = C3k2fBlock(in_dim     = round(512*cfg.width) + self.in_dims[0],
+                                           out_dim    = round(512*cfg.width*cfg.ratio),
+                                           num_blocks = round(2 * cfg.depth),
+                                           shortcut   = True,
+                                           expansion  = 0.5,
+                                           use_c3k    = True,
+                                           )
 
+        self.init_weights()
+        
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                m.reset_parameters()
 
     def forward(self, features):
         c3, c4, c5 = features
 
-        # Top down
+        # ------------------ Top down FPN ------------------
         ## P5 -> P4
-        c6 = self.reduce_layer_1(c5)
-        c7 = F.interpolate(c6, scale_factor=2.0)
-        c8 = torch.cat([c7, self.reduce_layer_2(c4)], dim=1)
-        c9 = self.top_down_layer_1(c8)
+        p5_up = F.interpolate(c5, scale_factor=2.0)
+        p4 = self.top_down_layer_1(torch.cat([p5_up, c4], dim=1))
+
         ## P4 -> P3
-        c10 = self.reduce_layer_3(c9)
-        c11 = F.interpolate(c10, scale_factor=2.0)
-        c12 = torch.cat([c11, self.reduce_layer_4(c3)], dim=1)
-        c13 = self.top_down_layer_2(c12)
+        p4_up = F.interpolate(p4, scale_factor=2.0)
+        p3 = self.top_down_layer_2(torch.cat([p4_up, c3], dim=1))
 
-        # Bottom up
+        # ------------------ Bottom up FPN ------------------
         ## p3 -> P4
-        c14 = self.downsample_layer_1(c13)
-        c15 = torch.cat([c14, c9], dim=1)
-        c16 = self.bottom_up_layer_1(c15)
-        ## P4 -> P5
-        c17 = self.downsample_layer_2(c16)
-        c18 = torch.cat([c17, c5], dim=1)
-        c19 = self.bottom_up_layer_2(c18)
+        p3_ds = self.dowmsample_layer_1(p3)
+        p4 = self.bottom_up_layer_1(torch.cat([p3_ds, p4], dim=1))
 
-        c20 = self.head_conv_1(c13)
-        c21 = self.head_conv_2(c16)
-        c22 = self.head_conv_3(c19)
-        out_feats = [c20, c21, c22] # [P3, P4, P5]
-        
-        # output proj layers
-        if self.out_layers is not None:
-            out_feats_proj = []
-            for feat, layer in zip(out_feats, self.out_layers):
-                out_feats_proj.append(layer(feat))
-            return out_feats_proj
+        ## P4 -> 5
+        p4_ds = self.dowmsample_layer_2(p4)
+        p5 = self.bottom_up_layer_2(torch.cat([p4_ds, c5], dim=1))
 
+        out_feats = [p3, p4, p5] # [P3, P4, P5]
+                
         return out_feats
+    
 
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
+    
+    # YOLOv8-Base config
+    class Yolov8BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 0.50
+            self.depth    = 0.34
+            self.ratio    = 2.0
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            self.model_scale = "s"
 
-def build_fpn(cfg, in_dims, out_dim=None):
-    model = cfg['fpn']
-    # build pafpn
-    if model == 'yolov7_pafpn':
-        fpn_net = Yolov7PaFPN(in_dims       = in_dims,
-                              out_dim       = out_dim,
-                              channel_width = cfg['channel_width'],
-                              branch_width  = cfg['branch_width'],
-                              branch_depth  = cfg['branch_depth'],
-                              act_type      = cfg['fpn_act'],
-                              norm_type     = cfg['fpn_norm'],
-                              depthwise     = cfg['fpn_depthwise']
-                              )
+    cfg = Yolov8BaseConfig()
+    # Build a head
+    in_dims  = [128, 256, 512]
+    fpn = Yolo11PaFPN(cfg, in_dims)
 
+    # Inference
+    x = [torch.randn(1, in_dims[0], 80, 80),
+         torch.randn(1, in_dims[1], 40, 40),
+         torch.randn(1, in_dims[2], 20, 20)]
+    t0 = time.time()
+    output = fpn(x)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== FPN output ====== ')
+    for level, feat in enumerate(output):
+        print("- Level-{} : ".format(level), feat.shape)
 
-    return fpn_net
+    flops, params = profile(fpn, inputs=(x, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))
