@@ -20,9 +20,9 @@ class Yolov2Backbone(nn.Module):
 
 
 if __name__=='__main__':
-    import time
     from thop import profile
-    # YOLOv8-Base config
+
+    # YOLOv1 configuration
     class Yolov2BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
@@ -31,21 +31,21 @@ if __name__=='__main__':
             ## Backbone
             self.backbone       = 'resnet18'
             self.use_pretrained = True
-
     cfg = Yolov2BaseConfig()
+
     # Build backbone
     model = Yolov2Backbone(cfg)
 
-    # Inference
-    x = torch.randn(1, 3, 640, 640)
-    t0 = time.time()
-    output = model(x)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    print(output.shape)
+    # Randomly generate a input data
+    x = torch.randn(2, 3, 640, 640)
 
-    print('==============================')
+    # Inference
+    output = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of output : ', output.shape)
+
+    x = torch.randn(1, 3, 640, 640)
     flops, params = profile(model, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

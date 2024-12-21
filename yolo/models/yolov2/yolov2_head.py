@@ -54,39 +54,34 @@ class Yolov2DetHead(nn.Module):
 
 
 if __name__=='__main__':
-    import time
     from thop import profile
-    # Model config
     
-    # YOLOv8-Base config
+    # YOLOv2 configuration
     class Yolov2BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
             self.out_stride = 32
             self.max_stride = 32
             ## Head
-            self.head_act  = 'lrelu'
-            self.head_norm = 'BN'
-            self.head_depthwise = False
             self.head_dim  = 256
-            self.num_cls_head   = 2
-            self.num_reg_head   = 2
-
+            self.num_cls_head = 2
+            self.num_reg_head = 2
     cfg = Yolov2BaseConfig()
-    # Build a head
-    head = Yolov2DetHead(cfg, 512)
 
+    # Build a head
+    model = Yolov2DetHead(cfg, 512)
+
+    # Randomly generate a input data
+    x = torch.randn(2, 512, 20, 20)
 
     # Inference
-    x = torch.randn(1, 512, 20, 20)
-    t0 = time.time()
-    cls_feat, reg_feat = head(x)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    print(cls_feat.shape, reg_feat.shape)
+    cls_feats, reg_feats = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of cls feats : ', cls_feats.shape)
+    print(' - the shape of reg feats : ', reg_feats.shape)
 
-    print('==============================')
-    flops, params = profile(head, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))    
+    x = torch.randn(1, 512, 20, 20)
+    flops, params = profile(model, inputs=(x, ), verbose=False)
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))
