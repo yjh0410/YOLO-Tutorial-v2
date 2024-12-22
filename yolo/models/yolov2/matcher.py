@@ -12,21 +12,21 @@ class Yolov2Matcher(object):
         self.anchor_boxes = np.array(
             [[0., 0., anchor[0], anchor[1]]
             for anchor in anchor_size]
-            )  # [KA, 4]
+            )  # [K, 4]
 
 
     def compute_iou(self, anchor_boxes, gt_box):
         """
-            anchor_boxes : ndarray -> [KA, 4] (cx, cy, bw, bh).
+            anchor_boxes : ndarray -> [K, 4] (cx, cy, bw, bh).
             gt_box : ndarray -> [1, 4] (cx, cy, bw, bh).
         """
-        # anchors: [KA, 4]
+        # anchors: [K, 4]
         anchors = np.zeros_like(anchor_boxes)
         anchors[..., :2] = anchor_boxes[..., :2] - anchor_boxes[..., 2:] * 0.5  # x1y1
         anchors[..., 2:] = anchor_boxes[..., :2] + anchor_boxes[..., 2:] * 0.5  # x2y2
         anchors_area = anchor_boxes[..., 2] * anchor_boxes[..., 3]
         
-        # gt_box: [1, 4] -> [KA, 4]
+        # gt_box: [1, 4] -> [K, 4]
         gt_box = np.array(gt_box).reshape(-1, 4)
         gt_box = np.repeat(gt_box, anchors.shape[0], axis=0)
         gt_box_ = np.zeros_like(gt_box)
