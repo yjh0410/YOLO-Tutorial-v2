@@ -12,6 +12,7 @@ from .yolov6.build import build_yolov6
 from .yolov7.build import build_yolov7
 from .yolov8.build import build_yolov8
 from .yolov9.build import build_gelan
+from .yolo11.build import build_yolo11
 
 from .yolof.build  import build_yolof
 from .fcos.build   import build_fcos
@@ -51,6 +52,9 @@ def build_model(args, cfg, is_val=False):
     ## GElan
     elif 'yolov9' in args.model:
         model, criterion = build_gelan(cfg, is_val)
+    ## YOLO11
+    elif 'yolo11' in args.model:
+        model, criterion = build_yolo11(cfg, is_val)
 
     ## Yolof
     elif 'yolof' in args.model:

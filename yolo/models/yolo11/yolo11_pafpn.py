@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from typing import List
 
 try:
-    from .modules import ConvModule, C3k2fBlock
+    from .modules import ConvModule, YoloStage
 except:
-    from  modules import ConvModule, C3k2fBlock
+    from  modules import ConvModule, YoloStage
 
 
 class Yolo11PaFPN(nn.Module):
@@ -19,7 +19,7 @@ class Yolo11PaFPN(nn.Module):
 
         # ----------------------------- Yolo11's Top-down FPN -----------------------------
         ## P5 -> P4
-        self.top_down_layer_1 = C3k2fBlock(in_dim     = self.in_dims[0] + self.in_dims[1],
+        self.top_down_layer_1 = YoloStage(in_dim     = self.in_dims[0] + self.in_dims[1],
                                           out_dim    = round(512*cfg.width),
                                           num_blocks = round(2 * cfg.depth),
                                           shortcut   = True,
@@ -27,7 +27,7 @@ class Yolo11PaFPN(nn.Module):
                                           use_c3k    = False if self.model_scale in "ns" else True,
                                           )
         ## P4 -> P3
-        self.top_down_layer_2 = C3k2fBlock(in_dim     = self.in_dims[2] + round(512*cfg.width),
+        self.top_down_layer_2 = YoloStage(in_dim     = self.in_dims[2] + round(512*cfg.width),
                                           out_dim    = round(256*cfg.width),
                                           num_blocks = round(2 * cfg.depth),
                                           shortcut   = True,
@@ -37,7 +37,7 @@ class Yolo11PaFPN(nn.Module):
         # ----------------------------- Yolo11's Bottom-up PAN -----------------------------
         ## P3 -> P4
         self.dowmsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, stride=2)
-        self.bottom_up_layer_1 = C3k2fBlock(in_dim     = round(256*cfg.width) + round(512*cfg.width),
+        self.bottom_up_layer_1 = YoloStage(in_dim     = round(256*cfg.width) + round(512*cfg.width),
                                            out_dim    = round(512*cfg.width),
                                            num_blocks = round(2 * cfg.depth),
                                            shortcut   = True,
@@ -46,7 +46,7 @@ class Yolo11PaFPN(nn.Module):
                                            )
         ## P4 -> P5
         self.dowmsample_layer_2 = ConvModule(round(512*cfg.width), round(512*cfg.width), kernel_size=3, stride=2)
-        self.bottom_up_layer_2 = C3k2fBlock(in_dim     = round(512*cfg.width) + self.in_dims[0],
+        self.bottom_up_layer_2 = YoloStage(in_dim     = round(512*cfg.width) + self.in_dims[0],
                                            out_dim    = round(512*cfg.width*cfg.ratio),
                                            num_blocks = round(2 * cfg.depth),
                                            shortcut   = True,

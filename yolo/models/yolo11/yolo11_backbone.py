@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import ConvModule, C3k2fBlock
+    from .modules import ConvModule, YoloStage, SPPF, C2PSA
 except:
-    from  modules import ConvModule, C3k2fBlock
+    from  modules import ConvModule, YoloStage, SPPF, C2PSA
 
 
 # ---------------------------- YOLO11 Backbone ----------------------------
@@ -21,7 +21,7 @@ class Yolo11Backbone(nn.Module):
         # P2/4
         self.layer_2 = nn.Sequential(
             ConvModule(int(64 * cfg.width), int(128 * cfg.width), kernel_size=3, stride=2),
-            C3k2fBlock(in_dim     = int(128 * cfg.width),
+            YoloStage(in_dim     = int(128 * cfg.width),
                       out_dim    = int(256 * cfg.width),
                       num_blocks = round(2*cfg.depth),
                       shortcut   = True,
@@ -32,7 +32,7 @@ class Yolo11Backbone(nn.Module):
         # P3/8
         self.layer_3 = nn.Sequential(
             ConvModule(int(256 * cfg.width), int(256 * cfg.width), kernel_size=3, stride=2),
-            C3k2fBlock(in_dim     = int(256 * cfg.width),
+            YoloStage(in_dim     = int(256 * cfg.width),
                       out_dim    = int(512 * cfg.width),
                       num_blocks = round(2*cfg.depth),
                       shortcut   = True,
@@ -43,7 +43,7 @@ class Yolo11Backbone(nn.Module):
         # P4/16
         self.layer_4 = nn.Sequential(
             ConvModule(int(512 * cfg.width), int(512 * cfg.width), kernel_size=3, stride=2),
-            C3k2fBlock(in_dim     = int(512 * cfg.width),
+            YoloStage(in_dim     = int(512 * cfg.width),
                       out_dim    = int(512 * cfg.width),
                       num_blocks = round(2*cfg.depth),
                       shortcut   = True,
@@ -54,7 +54,7 @@ class Yolo11Backbone(nn.Module):
         # P5/32
         self.layer_5 = nn.Sequential(
             ConvModule(int(512 * cfg.width), int(512 * cfg.width * cfg.ratio), kernel_size=3, stride=2),
-            C3k2fBlock(in_dim     = int(512 * cfg.width * cfg.ratio),
+            YoloStage(in_dim     = int(512 * cfg.width * cfg.ratio),
                       out_dim    = int(512 * cfg.width * cfg.ratio),
                       num_blocks = round(2*cfg.depth),
                       shortcut   = True,
@@ -62,6 +62,17 @@ class Yolo11Backbone(nn.Module):
                       use_c3k    = True,
                       )
         )
+        # Extra module (no pretrained weight)
+        self.layer_6 = SPPF(in_dim  = int(512 * cfg.width * cfg.ratio),
+                            out_dim = int(512 * cfg.width * cfg.ratio),
+                            spp_pooling_size = 5,
+                            neck_expand_ratio = 0.5,
+                            )
+        self.layer_7 = C2PSA(in_dim  = int(512 * cfg.width * cfg.ratio),
+                             out_dim = int(512 * cfg.width * cfg.ratio),
+                             num_blocks = round(2*cfg.depth),
+                             expansion = 0.5,
+                             )
 
         # Initialize all layers
         self.init_weights()
@@ -77,6 +88,8 @@ class Yolo11Backbone(nn.Module):
         c3 = self.layer_3(c2)
         c4 = self.layer_4(c3)
         c5 = self.layer_5(c4)
+        c5 = self.layer_6(c5)
+        c5 = self.layer_7(c5)
         outputs = [c3, c4, c5]
 
         return outputs

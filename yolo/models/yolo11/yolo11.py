@@ -4,14 +4,10 @@ import torch.nn as nn
 
 # --------------- Model components ---------------
 from .yolo11_backbone import Yolo11Backbone
-from .yolo11_neck     import SPPF, C2PSA
 from .yolo11_pafpn    import Yolo11PaFPN
 from .yolo11_head     import Yolo11DetHead
-from .yolo11_pred     import Yolo11DetPredLayer
 
-# --------------- External components ---------------
 from utils.misc import multiclass_nms
-
 
 # YOLO11
 class Yolo11(nn.Module):
@@ -28,24 +24,10 @@ class Yolo11(nn.Module):
         self.conf_thresh      = cfg.val_conf_thresh if is_val else cfg.test_conf_thresh
         self.nms_thresh       = cfg.val_nms_thresh  if is_val else cfg.test_nms_thresh
         self.no_multi_labels  = False if is_val else True
-        
-        # ---------------------- Network Parameters ----------------------
-        ## Backbone
+
         self.backbone = Yolo11Backbone(cfg)
-        self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
-
-        ## Neck
-        self.neck_spp  = SPPF(self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1])
-        self.neck_attn = C2PSA(self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1], num_blocks=int(2 * cfg.depth), expansion=0.5)
-        
-        ## Neck: PaFPN
-        self.fpn = Yolo11PaFPN(cfg, self.backbone.feat_dims)
-
-        ## Head
-        self.head = Yolo11DetHead(cfg, self.fpn.out_dims)
-
-        ## Pred
-        self.pred = Yolo11DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+        self.pafpn    = Yolo11PaFPN(cfg, self.backbone.feat_dims[-3:])
+        self.det_head = Yolo11DetHead(cfg, self.pafpn.out_dims)
 
     def post_process(self, cls_preds, box_preds):
         """
@@ -126,20 +108,9 @@ class Yolo11(nn.Module):
         return bboxes, scores, labels
     
     def forward(self, x):
-        # ---------------- Backbone ----------------
         pyramid_feats = self.backbone(x)
-        # ---------------- Neck: SPP ----------------
-        pyramid_feats[-1] = self.neck_spp(pyramid_feats[-1])
-        pyramid_feats[-1] = self.neck_attn(pyramid_feats[-1])
-
-        # ---------------- Neck: PaFPN ----------------
-        pyramid_feats = self.fpn(pyramid_feats)
-
-        # ---------------- Heads ----------------
-        cls_feats, reg_feats = self.head(pyramid_feats)
-
-        # ---------------- Preds ----------------
-        outputs = self.pred(cls_feats, reg_feats)
+        pyramid_feats = self.pafpn(pyramid_feats)
+        outputs = self.det_head(pyramid_feats)
         outputs['image_size'] = [x.shape[2], x.shape[3]]
 
         if not self.training:
