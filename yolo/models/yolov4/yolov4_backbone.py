@@ -5,71 +5,44 @@ try:
     from .modules import ConvModule, CSPBlock
 except:
     from  modules import ConvModule, CSPBlock
+    
 
-# IN1K pretrained weight
-pretrained_urls = {
-    'n': None,
-    's': None,
-    'm': None,
-    'l': None,
-    'x': None,
+in1k_pretrained_urls = {
+    "cspdarknet53": "https://github.com/yjh0410/image_classification_pytorch/releases/download/weight/cspdarknet53_silu.pth",
 }
 
-# --------------------- Yolov3's Backbone -----------------------
-## Modified DarkNet
+# --------------------- Yolov4 backbone (CSPDarkNet-53 with SiLU) -----------------------
 class Yolov4Backbone(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, use_pretrained: bool = False):
         super(Yolov4Backbone, self).__init__()
-        # ------------------ Basic setting ------------------
-        self.model_scale = cfg.model_scale
-        self.feat_dims = [round(64   * cfg.width),
-                          round(128  * cfg.width),
-                          round(256  * cfg.width),
-                          round(512  * cfg.width),
-                          round(1024 * cfg.width)]
-        
-        # ------------------ Network setting ------------------
-        ## P1/2
-        self.layer_1 = ConvModule(3, self.feat_dims[0], kernel_size=6, padding=2, stride=2)
-        # P2/4
+        self.feat_dims = [256, 512, 1024]
+        self.use_pretrained = use_pretrained
+
+        # P1
+        self.layer_1 = nn.Sequential(
+            ConvModule(3, 32, kernel_size=3),
+            ConvModule(32, 64, kernel_size=3, stride=2),
+            CSPBlock(64, 64, expand_ratio=0.5, num_blocks=1, shortcut=True)
+        )
+        # P2
         self.layer_2 = nn.Sequential(
-            ConvModule(self.feat_dims[0], self.feat_dims[1], kernel_size=3, padding=1, stride=2),
-            CSPBlock(in_dim     = self.feat_dims[1],
-                     out_dim    = self.feat_dims[1],
-                     num_blocks = round(3*cfg.depth),
-                     expansion  = 0.5,
-                     shortcut   = True,
-                     )
+            ConvModule(64, 128, kernel_size=3, stride=2),
+            CSPBlock(128, 128, expand_ratio=0.5, num_blocks=2, shortcut=True)
         )
-        # P3/8
+        # P3
         self.layer_3 = nn.Sequential(
-            ConvModule(self.feat_dims[1], self.feat_dims[2], kernel_size=3, padding=1, stride=2),
-            CSPBlock(in_dim     = self.feat_dims[2],
-                     out_dim    = self.feat_dims[2],
-                     num_blocks = round(9*cfg.depth),
-                     expansion  = 0.5,
-                     shortcut   = True,
-                     )
+            ConvModule(128, 256, kernel_size=3, stride=2),
+            CSPBlock(256, 256, expand_ratio=0.5, num_blocks=8, shortcut=True)
         )
-        # P4/16
+        # P4
         self.layer_4 = nn.Sequential(
-            ConvModule(self.feat_dims[2], self.feat_dims[3], kernel_size=3, padding=1, stride=2),
-            CSPBlock(in_dim     = self.feat_dims[3],
-                     out_dim    = self.feat_dims[3],
-                     num_blocks = round(9*cfg.depth),
-                     expansion  = 0.5,
-                     shortcut   = True,
-                     )
+            ConvModule(256, 512, kernel_size=3, stride=2),
+            CSPBlock(512, 512, expand_ratio=0.5, num_blocks=8, shortcut=True)
         )
-        # P5/32
+        # P5
         self.layer_5 = nn.Sequential(
-            ConvModule(self.feat_dims[3], self.feat_dims[4], kernel_size=3, padding=1, stride=2),
-            CSPBlock(in_dim     = self.feat_dims[4],
-                     out_dim    = self.feat_dims[4],
-                     num_blocks = round(3*cfg.depth),
-                     expansion  = 0.5,
-                     shortcut   = True,
-                     )
+            ConvModule(512, 1024, kernel_size=3, stride=2),
+            CSPBlock(1024, 1024, expand_ratio=0.5, num_blocks=4, shortcut=True)
         )
 
         # Initialize all layers
@@ -81,42 +54,64 @@ class Yolov4Backbone(nn.Module):
             if isinstance(m, torch.nn.Conv2d):
                 m.reset_parameters()
 
+        # Load imagenet pretrained weight
+        if self.use_pretrained:
+            self.load_pretrained()
+
+    def load_pretrained(self):
+        url = in1k_pretrained_urls["cspdarknet53"]
+        if url is not None:
+            print('Loading backbone pretrained weight from : {}'.format(url))
+            # checkpoint state dict
+            checkpoint = torch.hub.load_state_dict_from_url(
+                url=url, map_location="cpu", check_hash=True)
+            checkpoint_state_dict = checkpoint.pop("model")
+            # model state dict
+            model_state_dict = self.state_dict()
+            # check
+            for k in list(checkpoint_state_dict.keys()):
+                if k in model_state_dict:
+                    shape_model = tuple(model_state_dict[k].shape)
+                    shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
+                    if shape_model != shape_checkpoint:
+                        checkpoint_state_dict.pop(k)
+                else:
+                    checkpoint_state_dict.pop(k)
+                    print('Unused key: ', k)
+            # load the weight
+            self.load_state_dict(checkpoint_state_dict)
+        else:
+            print('No pretrained weight for model scale: {}.'.format(self.model_scale))
+
     def forward(self, x):
         c1 = self.layer_1(x)
         c2 = self.layer_2(c1)
         c3 = self.layer_3(c2)
         c4 = self.layer_4(c3)
         c5 = self.layer_5(c4)
+
         outputs = [c3, c4, c5]
 
         return outputs
 
 
-if __name__ == '__main__':
-    import time
+if __name__=='__main__':
     from thop import profile
-    class BaseConfig(object):
-        def __init__(self) -> None:
-            self.width = 0.5
-            self.depth = 0.34
-            self.model_scale = "s"
-            self.use_pretrained = True
 
-    cfg = BaseConfig()
-    model = Yolov4Backbone(cfg)
-    x = torch.randn(1, 3, 640, 640)
-    t0 = time.time()
+    # Build backbone
+    model = Yolov4Backbone(use_pretrained=True)
+
+    # Randomly generate a input data
+    x = torch.randn(2, 3, 640, 640)
+
+    # Inference
     outputs = model(x)
-    print(model)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
+    print(' - the shape of input :  ', x.shape)
     for out in outputs:
-        print(out.shape)
+        print(' - the shape of output : ', out.shape)
 
     x = torch.randn(1, 3, 640, 640)
-    print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
-    
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

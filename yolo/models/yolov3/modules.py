@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 
 
-
-
 # --------------------- Basic modules ---------------------
 class ConvModule(nn.Module):
     def __init__(self, 

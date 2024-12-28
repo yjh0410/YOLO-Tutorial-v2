@@ -1,7 +1,7 @@
-from typing import List
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import List
 
 try:
     from .modules import ConvModule, CSPBlock
@@ -9,96 +9,88 @@ except:
     from  modules import ConvModule, CSPBlock
 
 
-# Yolov4FPN
+# PaFPN-CSP
 class Yolov4PaFPN(nn.Module):
-    def __init__(self, cfg, in_dims: List = [256, 512, 1024]):
+    def __init__(self, 
+                 in_dims: List = [256, 512, 1024],
+                 head_dim: int = 256,
+                 ):
         super(Yolov4PaFPN, self).__init__()
         self.in_dims = in_dims
+        self.head_dim = head_dim
+        self.fpn_out_dims = [head_dim] * 3
         c3, c4, c5 = in_dims
 
-        # ---------------------- Yolov4's Top down FPN ----------------------
+        # top down
         ## P5 -> P4
-        self.reduce_layer_1   = ConvModule(c5, round(512*cfg.width), kernel_size=1, padding=0, stride=1)
-        self.top_down_layer_1 = CSPBlock(in_dim     = c4 + round(512*cfg.width),
-                                         out_dim    = round(512*cfg.width),
-                                         num_blocks = round(3*cfg.depth),
-                                         expansion  = 0.5,
-                                         shortcut   = False,
+        self.reduce_layer_1   = ConvModule(c5, 512, kernel_size=1)
+        self.top_down_layer_1 = CSPBlock(in_dim = c4 + 512,
+                                         out_dim = 512,
+                                         expand_ratio = 0.5,
+                                         num_blocks = 3,
+                                         shortcut = False,
                                          )
 
         ## P4 -> P3
-        self.reduce_layer_2   = ConvModule(round(512*cfg.width), round(256*cfg.width), kernel_size=1, padding=0, stride=1)
-        self.top_down_layer_2 = CSPBlock(in_dim     = c3 + round(256*cfg.width),
-                                         out_dim    = round(256*cfg.width),
-                                         num_blocks = round(3*cfg.depth),
-                                         expansion  = 0.5,
-                                         shortcut   = False,
+        self.reduce_layer_2   = ConvModule(512, 256, kernel_size=1)
+        self.top_down_layer_2 = CSPBlock(in_dim = c3 + 256, 
+                                         out_dim = 256,
+                                         expand_ratio = 0.5,
+                                         num_blocks = 3,
+                                         shortcut = False,
                                          )
-        
-        # ---------------------- Yolov4's Bottom up PAN ----------------------
+
+        # bottom up
         ## P3 -> P4
-        self.downsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, padding=1, stride=2)
-        self.bottom_up_layer_1  = CSPBlock(in_dim     = round(256*cfg.width) + round(256*cfg.width),
-                                           out_dim    = round(512*cfg.width),
-                                           num_blocks = round(3*cfg.depth),
-                                           expansion  = 0.5,
-                                           shortcut   = False,
-                                           )
+        self.reduce_layer_3    = ConvModule(256, 256, kernel_size=3, stride=2)
+        self.bottom_up_layer_1 = CSPBlock(in_dim = 256 + 256,
+                                          out_dim = 512,
+                                          expand_ratio = 0.5,
+                                          num_blocks = 3,
+                                          shortcut = False,
+                                          )
+
         ## P4 -> P5
-        self.downsample_layer_2 = ConvModule(round(512*cfg.width), round(512*cfg.width), kernel_size=3, padding=1, stride=2)
-        self.bottom_up_layer_2  = CSPBlock(in_dim     = round(512*cfg.width) + round(512*cfg.width),
-                                           out_dim    = round(1024*cfg.width),
-                                           num_blocks = round(3*cfg.depth),
-                                           expansion  = 0.5,
-                                           shortcut   = False,
-                                           )
+        self.reduce_layer_4    = ConvModule(512, 512, kernel_size=3, stride=2)
+        self.bottom_up_layer_2 = CSPBlock(in_dim = 512 + 512,
+                                          out_dim = 1024,
+                                          expand_ratio = 0.5,
+                                          num_blocks = 3,
+                                          shortcut = False,
+                                          )
 
-        # ---------------------- Yolov4's output projection ----------------------
-        self.out_layers = nn.ModuleList([
-            ConvModule(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1)
-                      for in_dim in [round(256*cfg.width), round(512*cfg.width), round(1024*cfg.width)]
-                      ])
-        self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
-
-        # Initialize all layers
-        self.init_weights()
-
-    def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
+        # output proj layers
+        self.out_layers = nn.ModuleList([ConvModule(in_dim, head_dim, kernel_size=1)
+                                         for in_dim in [256, 512, 1024]
+                                         ])
 
     def forward(self, features):
         c3, c4, c5 = features
-        
-        # ------------------ Top down FPN ------------------
-        ## P5 -> P4
-        p5 = self.reduce_layer_1(c5)
-        p5_up = F.interpolate(p5, scale_factor=2.0)
-        p4 = self.top_down_layer_1(torch.cat([c4, p5_up], dim=1))
 
-        ## P4 -> P3
-        p4 = self.reduce_layer_2(p4)
-        p4_up = F.interpolate(p4, scale_factor=2.0)
-        p3 = self.top_down_layer_2(torch.cat([c3, p4_up], dim=1))
+        c6 = self.reduce_layer_1(c5)
+        c7 = F.interpolate(c6, scale_factor=2.0)   # s32->s16
+        c8 = torch.cat([c7, c4], dim=1)
+        c9 = self.top_down_layer_1(c8)
+        # P3/8
+        c10 = self.reduce_layer_2(c9)
+        c11 = F.interpolate(c10, scale_factor=2.0)   # s16->s8
+        c12 = torch.cat([c11, c3], dim=1)
+        c13 = self.top_down_layer_2(c12)  # to det
+        # p4/16
+        c14 = self.reduce_layer_3(c13)
+        c15 = torch.cat([c14, c10], dim=1)
+        c16 = self.bottom_up_layer_1(c15)  # to det
+        # p5/32
+        c17 = self.reduce_layer_4(c16)
+        c18 = torch.cat([c17, c6], dim=1)
+        c19 = self.bottom_up_layer_2(c18)  # to det
 
-        # ------------------ Bottom up PAN ------------------
-        ## P3 -> P4
-        p3_ds = self.downsample_layer_1(p3)
-        p4 = self.bottom_up_layer_1(torch.cat([p4, p3_ds], dim=1))
-
-        ## P4 -> P5
-        p4_ds = self.downsample_layer_2(p4)
-        p5 = self.bottom_up_layer_2(torch.cat([p5, p4_ds], dim=1))
-
-        out_feats = [p3, p4, p5]
+        out_feats = [c13, c16, c19] # [P3, P4, P5]
 
         # output proj layers
         out_feats_proj = []
         for feat, layer in zip(out_feats, self.out_layers):
             out_feats_proj.append(layer(feat))
-            
         return out_feats_proj
 
 
@@ -107,27 +99,16 @@ if __name__=='__main__':
     from thop import profile
     # Model config
     
-    # YOLOv4-Base config
-    class Yolov4BaseConfig(object):
-        def __init__(self) -> None:
-            # ---------------- Model config ----------------
-            self.width    = 0.50
-            self.depth    = 0.34
-            self.out_stride = [8, 16, 32]
-            self.max_stride = 32
-            self.num_levels = 3
-            ## Head
-            self.head_dim = 256
-
-    cfg = Yolov4BaseConfig()
     # Build a head
     in_dims  = [128, 256, 512]
-    fpn = Yolov4PaFPN(cfg, in_dims)
+    fpn = Yolov4PaFPN(in_dims, head_dim=256)
 
-    # Inference
+    # Randomly generate a input data
     x = [torch.randn(1, in_dims[0], 80, 80),
          torch.randn(1, in_dims[1], 40, 40),
          torch.randn(1, in_dims[2], 20, 20)]
+    
+    # Inference
     t0 = time.time()
     output = fpn(x)
     t1 = time.time()

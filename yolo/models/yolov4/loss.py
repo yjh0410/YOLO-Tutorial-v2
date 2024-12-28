@@ -1,23 +1,21 @@
 import torch
 import torch.nn.functional as F
-
+from .matcher import Yolov4Matcher
 from utils.box_ops import get_ious
 from utils.distributed_utils import get_world_size, is_dist_avail_and_initialized
-
-from .matcher import Yolov3Matcher
 
 
 class SetCriterion(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.num_classes = cfg.num_classes
-        self.loss_obj_weight = cfg.loss_obj
-        self.loss_cls_weight = cfg.loss_cls
-        self.loss_box_weight = cfg.loss_box
+        # loss weight
+        self.loss_obj_weight = cfg.loss_obj_weight
+        self.loss_cls_weight = cfg.loss_cls_weight
+        self.loss_box_weight = cfg.loss_box_weight
 
         # matcher
-        anchor_size = cfg.anchor_size[0] + cfg.anchor_size[1] + cfg.anchor_size[2]
-        self.matcher = Yolov3Matcher(cfg.num_classes, 3, anchor_size, cfg.iou_thresh)
+        self.matcher = Yolov4Matcher(self.num_classes, 3, cfg.anchor_size, cfg.iou_thresh)
 
     def loss_objectness(self, pred_obj, gt_obj):
         loss_obj = F.binary_cross_entropy_with_logits(pred_obj, gt_obj, reduction='none')
@@ -40,21 +38,21 @@ class SetCriterion(object):
         return loss_box, ious
 
     def __call__(self, outputs, targets):
-        device = outputs['pred_cls'][0].device
-        fpn_strides = outputs['strides']
-        fmp_sizes = outputs['fmp_sizes']
+        # Label assignment
         (
             gt_objectness, 
             gt_classes, 
             gt_bboxes,
-            ) = self.matcher(fmp_sizes=fmp_sizes, 
-                             fpn_strides=fpn_strides, 
-                             targets=targets)
+            ) = self.matcher(fmp_sizes   = outputs['fmp_sizes'], 
+                             fpn_strides = outputs['strides'], 
+                             targets     = targets)
+        
         # List[B, M, C] -> [B, M, C] -> [BM, C]
         pred_obj = torch.cat(outputs['pred_obj'], dim=1).view(-1)                      # [BM,]
         pred_cls = torch.cat(outputs['pred_cls'], dim=1).view(-1, self.num_classes)    # [BM, C]
         pred_box = torch.cat(outputs['pred_box'], dim=1).view(-1, 4)                   # [BM, 4]
-       
+        device = pred_box.device
+
         gt_objectness = gt_objectness.view(-1).to(device).float()               # [BM,]
         gt_classes = gt_classes.view(-1, self.num_classes).to(device).float()   # [BM, C]
         gt_bboxes = gt_bboxes.view(-1, 4).to(device).float()                    # [BM, 4]
@@ -96,6 +94,6 @@ class SetCriterion(object):
 
         return loss_dict
     
-    
+
 if __name__ == "__main__":
     pass
