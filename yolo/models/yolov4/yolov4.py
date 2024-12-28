@@ -54,7 +54,33 @@ class Yolov4(nn.Module):
                             [nn.Conv2d(head.reg_head_dim, 4 * self.num_anchors, kernel_size=1) 
                              for head in self.non_shared_heads
                              ])                 
+
+        # init pred layers
+        self.init_weight()
     
+    def init_weight(self):
+        # Init bias
+        init_prob = 0.01
+        bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
+        # obj pred
+        for obj_pred in self.obj_preds:
+            b = obj_pred.bias.view(1, -1)
+            b.data.fill_(bias_value.item())
+            obj_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        # cls pred
+        for cls_pred in self.cls_preds:
+            b = cls_pred.bias.view(1, -1)
+            b.data.fill_(bias_value.item())
+            cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        # reg pred
+        for reg_pred in self.reg_preds:
+            b = reg_pred.bias.view(-1, )
+            b.data.fill_(1.0)
+            reg_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            w = reg_pred.weight
+            w.data.fill_(0.)
+            reg_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
     def generate_anchors(self, level, fmp_size):
         """
             fmp_size: (List) [H, W]

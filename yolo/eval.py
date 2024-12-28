@@ -1,7 +1,7 @@
 import argparse
 import torch
 
-from evaluator.map_evaluator import MapEvaluator
+from map_evaluator import MapEvaluator
 from dataset.build import build_dataset, build_transform
 from utils.misc import load_weight
 

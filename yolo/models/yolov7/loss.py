@@ -1,20 +1,24 @@
 import torch
 import torch.nn.functional as F
+from .matcher import SimOTA
 from utils.box_ops import get_ious
 from utils.distributed_utils import get_world_size, is_dist_avail_and_initialized
-
-from .matcher import YoloxMatcher
 
 
 class SetCriterion(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.num_classes = cfg.num_classes
+        # loss weight
         self.loss_obj_weight = cfg.loss_obj
         self.loss_cls_weight = cfg.loss_cls
         self.loss_box_weight = cfg.loss_box
         # matcher
-        self.matcher = YoloxMatcher(cfg.num_classes, cfg.ota_center_sampling_radius, cfg.ota_topk_candidate)
+        self.matcher = SimOTA(
+            num_classes=self.num_classes,
+            center_sampling_radius=cfg.ota_center_sampling_radius,
+            topk_candidate=cfg.ota_topk_candidate
+            )
 
     def loss_objectness(self, pred_obj, gt_obj):
         loss_obj = F.binary_cross_entropy_with_logits(pred_obj, gt_obj, reduction='none')
@@ -37,21 +41,22 @@ class SetCriterion(object):
         """
             outputs['pred_obj']: List(Tensor) [B, M, 1]
             outputs['pred_cls']: List(Tensor) [B, M, C]
-            outputs['pred_reg']: List(Tensor) [B, M, 4]
+            outputs['pred_box']: List(Tensor) [B, M, 4]
             outputs['pred_box']: List(Tensor) [B, M, 4]
             outputs['strides']: List(Int) [8, 16, 32] output stride
             targets: (List) [dict{'boxes': [...], 
                                  'labels': [...], 
                                  'orig_size': ...}, ...]
         """
-        bs = outputs['pred_cls'][0].shape[0]
-        device = outputs['pred_cls'][0].device
         fpn_strides = outputs['strides']
         anchors = outputs['anchors']
+
         # preds: [B, M, C]
         obj_preds = torch.cat(outputs['pred_obj'], dim=1)
         cls_preds = torch.cat(outputs['pred_cls'], dim=1)
         box_preds = torch.cat(outputs['pred_box'], dim=1)
+        device = box_preds.device
+        bs = box_preds.shape[0]
 
         # label assignment
         cls_targets = []
@@ -135,7 +140,4 @@ class SetCriterion(object):
         )
 
         return loss_dict
-
-
-if __name__ == "__main__":
-    pass
+    

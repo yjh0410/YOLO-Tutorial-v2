@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from typing import List
 
 try:
     from .modules import ConvModule
@@ -7,49 +8,33 @@ except:
     from  modules import ConvModule
 
 
-## Single-level Detection Head
-class DetHead(nn.Module):
-    def __init__(self,
-                 in_dim       :int  = 256,
-                 cls_head_dim :int  = 256,
-                 reg_head_dim :int  = 256,
-                 num_cls_head :int  = 2,
-                 num_reg_head :int  = 2,
-                 ):
+class DecoupledHead(nn.Module):
+    def __init__(self, cfg, in_dim: int = 256):
         super().__init__()
-        # --------- Basic Parameters ----------
         self.in_dim = in_dim
-        self.num_cls_head = num_cls_head
-        self.num_reg_head = num_reg_head
-        
-        # --------- Network Parameters ----------
-        ## cls head
+        self.cls_head_dim = cfg.head_dim
+        self.reg_head_dim = cfg.head_dim
+        self.num_cls_head = cfg.num_cls_head
+        self.num_reg_head = cfg.num_reg_head
+
+        # classification feature head
         cls_feats = []
-        self.cls_head_dim = cls_head_dim
-        for i in range(num_cls_head):
+        for i in range(self.num_cls_head):
             if i == 0:
-                cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
+                cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=3, stride=1))
             else:
-                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, padding=1, stride=1))
-        ## reg head
+                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, stride=1))
+                
+        # box regression feature head
         reg_feats = []
-        self.reg_head_dim = reg_head_dim
-        for i in range(num_reg_head):
+        for i in range(self.num_reg_head):
             if i == 0:
-                reg_feats.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+                reg_feats.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, stride=1))
             else:
-                reg_feats.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, padding=1, stride=1))
+                reg_feats.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, stride=1))
 
         self.cls_feats = nn.Sequential(*cls_feats)
         self.reg_feats = nn.Sequential(*reg_feats)
-
-        self.init_weights()
-        
-    def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
 
     def forward(self, x):
         """
@@ -59,79 +44,34 @@ class DetHead(nn.Module):
         reg_feats = self.reg_feats(x)
 
         return cls_feats, reg_feats
-    
-## Multi-level Detection Head
-class Yolov7DetHead(nn.Module):
-    def __init__(self, cfg, in_dims):
-        super().__init__()
-        self.num_levels = len(cfg.out_stride)
-        ## ----------- Network Parameters -----------
-        self.multi_level_heads = nn.ModuleList(
-            [DetHead(in_dim       = in_dims[level],
-                     cls_head_dim = round(cfg.head_dim * cfg.width),
-                     reg_head_dim = round(cfg.head_dim * cfg.width),
-                     num_cls_head = cfg.num_cls_head,
-                     num_reg_head = cfg.num_reg_head,
-                     ) for level in range(self.num_levels)])
-        
-        # --------- Basic Parameters ----------
-        self.in_dims = in_dims
-        self.cls_head_dim = cfg.head_dim
-        self.reg_head_dim = cfg.head_dim
-
-    def forward(self, feats):
-        """
-            feats: List[(Tensor)] [[B, C, H, W], ...]
-        """
-        cls_feats = []
-        reg_feats = []
-        for feat, head in zip(feats, self.multi_level_heads):
-            # ---------------- Pred ----------------
-            cls_feat, reg_feat = head(feat)
-
-            cls_feats.append(cls_feat)
-            reg_feats.append(reg_feat)
-
-        return cls_feats, reg_feats
 
 
 if __name__=='__main__':
-    import time
     from thop import profile
-    # Model config
     
-    # YOLOv7-Base config
+    # YOLOv2 configuration
     class Yolov7BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.width    = 0.50
-            self.out_stride = [8, 16, 32]
-            self.max_stride = 32
-            self.num_levels = 3
-            ## Head
             self.head_dim  = 256
-            self.num_cls_head   = 2
-            self.num_reg_head   = 2
-
+            self.num_cls_head = 2
+            self.num_reg_head = 2
     cfg = Yolov7BaseConfig()
-    # Build a head
-    pyramid_feats = [torch.randn(1, cfg.head_dim, 80, 80),
-                     torch.randn(1, cfg.head_dim, 40, 40),
-                     torch.randn(1, cfg.head_dim, 20, 20)]
-    head = Yolov7DetHead(cfg, [cfg.head_dim]*3)
 
+    # Build a head
+    model = DecoupledHead(cfg, in_dim= 256)
+
+    # Randomly generate a input data
+    x = torch.randn(2, 256, 20, 20)
 
     # Inference
-    t0 = time.time()
-    cls_feats, reg_feats = head(pyramid_feats)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    print("====== Yolov7 Head output ======")
-    for level, (cls_f, reg_f) in enumerate(zip(cls_feats, reg_feats)):
-        print("- Level-{} : ".format(level), cls_f.shape, reg_f.shape)
+    cls_feats, reg_feats = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of cls feats : ', cls_feats.shape)
+    print(' - the shape of reg feats : ', reg_feats.shape)
 
-    flops, params = profile(head, inputs=(pyramid_feats, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
-      
+    x = torch.randn(1, 256, 20, 20)
+    flops, params = profile(model, inputs=(x, ), verbose=False)
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

@@ -10,9 +10,9 @@ class SetCriterion(object):
         self.cfg = cfg
         self.num_classes = cfg.num_classes
         # loss weight
-        self.loss_obj_weight = cfg.loss_obj_weight
-        self.loss_cls_weight = cfg.loss_cls_weight
-        self.loss_box_weight = cfg.loss_box_weight
+        self.loss_obj_weight = cfg.loss_obj
+        self.loss_cls_weight = cfg.loss_cls
+        self.loss_box_weight = cfg.loss_box
 
         # matcher
         self.matcher = Yolov4Matcher(self.num_classes, 3, cfg.anchor_size, cfg.iou_thresh)

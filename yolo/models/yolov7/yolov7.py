@@ -1,49 +1,96 @@
-# --------------- Torch components ---------------
 import torch
 import torch.nn as nn
 
+from utils.misc import multiclass_nms
+
 # --------------- Model components ---------------
-from .yolov7_backbone import Yolov7TBackbone, Yolov7LBackbone
+from .yolov7_backbone import Yolov7Backbone
 from .yolov7_neck     import SPPFBlockCSP
 from .yolov7_pafpn    import Yolov7PaFPN
-from .yolov7_head     import Yolov7DetHead
-from .yolov7_pred     import Yolov7DetPredLayer
+from .yolov7_head     import DecoupledHead
 
 # --------------- External components ---------------
 from utils.misc import multiclass_nms
 
 
-# Yolov7
 class Yolov7(nn.Module):
-    def __init__(self,
-                 cfg,
-                 is_val = False,
-                 ) -> None:
+    def __init__(self, cfg, is_val: bool = False) -> None:
         super(Yolov7, self).__init__()
         # ---------------------- Basic setting ----------------------
-        assert cfg.model_scale in ["t", "l", "x"]
         self.cfg = cfg
         self.num_classes = cfg.num_classes
+        self.out_stride = cfg.out_stride
+        self.num_levels = len(cfg.out_stride)
+
         ## Post-process parameters
         self.topk_candidates  = cfg.val_topk        if is_val else cfg.test_topk
         self.conf_thresh      = cfg.val_conf_thresh if is_val else cfg.test_conf_thresh
         self.nms_thresh       = cfg.val_nms_thresh  if is_val else cfg.test_nms_thresh
         self.no_multi_labels  = False if is_val else True
         
-        # ---------------------- Network Parameters ----------------------
-        ## Backbone
-        self.backbone = Yolov7TBackbone(cfg) if cfg.model_scale == "t" else Yolov7LBackbone(cfg)
-        self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
-        ## Neck: SPP
-        self.neck = SPPFBlockCSP(self.pyramid_feat_dims[-1], self.pyramid_feat_dims[-1]//2)
-        self.pyramid_feat_dims[-1] = self.neck.out_dim
-        ## Neck: FPN
-        self.fpn = Yolov7PaFPN(cfg, self.pyramid_feat_dims)
-        ## Head
-        self.head = Yolov7DetHead(cfg, self.fpn.out_dims)
-        ## Pred
-        self.pred = Yolov7DetPredLayer(cfg)
+        # ------------------- Network Structure -------------------
+        self.backbone = Yolov7Backbone(use_pretrained=cfg.use_pretrained)
+        self.neck     = SPPFBlockCSP(self.backbone.feat_dims[-1], self.backbone.feat_dims[-1] // 2, expand_ratio=0.5)
+        self.backbone.feat_dims[-1] = self.backbone.feat_dims[-1] // 2
+        self.fpn      = Yolov7PaFPN(self.backbone.feat_dims[-3:], head_dim=cfg.head_dim)
+        self.non_shared_heads = nn.ModuleList([DecoupledHead(cfg, in_dim)
+                                               for in_dim in self.fpn.fpn_out_dims
+                                               ])
 
+        ## 预测层
+        self.obj_preds = nn.ModuleList(
+                            [nn.Conv2d(head.reg_head_dim, 1, kernel_size=1)
+                             for head in self.non_shared_heads
+                             ]) 
+        self.cls_preds = nn.ModuleList(
+                            [nn.Conv2d(head.cls_head_dim, self.num_classes, kernel_size=1) 
+                             for head in self.non_shared_heads
+                             ]) 
+        self.reg_preds = nn.ModuleList(
+                            [nn.Conv2d(head.reg_head_dim, 4, kernel_size=1) 
+                             for head in self.non_shared_heads
+                             ])
+        
+        # init pred layers
+        self.init_weight()
+    
+    def init_weight(self):
+        # Init bias
+        init_prob = 0.01
+        bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
+        # obj pred
+        for obj_pred in self.obj_preds:
+            b = obj_pred.bias.view(1, -1)
+            b.data.fill_(bias_value.item())
+            obj_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        # cls pred
+        for cls_pred in self.cls_preds:
+            b = cls_pred.bias.view(1, -1)
+            b.data.fill_(bias_value.item())
+            cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        # reg pred
+        for reg_pred in self.reg_preds:
+            b = reg_pred.bias.view(-1, )
+            b.data.fill_(1.0)
+            reg_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            w = reg_pred.weight
+            w.data.fill_(0.)
+            reg_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
+    def generate_anchors(self, level, fmp_size):
+        """
+            fmp_size: (List) [H, W]
+        """
+        # generate grid cells
+        fmp_h, fmp_w = fmp_size
+        anchor_y, anchor_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
+        # [H, W, 2] -> [HW, 2]
+        anchors = torch.stack([anchor_x, anchor_y], dim=-1).float().view(-1, 2)
+        anchors += 0.5  # add center offset
+        anchors *= self.out_stride[level]
+
+        return anchors
+        
     def post_process(self, obj_preds, cls_preds, box_preds):
         """
         We process predictions at each scale hierarchically
@@ -66,8 +113,7 @@ class Yolov7(nn.Module):
             box_pred_i = box_pred_i[0]
             if self.no_multi_labels:
                 # [M,]
-                scores, labels = torch.max(
-                    torch.sqrt(obj_pred_i.sigmoid() * cls_pred_i.sigmoid()), dim=1)
+                scores, labels = torch.max(torch.sqrt(obj_pred_i.sigmoid() * cls_pred_i.sigmoid()), dim=1)
 
                 # Keep top k top scoring indices only.
                 num_topk = min(self.topk_candidates, box_pred_i.size(0))
@@ -126,33 +172,62 @@ class Yolov7(nn.Module):
         return bboxes, scores, labels
     
     def forward(self, x):
-        # ---------------- Backbone ----------------
+        bs = x.shape[0]
         pyramid_feats = self.backbone(x)
-
-        # ---------------- Neck: SPP ----------------
         pyramid_feats[-1] = self.neck(pyramid_feats[-1])
-        
-        # ---------------- Neck: PaFPN ----------------
         pyramid_feats = self.fpn(pyramid_feats)
 
-        # ---------------- Heads ----------------
-        cls_feats, reg_feats = self.head(pyramid_feats)
+        all_anchors = []
+        all_obj_preds = []
+        all_cls_preds = []
+        all_box_preds = []
+        all_reg_preds = []
+        for level, (feat, head) in enumerate(zip(pyramid_feats, self.non_shared_heads)):
+            cls_feat, reg_feat = head(feat)
 
-        # ---------------- Preds ----------------
-        outputs = self.pred(cls_feats, reg_feats)
-        outputs['image_size'] = [x.shape[2], x.shape[3]]
+            # [B, C, H, W]
+            obj_pred = self.obj_preds[level](reg_feat)
+            cls_pred = self.cls_preds[level](cls_feat)
+            reg_pred = self.reg_preds[level](reg_feat)
+
+            B, _, H, W = cls_pred.size()
+            fmp_size = [H, W]
+            # generate anchor boxes: [M, 4]
+            anchors = self.generate_anchors(level, fmp_size)
+            anchors = anchors.to(x.device)
+            
+            # [B, C, H, W] -> [B, H, W, C] -> [B, M, C]
+            obj_pred = obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
+            cls_pred = cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_classes)
+            reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
+
+            # decode bbox
+            ctr_pred = reg_pred[..., :2] * self.out_stride[level] + anchors[..., :2]
+            wh_pred = torch.exp(reg_pred[..., 2:]) * self.out_stride[level]
+            pred_x1y1 = ctr_pred - wh_pred * 0.5
+            pred_x2y2 = ctr_pred + wh_pred * 0.5
+            box_pred = torch.cat([pred_x1y1, pred_x2y2], dim=-1)
+
+            all_obj_preds.append(obj_pred)
+            all_cls_preds.append(cls_pred)
+            all_box_preds.append(box_pred)
+            all_reg_preds.append(reg_pred)
+            all_anchors.append(anchors)
 
         if not self.training:
-            all_obj_preds = outputs['pred_obj']
-            all_cls_preds = outputs['pred_cls']
-            all_box_preds = outputs['pred_box']
-
-            # post process
             bboxes, scores, labels = self.post_process(all_obj_preds, all_cls_preds, all_box_preds)
             outputs = {
                 "scores": scores,
                 "labels": labels,
                 "bboxes": bboxes
             }
-        
-        return outputs
+        else:
+            outputs = {"pred_obj": all_obj_preds,        # List(Tensor) [B, M, 1]
+                       "pred_cls": all_cls_preds,        # List(Tensor) [B, M, C]
+                       "pred_box": all_box_preds,        # List(Tensor) [B, M, 4]
+                       "pred_reg": all_reg_preds,        # List(Tensor) [B, M, 4]
+                       "anchors": all_anchors,           # List(Tensor) [M, 2]
+                       "strides": self.out_stride,       # List(Int) [8, 16, 32]
+                       }
+
+        return outputs 

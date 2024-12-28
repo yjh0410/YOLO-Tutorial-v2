@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from utils.box_ops import *
 
 
-class YoloxMatcher(object):
+class SimOTA(object):
     """
         This code referenced to https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/models/yolo_head.py
     """
@@ -81,6 +81,7 @@ class YoloxMatcher(object):
 
         return fg_mask, assigned_labels, assigned_ious, assigned_indexs
 
+
     def get_in_boxes_info(
         self,
         gt_bboxes,   # [N, 4]
@@ -140,7 +141,8 @@ class YoloxMatcher(object):
             is_in_boxes[:, is_in_boxes_anchor] & is_in_centers[:, is_in_boxes_anchor]
         )
         return is_in_boxes_anchor, is_in_boxes_and_center
-
+    
+    
     def dynamic_k_matching(
         self, 
         cost, 

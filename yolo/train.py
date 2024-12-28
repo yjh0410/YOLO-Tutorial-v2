@@ -23,7 +23,7 @@ from config import build_config
 from dataset.build import build_dataset, build_transform
 
 # ----------------- Evaluator Components -----------------
-from evaluator.map_evaluator import MapEvaluator
+from map_evaluator import MapEvaluator
 
 # ----------------- Model Components -----------------
 from models import build_model
