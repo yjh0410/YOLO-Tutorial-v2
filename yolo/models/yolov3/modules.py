@@ -1,82 +1,73 @@
 import torch
 import torch.nn as nn
-from typing import List
+
+
 
 
 # --------------------- Basic modules ---------------------
 class ConvModule(nn.Module):
     def __init__(self, 
-                 in_dim,        # in channels
-                 out_dim,       # out channels 
-                 kernel_size=1, # kernel size 
-                 padding=0,     # padding
-                 stride=1,      # padding
-                 dilation=1,    # dilation
-                ):
+                 in_dim: int,          # in channels
+                 out_dim: int,         # out channels 
+                 kernel_size: int = 1, # kernel size 
+                 stride:int = 1,       # padding
+                 ):
         super(ConvModule, self).__init__()
-        self.conv = nn.Conv2d(in_dim, out_dim, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, bias=False)
-        self.norm = nn.BatchNorm2d(out_dim)
-        self.act  = nn.SiLU(inplace=True)
+        convs = []
+        convs.append(nn.Conv2d(in_dim, out_dim, kernel_size=kernel_size, padding=kernel_size//2, stride=stride, bias=False))
+        convs.append(nn.BatchNorm2d(out_dim))
+        convs.append(nn.SiLU(inplace=True))
+        self.convs = nn.Sequential(*convs)
 
     def forward(self, x):
-        return self.act(self.norm(self.conv(x)))
+        return self.convs(x)
 
-class YoloBottleneck(nn.Module):
+class Bottleneck(nn.Module):
     def __init__(self,
-                 in_dim       :int,
-                 out_dim      :int,
-                 kernel_size  :List  = [1, 3],
-                 expansion    :float = 0.5,
-                 shortcut     :bool  = False,
-                 ) -> None:
-        super(YoloBottleneck, self).__init__()
-        inter_dim = int(out_dim * expansion)
-        # ----------------- Network setting -----------------
-        self.conv_layer1 = ConvModule(in_dim, inter_dim, kernel_size=kernel_size[0], padding=kernel_size[0]//2, stride=1)
-        self.conv_layer2 = ConvModule(inter_dim, out_dim, kernel_size=kernel_size[1], padding=kernel_size[1]//2, stride=1)
+                 in_dim: int,
+                 out_dim: int,
+                 expand_ratio: float = 0.5,
+                 shortcut: bool = False,
+                 ):
+        super(Bottleneck, self).__init__()
+        inter_dim = int(out_dim * expand_ratio)  # hidden channels            
+        self.cv1 = ConvModule(in_dim, inter_dim, kernel_size=1)
+        self.cv2 = ConvModule(inter_dim, out_dim, kernel_size=3, stride=1)
         self.shortcut = shortcut and in_dim == out_dim
 
     def forward(self, x):
-        h = self.conv_layer2(self.conv_layer1(x))
+        h = self.cv2(self.cv1(x))
 
         return x + h if self.shortcut else h
 
 class ResBlock(nn.Module):
     def __init__(self,
-                 in_dim,
-                 out_dim,
-                 num_blocks :int   = 1,
-                 expansion  :float = 0.5,
-                 shortcut   :bool  = False,
+                 in_dim: int,
+                 out_dim: int,
+                 num_blocks: int = 1,
                  ):
         super(ResBlock, self).__init__()
-        # ---------- Basic parameters ----------
-        self.num_blocks = num_blocks
-        self.expansion = expansion
-        self.shortcut = shortcut
-        # ---------- Model parameters ----------
-        module = []
-        for i in range(num_blocks):
-            if i == 0:
-                module.append(YoloBottleneck(in_dim       = in_dim,
-                                             out_dim      = out_dim,
-                                             kernel_size  = [1, 3],
-                                             expansion    = expansion,
-                                             shortcut     = shortcut,
-                                             ))
-            else:
-                module.append(YoloBottleneck(in_dim       = out_dim,
-                                             out_dim      = out_dim,
-                                             kernel_size  = [1, 3],
-                                             expansion    = expansion,
-                                             shortcut     = shortcut,
-                                             ))
-
-
-        self.module = nn.Sequential(*module)
+        assert in_dim == out_dim
+        self.m = nn.Sequential(*[
+            Bottleneck(in_dim, out_dim, expand_ratio=0.5, shortcut=True)
+                       for _ in range(num_blocks)
+                       ])
 
     def forward(self, x):
-        out = self.module(x)
+        return self.m(x)
 
-        return out
+class ConvBlocks(nn.Module):
+    def __init__(self, in_dim: int, out_dim: int):
+        super().__init__()
+        inter_dim = out_dim // 2
+        self.convs = nn.Sequential(
+            ConvModule(in_dim, out_dim, kernel_size=1),
+            ConvModule(out_dim, inter_dim, kernel_size=3, stride=1),
+            ConvModule(inter_dim, out_dim, kernel_size=1),
+            ConvModule(out_dim, inter_dim, kernel_size=3, stride=1),
+            ConvModule(inter_dim, out_dim, kernel_size=1)
+        )
+
+    def forward(self, x):
+        return self.convs(x)
     

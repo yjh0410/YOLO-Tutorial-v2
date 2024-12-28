@@ -12,7 +12,7 @@ class SPPF(nn.Module):
     """
         This code referenced to https://github.com/ultralytics/yolov5
     """
-    def __init__(self, cfg, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim):
         super().__init__()
         ## ----------- Basic Parameters -----------
         inter_dim = in_dim // 2

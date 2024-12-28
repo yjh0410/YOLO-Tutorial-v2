@@ -1,64 +1,41 @@
-from typing import List
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import List
 
 try:
-    from .modules import ConvModule, ResBlock
+    from .modules import ConvModule, ConvBlocks
 except:
-    from  modules import ConvModule, ResBlock
+    from  modules import ConvModule, ConvBlocks
 
 
 # Yolov3FPN
 class Yolov3FPN(nn.Module):
-    def __init__(self, cfg, in_dims: List = [256, 512, 1024],
+    def __init__(self,
+                 in_dims: List = [256, 512, 1024],
+                 head_dim: int = 256,
                  ):
         super(Yolov3FPN, self).__init__()
         self.in_dims = in_dims
+        self.head_dim = head_dim
+        self.fpn_out_dims = [head_dim] * 3
         c3, c4, c5 = in_dims
 
-        # ---------------------- Yolov3's Top down FPN ----------------------
-        ## P5 -> P4
-        self.reduce_layer_1   = ConvModule(round(512*cfg.width), round(256*cfg.width), kernel_size=1, padding=0, stride=1)
-        self.top_down_layer_1 = ResBlock(in_dim     = c5,
-                                         out_dim    = round(512*cfg.width),
-                                         num_blocks = round(3*cfg.depth),
-                                         expansion  = 0.5,
-                                         shortcut   = False,
-                                         )
+        # P5 -> P4
+        self.top_down_layer_1 = ConvBlocks(c5, 512)
+        self.reduce_layer_1   = ConvModule(512, 256, kernel_size=1)
 
-        ## P4 -> P3
-        self.reduce_layer_2   = ConvModule(round(256*cfg.width), round(128*cfg.width), kernel_size=1, padding=0, stride=1)
-        self.top_down_layer_2 = ResBlock(in_dim     = c4 + round(256*cfg.width),
-                                         out_dim    = round(256*cfg.width),
-                                         num_blocks = round(3*cfg.depth),
-                                         expansion  = 0.5,
-                                         shortcut   = False,
-                                         )
-        
-        ## P3
-        self.top_down_layer_3 = ResBlock(in_dim     = c3 + round(128*cfg.width),
-                                         out_dim    = round(128*cfg.width),
-                                         num_blocks = round(3*cfg.depth),
-                                         expansion  = 0.5,
-                                         shortcut   = False,
-                                         )
+        # P4 -> P3
+        self.top_down_layer_2 = ConvBlocks(c4 + 256, 256)
+        self.reduce_layer_2   = ConvModule(256, 128, kernel_size=1)
 
-        # ---------------------- Yolov3's output projection ----------------------
-        self.out_layers = nn.ModuleList([
-            ConvModule(in_dim, round(cfg.head_dim*cfg.width), kernel_size=1)
-                      for in_dim in [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
-                      ])
-        self.out_dims = [round(cfg.head_dim*cfg.width)] * 3
+        # P3
+        self.top_down_layer_3 = ConvBlocks(c3 + 128, 128)
 
-        # Initialize all layers
-        self.init_weights()
-
-    def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
+        # output proj layers
+        self.out_layers = nn.ModuleList([ConvModule(in_dim, head_dim, kernel_size=1)
+                                         for in_dim in [128, 256, 512]
+                                         ])
 
     def forward(self, features):
         c3, c4, c5 = features
@@ -80,36 +57,23 @@ class Yolov3FPN(nn.Module):
         out_feats_proj = []
         for feat, layer in zip(out_feats, self.out_layers):
             out_feats_proj.append(layer(feat))
-
         return out_feats_proj
-
 
 if __name__=='__main__':
     import time
     from thop import profile
     # Model config
     
-    # YOLOv2-Base config
-    class Yolov3BaseConfig(object):
-        def __init__(self) -> None:
-            # ---------------- Model config ----------------
-            self.width    = 0.50
-            self.depth    = 0.34
-            self.out_stride = [8, 16, 32]
-            self.max_stride = 32
-            self.num_levels = 3
-            ## Head
-            self.head_dim = 256
-
-    cfg = Yolov3BaseConfig()
     # Build a head
     in_dims  = [128, 256, 512]
-    fpn = Yolov3FPN(cfg, in_dims)
+    fpn = Yolov3FPN(in_dims, head_dim=256)
 
-    # Inference
+    # Randomly generate a input data
     x = [torch.randn(1, in_dims[0], 80, 80),
          torch.randn(1, in_dims[1], 40, 40),
          torch.randn(1, in_dims[2], 20, 20)]
+    
+    # Inference
     t0 = time.time()
     output = fpn(x)
     t1 = time.time()

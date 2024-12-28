@@ -14,22 +14,11 @@ class SPPF(nn.Module):
     """
     def __init__(self, in_dim, out_dim):
         super().__init__()
-        ## ----------- Basic Parameters -----------
         inter_dim = in_dim // 2
         self.out_dim = out_dim
-        ## ----------- Network Parameters -----------
-        self.cv1 = ConvModule(in_dim, inter_dim, kernel_size=1, padding=0, stride=1)
-        self.cv2 = ConvModule(inter_dim * 4, out_dim, kernel_size=1, padding=0, stride=1)
-        self.m = nn.MaxPool2d(kernel_size=5, stride=1, padding=2)
-
-        # Initialize all layers
-        self.init_weights()
-
-    def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
+        self.cv1 = ConvModule(in_dim, inter_dim, kernel_size=1)
+        self.cv2 = ConvModule(inter_dim * 4, out_dim, kernel_size=1)
+        self.m = nn.MaxPool2d(kernel_size=5, stride=1, padding=5 // 2)
 
     def forward(self, x):
         x = self.cv1(x)
@@ -40,24 +29,23 @@ class SPPF(nn.Module):
 
 
 if __name__=='__main__':
-    import time
     from thop import profile
-    # Model config
     
     # Build a neck
     in_dim  = 512
     out_dim = 512
-    neck = SPPF(in_dim, out_dim)
+    model = SPPF(512, 512)
+
+    # Randomly generate a input data
+    x = torch.randn(2, in_dim, 20, 20)
 
     # Inference
-    x = torch.randn(1, in_dim, 20, 20)
-    t0 = time.time()
-    output = neck(x)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
-    print('Neck output: ', output.shape)
+    output = model(x)
+    print(' - the shape of input :  ', x.shape)
+    print(' - the shape of output : ', output.shape)
 
-    flops, params = profile(neck, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
+    x = torch.randn(1, in_dim, 20, 20)
+    flops, params = profile(model, inputs=(x, ), verbose=False)
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

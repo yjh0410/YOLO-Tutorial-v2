@@ -2,38 +2,23 @@
 
 
 def build_yolov3_config(args):
-    if   args.model == 'yolov3_n':
-        return Yolov3NConfig()
-    elif args.model == 'yolov3_s':
-        return Yolov3SConfig()
-    elif args.model == 'yolov3_m':
-        return Yolov3MConfig()
-    elif args.model == 'yolov3_l':
-        return Yolov3LConfig()
-    elif args.model == 'yolov3_x':
-        return Yolov3XConfig()
-    else:
-        raise NotImplementedError("No config for model: {}".format(args.model))
+    return Yolov3Config()
     
 # YOLOv3-Base config
-class Yolov3BaseConfig(object):
+class Yolov3Config(object):
     def __init__(self) -> None:
         # ---------------- Model config ----------------
-        self.width    = 1.0
-        self.depth    = 1.0
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
-        self.num_levels = 3
-        self.model_scale = "l"
         ## Backbone
         self.use_pretrained = True
         ## Head
-        self.head_dim       = 256
-        self.num_cls_head   = 2
-        self.num_reg_head   = 2
-        self.anchor_size    = {0: [[10, 13],   [16, 30],   [33, 23]],
-                               1: [[30, 61],   [62, 45],   [59, 119]],
-                               2: [[116, 90],  [156, 198], [373, 326]]}
+        self.head_dim     = 256
+        self.num_cls_head = 2
+        self.num_reg_head = 2
+        self.anchor_size  = [[10, 13],   [16, 30],   [33, 23],
+                             [30, 61],   [62, 45],   [59, 119],
+                             [116, 90],  [156, 198], [373, 326]]
 
         # ---------------- Post-process config ----------------
         ## Post process
@@ -41,7 +26,7 @@ class Yolov3BaseConfig(object):
         self.val_conf_thresh = 0.001
         self.val_nms_thresh  = 0.7
         self.test_topk = 100
-        self.test_conf_thresh = 0.3
+        self.test_conf_thresh = 0.45
         self.test_nms_thresh  = 0.5
 
         # ---------------- Assignment config ----------------
@@ -79,7 +64,7 @@ class Yolov3BaseConfig(object):
         # ---------------- Data process config ----------------
         self.aug_type = 'yolo'
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
+        self.mixup_prob  = 0.1
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std
@@ -103,73 +88,3 @@ class Yolov3BaseConfig(object):
         config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}
         for k, v in config_dict.items():
             print("{} : {}".format(k, v))
-
-# YOLOv3-N
-class Yolov3NConfig(Yolov3BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.25
-        self.depth = 0.34
-        self.model_scale = "n"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.0
-        self.copy_paste  = 0.0
-
-# YOLOv3-S
-class Yolov3SConfig(Yolov3BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.50
-        self.depth = 0.34
-        self.model_scale = "s"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.0
-        self.copy_paste  = 0.0
-
-# YOLOv3-M
-class Yolov3MConfig(Yolov3BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 0.75
-        self.depth = 0.67
-        self.model_scale = "m"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.0
-
-# YOLOv3-L
-class Yolov3LConfig(Yolov3BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.0
-        self.depth = 1.0
-        self.model_scale = "l"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.0
-
-# YOLOv3-X
-class Yolov3XConfig(Yolov3BaseConfig):
-    def __init__(self) -> None:
-        super().__init__()
-        # ---------------- Model config ----------------
-        self.width = 1.25
-        self.depth = 1.34
-        self.model_scale = "x"
-
-        # ---------------- Data process config ----------------
-        self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.1
-        self.copy_paste  = 0.0
