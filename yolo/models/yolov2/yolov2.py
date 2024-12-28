@@ -30,7 +30,7 @@ class Yolov2(nn.Module):
         
         # ---------------------- Network Parameters ----------------------
         self.backbone = Yolov2Backbone(cfg)
-        self.neck     = SPPF(cfg, self.backbone.feat_dim, cfg.head_dim)
+        self.neck     = SPPF(self.backbone.feat_dim, cfg.head_dim)
         self.head     = Yolov2DetHead(cfg, self.neck.out_dim)
         self.pred     = Yolov2DetPredLayer(cfg)
 
