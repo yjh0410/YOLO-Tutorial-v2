@@ -93,7 +93,7 @@ if __name__=='__main__':
     class Yolov8BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.width    = 0.50
+            self.width    = 0.25
             self.depth    = 0.34
             self.ratio    = 2.0
             self.out_stride = [8, 16, 32]
@@ -104,7 +104,7 @@ if __name__=='__main__':
 
     cfg = Yolov8BaseConfig()
     # Build a head
-    in_dims  = [128, 256, 512]
+    in_dims  = [64, 128, 256]
     fpn = Yolov8PaFPN(cfg, in_dims)
 
     # Inference

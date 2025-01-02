@@ -105,7 +105,7 @@ if __name__=='__main__':
     class Yolov8BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.width    = 0.50
+            self.width    = 0.25
             self.depth    = 0.34
             self.ratio    = 2.0
             self.reg_max  = 16
@@ -117,10 +117,10 @@ if __name__=='__main__':
             self.num_reg_head = 2
 
     cfg = Yolov8BaseConfig()
-    cfg.num_classes = 20
+    cfg.num_classes = 80
 
     # Build a head
-    fpn_dims = [128, 256, 512]
+    fpn_dims = [64, 128, 256]
     pyramid_feats = [torch.randn(1, fpn_dims[0], 80, 80),
                      torch.randn(1, fpn_dims[1], 40, 40),
                      torch.randn(1, fpn_dims[2], 20, 20)]

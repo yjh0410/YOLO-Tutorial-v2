@@ -162,9 +162,9 @@ if __name__=='__main__':
     class Yolov8BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
-            self.width    = 1.0
-            self.depth    = 1.0
-            self.ratio    = 1.0
+            self.width    = 0.25
+            self.depth    = 0.34
+            self.ratio    = 2.0
             self.reg_max  = 16
             self.out_stride = [8, 16, 32]
             self.max_stride = 32
@@ -172,8 +172,8 @@ if __name__=='__main__':
             ## Head
 
     cfg = Yolov8BaseConfig()
-    cfg.num_classes = 20
-    cls_dim = 128
+    cfg.num_classes = 80
+    cls_dim = 80
     reg_dim = 64
     # Build a pred layer
     pred = Yolov8DetPredLayer(cfg, cls_dim, reg_dim)

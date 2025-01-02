@@ -126,10 +126,10 @@ if __name__ == '__main__':
     class BaseConfig(object):
         def __init__(self) -> None:
             self.use_pretrained = True
-            self.width = 0.50
+            self.width = 0.25
             self.depth = 0.34
             self.ratio = 2.0
-            self.model_scale = "s"
+            self.model_scale = "n"
 
     cfg = BaseConfig()
     model = Yolov8Backbone(cfg)

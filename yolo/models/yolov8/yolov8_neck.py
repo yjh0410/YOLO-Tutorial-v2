@@ -44,8 +44,8 @@ if __name__=='__main__':
     from thop import profile
     
     # Build a head
-    in_dim  = 512
-    out_dim = 512
+    in_dim  = 256
+    out_dim = 256
     neck = SPPF(in_dim, out_dim)
 
     # Inference
