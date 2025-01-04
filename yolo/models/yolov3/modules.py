@@ -46,10 +46,13 @@ class ResBlock(nn.Module):
                  ):
         super(ResBlock, self).__init__()
         assert in_dim == out_dim
-        self.m = nn.Sequential(*[
-            Bottleneck(in_dim, out_dim, expand_ratio=0.5, shortcut=True)
-                       for _ in range(num_blocks)
-                       ])
+        blocks = []
+        for i in range(num_blocks):
+            if i == 0:
+                blocks.append(Bottleneck(in_dim, out_dim, expand_ratio=0.5, shortcut=True))
+            else:
+                blocks.append(Bottleneck(out_dim, out_dim, expand_ratio=0.5, shortcut=True))
+        self.m = nn.Sequential(*blocks)
 
     def forward(self, x):
         return self.m(x)
