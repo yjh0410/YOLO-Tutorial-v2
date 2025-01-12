@@ -213,8 +213,8 @@ if __name__ == "__main__":
             self.box_format = 'xywh'
             self.normalize_coords = False
             self.mosaic_prob = 1.0
-            self.mixup_prob  = 0.15
-            self.copy_paste  = 0.3
+            self.mixup_prob  = 0.0
+            self.copy_paste  = 1.0
             ## Pixel mean & std
             self.pixel_mean = [0., 0., 0.]
             self.pixel_std  = [255., 255., 255.]

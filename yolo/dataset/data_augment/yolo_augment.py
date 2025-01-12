@@ -158,7 +158,7 @@ class YOLOAugmentation(object):
             target["boxes"] = boxes
 
         # --------------- To torch.Tensor ---------------
-        image = F.to_tensor(image) * 255.
+        image = torch.as_tensor(image).permute(2, 0, 1).contiguous()
         if target is not None:
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
@@ -203,7 +203,7 @@ class YOLOBaseTransform(object):
             target["boxes"][..., [1, 3]] = target["boxes"][..., [1, 3]] / orig_h * img_h
 
         # --------------- To torch.Tensor ---------------
-        image = F.to_tensor(image) * 255.
+        image = torch.as_tensor(image).permute(2, 0, 1).contiguous()
         if target is not None:
             target["boxes"] = torch.as_tensor(target["boxes"]).float()
             target["labels"] = torch.as_tensor(target["labels"]).long()
@@ -228,7 +228,7 @@ class YOLOBaseTransform(object):
 
 if __name__ == "__main__":
     image_path = "voc_image.jpg"
-    is_train = False
+    is_train = True
 
     affine_params = {
         'degrees': 0.0,
@@ -247,16 +247,12 @@ if __name__ == "__main__":
                                        affine_params=affine_params,
                                        pixel_mean=[0., 0., 0.],
                                        pixel_std=[255., 255., 255.],
-                                       box_format="xyxy",
-                                       normalize_coords=False,
                                        )
     else:
         ssd_augment = YOLOBaseTransform(img_size=416,
                                         max_stride=32,
                                         pixel_mean=[0., 0., 0.],
                                         pixel_std=[255., 255., 255.],
-                                        box_format="xyxy",
-                                        normalize_coords=False,
                                         )
     
     # 读取图像数据
