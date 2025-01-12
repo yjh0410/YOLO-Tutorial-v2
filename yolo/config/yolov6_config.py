@@ -23,25 +23,13 @@ class Yolov6BaseConfig(object):
         self.out_stride = [8, 16, 32]
         self.max_stride = 32
         self.num_levels = 3
-        self.model_scale = "b"
+        self.model_scale = "l"
         ## Backbone
         self.use_pretrained = True
-        ## Neck
-        self.neck_act       = 'silu'
-        self.neck_norm      = 'BN'
-        self.neck_depthwise = False
-        self.neck_expand_ratio = 0.5
-        self.spp_pooling_size  = 5
-        ## FPN
-        self.fpn_act  = 'silu'
-        self.fpn_norm = 'BN'
-        self.fpn_depthwise = False
         ## Head
-        self.head_act  = 'silu'
-        self.head_norm = 'BN'
-        self.head_depthwise = False
-        self.num_cls_head   = 1
-        self.num_reg_head   = 1
+        self.head_dim       = 256
+        self.num_cls_head   = 2
+        self.num_reg_head   = 2
 
         # ---------------- Post-process config ----------------
         ## Post process
@@ -49,17 +37,17 @@ class Yolov6BaseConfig(object):
         self.val_conf_thresh = 0.001
         self.val_nms_thresh  = 0.7
         self.test_topk = 100
-        self.test_conf_thresh = 0.2
+        self.test_conf_thresh = 0.4
         self.test_nms_thresh  = 0.5
 
         # ---------------- Assignment config ----------------
         ## Matcher
-        self.tal_topk_candidates = 13
-        self.tal_alpha = 1.0
-        self.tal_beta  = 6.0
+        self.ota_center_sampling_radius = 2.5
+        self.ota_topk_candidate = 10
         ## Loss weight
+        self.loss_obj = 1.0
         self.loss_cls = 1.0
-        self.loss_box = 2.5
+        self.loss_box = 5.0
 
         # ---------------- ModelEMA config ----------------
         self.use_ema = True
@@ -88,7 +76,7 @@ class Yolov6BaseConfig(object):
         # ---------------- Data process config ----------------
         self.aug_type = 'yolo'
         self.mosaic_prob = 1.0
-        self.mixup_prob  = 0.15
+        self.mixup_prob  = 0.1
         self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
         self.multi_scale = [0.5, 1.25]   # multi scale: [img_size * 0.5, img_size * 1.25]
         ## Pixel mean & std

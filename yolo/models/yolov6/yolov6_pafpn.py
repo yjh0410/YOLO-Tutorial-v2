@@ -14,49 +14,48 @@ class Yolov6PaFPN(nn.Module):
     def __init__(self, cfg, in_dims: List = [256, 512, 1024]):
         super(Yolov6PaFPN, self).__init__()
         self.in_dims = in_dims
-        self.model_scale = cfg.scale
+        self.model_scale = cfg.model_scale
         c3, c4, c5 = in_dims
 
         # ---------------------- Yolov6's Top down FPN ----------------------
         ## P5 -> P4
         self.reduce_layer_1   = ConvModule(c5, round(256*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+                                           kernel_size=1, padding=0, stride=1, act_type="silu",)
         self.top_down_layer_1 = self.make_block(in_dim     = c4 + round(256*cfg.width),
                                                 out_dim    = round(256*cfg.width),
-                                                num_blocks = round(12*cfg.depth))
+                                                num_blocks = round(12*cfg.depth),
+                                                )
 
         ## P4 -> P3
         self.reduce_layer_2   = ConvModule(round(256*cfg.width), round(128*cfg.width),
-                                          kernel_size=1, padding=0, stride=1,
-                                          act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
+                                           kernel_size=1, padding=0, stride=1, act_type="silu",)
         self.top_down_layer_2 = self.make_block(in_dim     = c3 + round(128*cfg.width),
                                                 out_dim    = round(128*cfg.width),
-                                                num_blocks = round(12*cfg.depth))
+                                                num_blocks = round(12*cfg.depth),
+                                                )
         
         # ---------------------- Yolov6's Bottom up PAN ----------------------
         ## P3 -> P4
         self.downsample_layer_1 = ConvModule(round(128*cfg.width), round(128*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+                                             kernel_size=3, padding=1, stride=2, act_type="silu",)
         self.bottom_up_layer_1  = self.make_block(in_dim     = round(128*cfg.width) + round(128*cfg.width),
                                                   out_dim    = round(256*cfg.width),
-                                                  num_blocks = round(12*cfg.depth))
+                                                  num_blocks = round(12*cfg.depth),
+                                                  )
 
         ## P4 -> P5
         self.downsample_layer_2 = ConvModule(round(256*cfg.width), round(256*cfg.width),
-                                            kernel_size=3, padding=1, stride=2,
-                                            act_type=cfg.fpn_act, norm_type=cfg.fpn_norm, depthwise=cfg.fpn_depthwise)
+                                             kernel_size=3, padding=1, stride=2, act_type="silu",)
         self.bottom_up_layer_2  = self.make_block(in_dim     = round(256*cfg.width) + round(256*cfg.width),
                                                   out_dim    = round(512*cfg.width),
-                                                  num_blocks = round(12*cfg.depth))
+                                                  num_blocks = round(12*cfg.depth),
+                                                  )
 
         # ---------------------- Yolov6's output projection ----------------------
         self.out_layers = nn.ModuleList([
-            ConvModule(in_dim, in_dim, kernel_size=1,
-                      act_type=cfg.fpn_act, norm_type=cfg.fpn_norm)
-                      for in_dim in [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
-                      ])
+            ConvModule(in_dim, in_dim, kernel_size=1, act_type="silu",)
+                       for in_dim in [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
+                       ])
         self.out_dims = [round(128*cfg.width), round(256*cfg.width), round(512*cfg.width)]
 
     def make_block(self, in_dim, out_dim, num_blocks=1):
@@ -72,7 +71,8 @@ class Yolov6PaFPN(nn.Module):
         else:
             raise NotImplementedError("Unknown model scale: {}".format(self.model_scale))
             
-        return block        
+        return block      
+      
     def forward(self, features):
         c3, c4, c5 = features
         

@@ -18,12 +18,8 @@ class SPPF(nn.Module):
         inter_dim = in_dim // 2
         self.out_dim = out_dim
         ## ----------- Network Parameters -----------
-        self.cv1 = ConvModule(in_dim, inter_dim,
-                             kernel_size=1, padding=0, stride=1,
-                             act_type=cfg.neck_act, norm_type=cfg.neck_norm)
-        self.cv2 = ConvModule(inter_dim * 4, out_dim,
-                             kernel_size=1, padding=0, stride=1,
-                             act_type=cfg.neck_act, norm_type=cfg.neck_norm)
+        self.cv1 = ConvModule(in_dim, inter_dim, kernel_size=1, padding=0, stride=1, act_type="silu")
+        self.cv2 = ConvModule(inter_dim * 4, out_dim, kernel_size=1, padding=0, stride=1, act_type="silu")
         self.m = nn.MaxPool2d(kernel_size=5, stride=1, padding=2)
 
     def forward(self, x):

@@ -19,6 +19,7 @@ class DetPredLayer(nn.Module):
         self.num_classes = num_classes
 
         # --------- Network Parameters ----------
+        self.obj_pred = nn.Conv2d(self.cls_dim, 1, kernel_size=1)
         self.cls_pred = nn.Conv2d(self.cls_dim, num_classes, kernel_size=1)
         self.reg_pred = nn.Conv2d(self.reg_dim, 4, kernel_size=1)                
 
@@ -28,6 +29,10 @@ class DetPredLayer(nn.Module):
         # Init bias
         init_prob = 0.01
         bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
+        # obj pred
+        b = self.obj_pred.bias.view(1, -1)
+        b.data.fill_(bias_value.item())
+        self.obj_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
         # cls pred
         b = self.cls_pred.bias.view(1, -1)
         b.data.fill_(bias_value.item())
@@ -56,6 +61,7 @@ class DetPredLayer(nn.Module):
         
     def forward(self, cls_feat, reg_feat):
         # 预测层
+        obj_pred = self.obj_pred(reg_feat)
         cls_pred = self.cls_pred(cls_feat)
         reg_pred = self.reg_pred(reg_feat)
 
@@ -67,6 +73,7 @@ class DetPredLayer(nn.Module):
 
         # 对 pred 的size做一些view调整，便于后续的处理
         # [B, C, H, W] -> [B, H, W, C] -> [B, H*W, C]
+        obj_pred = obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
         cls_pred = cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_classes)
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
         
@@ -78,7 +85,8 @@ class DetPredLayer(nn.Module):
         box_pred = torch.cat([pred_x1y1, pred_x2y2], dim=-1)
 
         # output dict
-        outputs = {"pred_cls": cls_pred,       # (torch.Tensor) [B, M, C]
+        outputs = {"pred_obj": obj_pred,       # (torch.Tensor) [B, M, 1]
+                   "pred_cls": cls_pred,       # (torch.Tensor) [B, M, C]
                    "pred_reg": reg_pred,       # (torch.Tensor) [B, M, 4]
                    "pred_box": box_pred,       # (torch.Tensor) [B, M, 4]
                    "anchors" : anchors,        # (torch.Tensor) [M, 2]
@@ -90,32 +98,35 @@ class DetPredLayer(nn.Module):
 
 ## Multi-level pred layer
 class Yolov6DetPredLayer(nn.Module):
-    def __init__(self, cfg, in_dims):
+    def __init__(self, cfg):
         super().__init__()
         # --------- Basic Parameters ----------
         self.cfg = cfg
+        self.num_levels = len(cfg.out_stride)
 
         # ----------- Network Parameters -----------
         ## pred layers
         self.multi_level_preds = nn.ModuleList(
-            [DetPredLayer(cls_dim      = in_dims[level],
-                          reg_dim      = in_dims[level],
+            [DetPredLayer(cls_dim      = round(cfg.head_dim * cfg.width),
+                          reg_dim      = round(cfg.head_dim * cfg.width),
                           stride       = cfg.out_stride[level],
                           num_classes  = cfg.num_classes,)
-                          for level in range(cfg.num_levels)
+                          for level in range(self.num_levels)
                           ])
 
     def forward(self, cls_feats, reg_feats):
         all_anchors = []
         all_fmp_sizes = []
+        all_obj_preds = []
         all_cls_preds = []
         all_reg_preds = []
         all_box_preds = []
-        for level in range(self.cfg.num_levels):
+        for level in range(self.num_levels):
             # -------------- Single-level prediction --------------
             outputs = self.multi_level_preds[level](cls_feats[level], reg_feats[level])
 
             # collect results
+            all_obj_preds.append(outputs["pred_obj"])
             all_cls_preds.append(outputs["pred_cls"])
             all_reg_preds.append(outputs["pred_reg"])
             all_box_preds.append(outputs["pred_box"])
@@ -123,7 +134,8 @@ class Yolov6DetPredLayer(nn.Module):
             all_anchors.append(outputs["anchors"])
         
         # output dict
-        outputs = {"pred_cls":  all_cls_preds,         # List(Tensor) [B, M, C]
+        outputs = {"pred_obj":  all_obj_preds,         # List(Tensor) [B, M, 1]
+                   "pred_cls":  all_cls_preds,         # List(Tensor) [B, M, C]
                    "pred_reg":  all_reg_preds,         # List(Tensor) [B, M, 4*(reg_max)]
                    "pred_box":  all_box_preds,         # List(Tensor) [B, M, 4]
                    "fmp_sizes": all_fmp_sizes,         # List(Tensor) [M, 1]
@@ -132,4 +144,55 @@ class Yolov6DetPredLayer(nn.Module):
                    }
 
         return outputs
+
+
+if __name__=='__main__':
+    import time
+    from thop import profile
+    # Model config
     
+    # YOLOv6-Base config
+    class Yolov6BaseConfig(object):
+        def __init__(self) -> None:
+            # ---------------- Model config ----------------
+            self.width    = 1.0
+            self.depth    = 1.0
+            self.out_stride = [8, 16, 32]
+            self.max_stride = 32
+            ## Head
+            self.head_dim  = 256
+
+    cfg = Yolov6BaseConfig()
+    cfg.num_classes = 20
+    # Build a pred layer
+    pred = Yolov6DetPredLayer(cfg)
+
+    # Inference
+    cls_feats = [torch.randn(1, cfg.head_dim, 80, 80),
+                 torch.randn(1, cfg.head_dim, 40, 40),
+                 torch.randn(1, cfg.head_dim, 20, 20),]
+    reg_feats = [torch.randn(1, cfg.head_dim, 80, 80),
+                 torch.randn(1, cfg.head_dim, 40, 40),
+                 torch.randn(1, cfg.head_dim, 20, 20),]
+    t0 = time.time()
+    output = pred(cls_feats, reg_feats)
+    t1 = time.time()
+    print('Time: ', t1 - t0)
+    print('====== Pred output ======= ')
+    pred_obj = output["pred_obj"]
+    pred_cls = output["pred_cls"]
+    pred_reg = output["pred_reg"]
+    pred_box = output["pred_box"]
+    anchors  = output["anchors"]
+    
+    for level in range(len(cfg.out_stride)):
+        print("- Level-{} : objectness       -> {}".format(level, pred_obj[level].shape))
+        print("- Level-{} : classification   -> {}".format(level, pred_cls[level].shape))
+        print("- Level-{} : delta regression -> {}".format(level, pred_reg[level].shape))
+        print("- Level-{} : bbox regression  -> {}".format(level, pred_box[level].shape))
+        print("- Level-{} : anchor boxes     -> {}".format(level, anchors[level].shape))
+
+    flops, params = profile(pred, inputs=(cls_feats, reg_feats, ), verbose=False)
+    print('==============================')
+    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
+    print('Params : {:.2f} M'.format(params / 1e6))

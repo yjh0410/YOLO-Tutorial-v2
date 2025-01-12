@@ -41,17 +41,18 @@ class Yolov6(nn.Module):
         ## Head
         self.head     = Yolov6DetHead(cfg, self.fpn.out_dims)
         ## Pred
-        self.pred     = Yolov6DetPredLayer(cfg, self.fpn.out_dims)
+        self.pred     = Yolov6DetPredLayer(cfg,)
 
     def switch_deploy(self,):
         for m in self.modules():
             if hasattr(m, "switch_to_deploy"):
                 m.switch_to_deploy()
 
-    def post_process(self, cls_preds, box_preds):
+    def post_process(self, obj_preds, cls_preds, box_preds):
         """
         We process predictions at each scale hierarchically
         Input:
+            obj_preds: List[torch.Tensor] -> [[B, M, 1], ...], B=1
             cls_preds: List[torch.Tensor] -> [[B, M, C], ...], B=1
             box_preds: List[torch.Tensor] -> [[B, M, 4], ...], B=1
         Output:
@@ -63,12 +64,14 @@ class Yolov6(nn.Module):
         all_labels = []
         all_bboxes = []
         
-        for cls_pred_i, box_pred_i in zip(cls_preds, box_preds):
+        for obj_pred_i, cls_pred_i, box_pred_i in zip(obj_preds, cls_preds, box_preds):
+            obj_pred_i = obj_pred_i[0]
             cls_pred_i = cls_pred_i[0]
             box_pred_i = box_pred_i[0]
             if self.no_multi_labels:
                 # [M,]
-                scores, labels = torch.max(cls_pred_i.sigmoid(), dim=1)
+                scores, labels = torch.max(
+                    torch.sqrt(obj_pred_i.sigmoid() * cls_pred_i.sigmoid()), dim=1)
 
                 # Keep top k top scoring indices only.
                 num_topk = min(self.topk_candidates, box_pred_i.size(0))
@@ -87,7 +90,7 @@ class Yolov6(nn.Module):
                 bboxes = box_pred_i[topk_idxs]
             else:
                 # [M, C] -> [MC,]
-                scores_i = cls_pred_i.sigmoid().flatten()
+                scores_i = torch.sqrt(obj_pred_i.sigmoid() * cls_pred_i.sigmoid()).flatten()
 
                 # Keep top k top scoring indices only.
                 num_topk = min(self.topk_candidates, box_pred_i.size(0))
@@ -143,11 +146,12 @@ class Yolov6(nn.Module):
         outputs['image_size'] = [x.shape[2], x.shape[3]]
 
         if not self.training:
+            all_obj_preds = outputs['pred_obj']
             all_cls_preds = outputs['pred_cls']
             all_box_preds = outputs['pred_box']
 
             # post process
-            bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
+            bboxes, scores, labels = self.post_process(all_obj_preds, all_cls_preds, all_box_preds)
             outputs = {
                 "scores": scores,
                 "labels": labels,
