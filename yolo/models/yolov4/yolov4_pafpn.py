@@ -67,20 +67,24 @@ class Yolov4PaFPN(nn.Module):
     def forward(self, features):
         c3, c4, c5 = features
 
+        # P5 -> P4
         c6 = self.reduce_layer_1(c5)
         c7 = F.interpolate(c6, scale_factor=2.0)   # s32->s16
         c8 = torch.cat([c7, c4], dim=1)
         c9 = self.top_down_layer_1(c8)
-        # P3/8
+
+        # P4 -> P3
         c10 = self.reduce_layer_2(c9)
         c11 = F.interpolate(c10, scale_factor=2.0)   # s16->s8
         c12 = torch.cat([c11, c3], dim=1)
         c13 = self.top_down_layer_2(c12)  # to det
-        # p4/16
+
+        # P3 -> P4
         c14 = self.reduce_layer_3(c13)
         c15 = torch.cat([c14, c10], dim=1)
         c16 = self.bottom_up_layer_1(c15)  # to det
-        # p5/32
+
+        # P4 -> P5
         c17 = self.reduce_layer_4(c16)
         c18 = torch.cat([c17, c6], dim=1)
         c19 = self.bottom_up_layer_2(c18)  # to det

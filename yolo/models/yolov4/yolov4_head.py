@@ -50,13 +50,13 @@ if __name__=='__main__':
     from thop import profile
     
     # YOLOv2 configuration
-    class Yolov3BaseConfig(object):
+    class Yolov4BaseConfig(object):
         def __init__(self) -> None:
             # ---------------- Model config ----------------
             self.head_dim  = 256
             self.num_cls_head = 2
             self.num_reg_head = 2
-    cfg = Yolov3BaseConfig()
+    cfg = Yolov4BaseConfig()
 
     # Build a head
     model = DecoupledHead(cfg, in_dim= 256)

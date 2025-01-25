@@ -72,7 +72,7 @@ class Yolov3Config(object):
         self.pixel_std  = [255., 255., 255.]
         ## Transforms
         self.train_img_size = 640
-        self.test_img_size  = 640
+        self.test_img_size  = 320
         self.affine_params = {
             'degrees': 0.0,
             'translate': 0.2,
