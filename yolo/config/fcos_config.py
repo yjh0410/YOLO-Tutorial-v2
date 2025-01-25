@@ -63,7 +63,7 @@ class FcosBaseConfig(object):
         # ---------------- Lr Scheduler config ----------------
         self.warmup_iters = 500
         self.lr_scheduler = "cosine"
-        self.max_epoch    = 150
+        self.max_epoch    = 50
         self.eval_epoch   = 10
         self.no_aug_epoch = -1
 
