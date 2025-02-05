@@ -208,6 +208,6 @@ if __name__=='__main__':
         print("- Level-{} : anchor boxes     -> {}".format(level, anchors[level].shape))
 
     flops, params = profile(pred, inputs=(cls_feats, reg_feats, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))

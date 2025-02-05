@@ -16,8 +16,7 @@ pretrained_urls = {
 }
 
 
-# --------------------- Yolov3's Backbone -----------------------
-## Modified DarkNet
+# --------------------- Yolov5's Backbone (Modified CSPDarkNet) -----------------------
 class Yolov5Backbone(nn.Module):
     def __init__(self, cfg):
         super(Yolov5Backbone, self).__init__()
@@ -122,29 +121,32 @@ class Yolov5Backbone(nn.Module):
         return outputs
 
 
-if __name__ == '__main__':
-    import time
+if __name__=='__main__':
     from thop import profile
+
+    # YOLOv5 config
     class BaseConfig(object):
         def __init__(self) -> None:
-            self.width = 0.5
+            self.use_pretrained = True
+            self.width = 0.50
             self.depth = 0.34
             self.model_scale = "s"
-            self.use_pretrained = True
-
     cfg = BaseConfig()
+
+    # Build backbone
     model = Yolov5Backbone(cfg)
-    x = torch.randn(1, 3, 640, 640)
-    t0 = time.time()
+
+    # Randomly generate a input data
+    x = torch.randn(2, 3, 640, 640)
+
+    # Inference
     outputs = model(x)
-    t1 = time.time()
-    print('Time: ', t1 - t0)
+    print(' - the shape of input :  ', x.shape)
     for out in outputs:
-        print(out.shape)
+        print(' - the shape of output : ', out.shape)
 
     x = torch.randn(1, 3, 640, 640)
-    print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
-    print('==============================')
-    print('GFLOPs : {:.2f}'.format(flops / 1e9 * 2))
-    print('Params : {:.2f} M'.format(params / 1e6))
+    print('============== FLOPs & Params ================')
+    print(' - FLOPs  : {:.2f} G'.format(flops / 1e9 * 2))
+    print(' - Params : {:.2f} M'.format(params / 1e6))
