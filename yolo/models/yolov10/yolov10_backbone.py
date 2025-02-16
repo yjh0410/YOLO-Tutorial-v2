@@ -2,55 +2,88 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import Conv, ELANBlock, DownSample
+    from .modules import ConvModule, C2fBlock, SCDown, SPPF, PSABlock
 except:
-    from yolo.models.yolov10.modules import Conv, ELANBlock, DownSample
-    
-
-model_urls = {
-    "elannet_tiny": "https://github.com/yjh0410/image_classification_pytorch/releases/download/weight/yolov7_elannet_tiny.pth",
-    "elannet_large": "https://github.com/yjh0410/image_classification_pytorch/releases/download/weight/yolov7_elannet_large.pth",
-    "elannet_huge": "https://github.com/yjh0410/image_classification_pytorch/releases/download/weight/yolov7_elannet_huge.pth",
-}
+    from  modules import ConvModule, C2fBlock, SCDown, SPPF, PSABlock
 
 
-# --------------------- ELANNet -----------------------
-## ELANNet-Tiny
-class ELANNet_Tiny(nn.Module):
-    """
-    ELAN-Net of YOLOv7-Tiny.
-    """
-    def __init__(self, act_type='silu', norm_type='BN', depthwise=False):
-        super(ELANNet_Tiny, self).__init__()
-        # -------------- Basic parameters --------------
-        self.feat_dims = [32, 64, 128, 256, 512]
-        self.squeeze_ratios = [0.5, 0.5, 0.5, 0.5]   # Stage-1 -> Stage-4
-        self.branch_depths = [1, 1, 1, 1]            # Stage-1 -> Stage-4
+# ---------------------------- Basic functions ----------------------------
+class Yolov10Backbone(nn.Module):
+    def __init__(self, cfg):
+        super(Yolov10Backbone, self).__init__()
+        # ------------------ Basic setting ------------------
+        self.model_scale = cfg.model_scale
+        self.feat_dims = [round(64  * cfg.width),
+                          round(128 * cfg.width),
+                          round(256 * cfg.width),
+                          round(512 * cfg.width),
+                          round(512 * cfg.width * cfg.ratio)]
         
-        # -------------- Network parameters --------------
+        # ------------------ Network setting ------------------
         ## P1/2
-        self.layer_1 = Conv(3, self.feat_dims[0], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        ## P2/4: Stage-1
-        self.layer_2 = nn.Sequential(   
-            Conv(self.feat_dims[0], self.feat_dims[1], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise),             
-            ELANBlock(self.feat_dims[1], self.feat_dims[1], self.squeeze_ratios[0], self.branch_depths[0], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+        self.layer_1 = ConvModule(3, self.feat_dims[0], kernel_size=3, stride=2)
+        # P2/4
+        self.layer_2 = nn.Sequential(
+            ConvModule(self.feat_dims[0], self.feat_dims[1], kernel_size=3, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[1],
+                     out_dim    = self.feat_dims[1],
+                     num_blocks = round(3*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     use_cib    = False,
+                     )
         )
-        ## P3/8: Stage-2
+        # P3/8
         self.layer_3 = nn.Sequential(
-            nn.MaxPool2d((2, 2), 2),             
-            ELANBlock(self.feat_dims[1], self.feat_dims[2], self.squeeze_ratios[1], self.branch_depths[1], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+            ConvModule(self.feat_dims[1], self.feat_dims[2], kernel_size=3, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[2],
+                     out_dim    = self.feat_dims[2],
+                     num_blocks = round(6*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     use_cib    = False,
+                     )
         )
-        ## P4/16: Stage-3
+        # P4/16
         self.layer_4 = nn.Sequential(
-            nn.MaxPool2d((2, 2), 2),             
-            ELANBlock(self.feat_dims[2], self.feat_dims[3], self.squeeze_ratios[2], self.branch_depths[2], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+            SCDown(self.feat_dims[2], self.feat_dims[3], kernel_size=3, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[3],
+                     out_dim    = self.feat_dims[3],
+                     num_blocks = round(6*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     use_cib    = False,
+                     )
         )
-        ## P5/32: Stage-4
+        # P5/32
         self.layer_5 = nn.Sequential(
-            nn.MaxPool2d((2, 2), 2),             
-            ELANBlock(self.feat_dims[3], self.feat_dims[4], self.squeeze_ratios[3], self.branch_depths[3], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
+            SCDown(self.feat_dims[3], self.feat_dims[4], kernel_size=3, stride=2),
+            C2fBlock(in_dim     = self.feat_dims[4],
+                     out_dim    = self.feat_dims[4],
+                     num_blocks = round(3*cfg.depth),
+                     expansion  = 0.5,
+                     shortcut   = True,
+                     use_cib    = True if self.model_scale in "smlx" else False,
+                     )
         )
 
+        # Extra module (no pretrained weight)
+        self.layer_6 = SPPF(in_dim  = int(512 * cfg.width * cfg.ratio),
+                            out_dim = int(512 * cfg.width * cfg.ratio),
+                            )
+        self.layer_7 = PSABlock(in_dim  = int(512 * cfg.width * cfg.ratio),
+                                out_dim = int(512 * cfg.width * cfg.ratio),
+                                expansion = 0.5,
+                                )
+
+        # Initialize all layers
+        self.init_weights()
+                
+    def init_weights(self):
+        """Initialize the parameters."""
+        for m in self.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                m.reset_parameters()
 
     def forward(self, x):
         c1 = self.layer_1(x)
@@ -59,162 +92,41 @@ class ELANNet_Tiny(nn.Module):
         c4 = self.layer_4(c3)
         c5 = self.layer_5(c4)
 
-        outputs = [c3, c4, c5]
-
-        return outputs
-
-## ELANNet-Large
-class ELANNet_Lagre(nn.Module):
-    def __init__(self, act_type='silu', norm_type='BN', depthwise=False):
-        super(ELANNet_Lagre, self).__init__()
-        # -------------------- Basic parameters --------------------
-        self.feat_dims = [32, 64, 128, 256, 512, 1024, 1024]
-        self.squeeze_ratios = [0.5, 0.5, 0.5, 0.25]  # Stage-1 -> Stage-4
-        self.branch_depths = [2, 2, 2, 2]            # Stage-1 -> Stage-4
-
-        # -------------------- Network parameters --------------------
-        ## P1/2
-        self.layer_1 = nn.Sequential(
-            Conv(3, self.feat_dims[0], k=3, p=1, act_type=act_type, norm_type=norm_type, depthwise=depthwise),      
-            Conv(self.feat_dims[0], self.feat_dims[1], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            Conv(self.feat_dims[1], self.feat_dims[1], k=3, p=1, act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P2/4: Stage-1
-        self.layer_2 = nn.Sequential(   
-            Conv(self.feat_dims[1], self.feat_dims[2], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise),             
-            ELANBlock(self.feat_dims[2], self.feat_dims[3], self.squeeze_ratios[0], self.branch_depths[0], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P3/8: Stage-2
-        self.layer_3 = nn.Sequential(
-            DownSample(self.feat_dims[3], self.feat_dims[3], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[3], self.feat_dims[4], self.squeeze_ratios[1], self.branch_depths[1], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P4/16: Stage-3
-        self.layer_4 = nn.Sequential(
-            DownSample(self.feat_dims[4], self.feat_dims[4], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[4], self.feat_dims[5], self.squeeze_ratios[2], self.branch_depths[2], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P5/32: Stage-4
-        self.layer_5 = nn.Sequential(
-            DownSample(self.feat_dims[5], self.feat_dims[5], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[5], self.feat_dims[6], self.squeeze_ratios[3], self.branch_depths[3], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-
-
-    def forward(self, x):
-        c1 = self.layer_1(x)
-        c2 = self.layer_2(c1)
-        c3 = self.layer_3(c2)
-        c4 = self.layer_4(c3)
-        c5 = self.layer_5(c4)
+        c5 = self.layer_6(c5)
+        c5 = self.layer_7(c5)
 
         outputs = [c3, c4, c5]
 
         return outputs
-
-## ELANNet-Huge
-class ELANNet_Huge(nn.Module):
-    def __init__(self, act_type='silu', norm_type='BN', depthwise=False):
-        super(ELANNet_Huge, self).__init__()
-        # -------------------- Basic parameters --------------------
-        self.feat_dims = [40, 80, 160, 320, 640, 1280, 1280]
-        self.squeeze_ratios = [0.5, 0.5, 0.5, 0.25]  # Stage-1 -> Stage-4
-        self.branch_depths = [3, 3, 3, 3]            # Stage-1 -> Stage-4
-
-        # -------------------- Network parameters --------------------
-        ## P1/2
-        self.layer_1 = nn.Sequential(
-            Conv(3, self.feat_dims[0], k=3, p=1, act_type=act_type, norm_type=norm_type, depthwise=depthwise),      
-            Conv(self.feat_dims[0], self.feat_dims[1], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            Conv(self.feat_dims[1], self.feat_dims[1], k=3, p=1, act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P2/4: Stage-1
-        self.layer_2 = nn.Sequential(   
-            Conv(self.feat_dims[1], self.feat_dims[2], k=3, p=1, s=2, act_type=act_type, norm_type=norm_type, depthwise=depthwise),             
-            ELANBlock(self.feat_dims[2], self.feat_dims[3], self.squeeze_ratios[0], self.branch_depths[0], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P3/8: Stage-2
-        self.layer_3 = nn.Sequential(
-            DownSample(self.feat_dims[3], self.feat_dims[3], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[3], self.feat_dims[4], self.squeeze_ratios[1], self.branch_depths[1], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P4/16: Stage-3
-        self.layer_4 = nn.Sequential(
-            DownSample(self.feat_dims[4], self.feat_dims[4], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[4], self.feat_dims[5], self.squeeze_ratios[2], self.branch_depths[2], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-        ## P5/32: Stage-4
-        self.layer_5 = nn.Sequential(
-            DownSample(self.feat_dims[5], self.feat_dims[5], act_type=act_type, norm_type=norm_type, depthwise=depthwise),
-            ELANBlock(self.feat_dims[5], self.feat_dims[6], self.squeeze_ratios[3], self.branch_depths[3], act_type=act_type, norm_type=norm_type, depthwise=depthwise)
-        )
-
-
-    def forward(self, x):
-        c1 = self.layer_1(x)
-        c2 = self.layer_2(c1)
-        c3 = self.layer_3(c2)
-        c4 = self.layer_4(c3)
-        c5 = self.layer_5(c4)
-
-        outputs = [c3, c4, c5]
-
-        return outputs
-
-
-# --------------------- Functions -----------------------
-## build backbone
-def build_backbone(cfg, pretrained=False): 
-    # build backbone
-    if cfg['backbone'] == 'elannet_huge':
-        backbone = ELANNet_Huge(cfg['bk_act'], cfg['bk_norm'], cfg['bk_dpw'])
-    elif cfg['backbone'] == 'elannet_large':
-        backbone = ELANNet_Lagre(cfg['bk_act'], cfg['bk_norm'], cfg['bk_dpw'])
-    elif cfg['backbone'] == 'elannet_tiny':
-        backbone = ELANNet_Tiny(cfg['bk_act'], cfg['bk_norm'], cfg['bk_dpw'])
-    # pyramid feat dims
-    feat_dims = backbone.feat_dims[-3:]
-
-    # load imagenet pretrained weight
-    if pretrained:
-        url = model_urls[cfg['backbone']]
-        if url is not None:
-            print('Loading pretrained weight for {}.'.format(cfg['backbone'].upper()))
-            checkpoint = torch.hub.load_state_dict_from_url(
-                url=url, map_location="cpu", check_hash=True)
-            # checkpoint state dict
-            checkpoint_state_dict = checkpoint.pop("model")
-            # model state dict
-            model_state_dict = backbone.state_dict()
-            # check
-            for k in list(checkpoint_state_dict.keys()):
-                if k in model_state_dict:
-                    shape_model = tuple(model_state_dict[k].shape)
-                    shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
-                    if shape_model != shape_checkpoint:
-                        checkpoint_state_dict.pop(k)
-                else:
-                    checkpoint_state_dict.pop(k)
-                    print('Unused key: ', k)
-
-            backbone.load_state_dict(checkpoint_state_dict)
-        else:
-            print('No backbone pretrained: ELANNet')        
-
-    return backbone, feat_dims
 
 
 if __name__ == '__main__':
     import time
     from thop import profile
-    cfg = {
-        'pretrained': False,
-        'backbone': 'elannet_tiny',
-        'bk_act': 'silu',
-        'bk_norm': 'BN',
-        'bk_dpw': False,
-    }
-    model, feats = build_backbone(cfg)
+    class BaseConfig(object):
+        def __init__(self) -> None:
+            self.width = 0.25
+            self.depth = 0.34
+            self.ratio = 2.0
+            self.model_scale = "n"
+
+            self.width = 0.50
+            self.depth = 0.34
+            self.ratio = 2.0
+            self.model_scale = "s"
+
+            self.width = 0.75
+            self.depth = 0.67
+            self.ratio = 1.5
+            self.model_scale = "m"
+
+            self.width = 1.0
+            self.depth = 1.0
+            self.ratio = 1.0
+            self.model_scale = "l"
+
+    cfg = BaseConfig()
+    model = Yolov10Backbone(cfg)
     x = torch.randn(1, 3, 640, 640)
     t0 = time.time()
     outputs = model(x)
@@ -223,6 +135,7 @@ if __name__ == '__main__':
     for out in outputs:
         print(out.shape)
 
+    x = torch.randn(1, 3, 640, 640)
     print('==============================')
     flops, params = profile(model, inputs=(x, ), verbose=False)
     print('==============================')

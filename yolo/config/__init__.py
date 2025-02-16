@@ -9,6 +9,7 @@ from .yolov6_config  import build_yolov6_config
 from .yolov7_config  import build_yolov7_config
 from .yolov8_config  import build_yolov8_config
 from .yolov9_config  import build_yolov9_config
+from .yolov10_config  import build_yolov10_config
 from .yolo11_config  import build_yolo11_config
 
 from .yolof_config   import build_yolof_config
@@ -40,6 +41,8 @@ def build_config(args):
         cfg = build_yolov8_config(args)
     elif 'yolov9' in args.model:
         cfg = build_yolov9_config(args)
+    elif 'yolov10' in args.model:
+        cfg = build_yolov10_config(args)
     elif 'yolo11' in args.model:
         cfg = build_yolo11_config(args)
         
