@@ -73,4 +73,3 @@ class CSPBlock(nn.Module):
         out = self.conv_layer_3(torch.cat([x1, x2], dim=1))
 
         return out
-    

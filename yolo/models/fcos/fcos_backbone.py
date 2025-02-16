@@ -7,7 +7,7 @@ except:
     from  resnet import build_resnet
 
 
-# --------------------- Yolov1's Backbone -----------------------
+# --------------------- FCOS's Backbone -----------------------
 class FcosBackbone(nn.Module):
     def __init__(self, cfg):
         super().__init__()
