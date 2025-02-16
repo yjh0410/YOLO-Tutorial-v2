@@ -37,7 +37,7 @@ class Yolov10PaFPN(nn.Module):
                                          )
         # ----------------------------- Yolov10's Bottom-up PAN -----------------------------
         ## P3 -> P4
-        self.dowmsample_layer_1 = SCDown(round(256*cfg.width), round(256*cfg.width), kernel_size=3, stride=2)
+        self.dowmsample_layer_1 = ConvModule(round(256*cfg.width), round(256*cfg.width), kernel_size=3, stride=2)
         self.bottom_up_layer_1 = C2fBlock(in_dim     = round(256*cfg.width) + round(512*cfg.width),
                                           out_dim    = round(512*cfg.width),
                                           expansion  = 0.5,
