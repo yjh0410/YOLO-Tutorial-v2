@@ -24,7 +24,9 @@ from .rtdetr.build import build_rtdetr
 def build_model(args, cfg, is_val=False):
     # ------------ build object detector ------------
     ## Modified YOLOv1
-    if   'yolov1' in args.model:
+    if   'yolov10' in args.model:
+        model, criterion = build_yolov10(cfg, is_val)
+    elif 'yolov1' in args.model:
         model, criterion = build_yolov1(cfg, is_val)
     ## Modified YOLOv2
     elif 'yolov2' in args.model:
@@ -53,10 +55,6 @@ def build_model(args, cfg, is_val=False):
     ## GElan
     elif 'yolov9' in args.model:
         model, criterion = build_gelan(cfg, is_val)
-    ## YOLOv10
-    elif 'yolov10' in args.model:
-        model, criterion = build_yolov10(cfg, is_val)
-
     ## YOLO11
     elif 'yolo11' in args.model:
         model, criterion = build_yolo11(cfg, is_val)

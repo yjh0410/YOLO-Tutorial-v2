@@ -25,7 +25,7 @@ class Yolov10PaFPN(nn.Module):
                                          expansion  = 0.5,
                                          num_blocks = round(3 * cfg.depth),
                                          shortcut   = False,
-                                         use_cib    = True if self.model_scale in "mlx" else False
+                                         use_cib    = True if self.model_scale in "lx" else False
                                          )
         ## P4 -> P3
         self.top_down_layer_2 = C2fBlock(in_dim     = self.in_dims[2] + round(512*cfg.width),
@@ -52,7 +52,7 @@ class Yolov10PaFPN(nn.Module):
                                           expansion  = 0.5,
                                           num_blocks = round(3 * cfg.depth),
                                           shortcut   = False,
-                                          use_cib    = True if self.model_scale in "mlx" else False
+                                          use_cib    = True
                                           )
 
         self.init_weights()

@@ -21,7 +21,9 @@ def build_config(args):
     print('==============================')
     print('Model: {} ...'.format(args.model.upper()))
     # ----------- YOLO series -----------
-    if   'yolov1' in args.model:
+    if   'yolov10' in args.model:
+        cfg = build_yolov10_config(args)
+    elif 'yolov1' in args.model:
         cfg = build_yolov1_config(args)
     elif 'yolov2' in args.model:
         cfg = build_yolov2_config(args)
