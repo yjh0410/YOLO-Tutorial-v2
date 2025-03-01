@@ -116,7 +116,7 @@ class Yolov10NConfig(Yolov10BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv10-S
 class Yolov10SConfig(Yolov10BaseConfig):
@@ -131,7 +131,7 @@ class Yolov10SConfig(Yolov10BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv10-M
 class Yolov10MConfig(Yolov10BaseConfig):
@@ -146,7 +146,7 @@ class Yolov10MConfig(Yolov10BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv10-L
 class Yolov10LConfig(Yolov10BaseConfig):
@@ -161,7 +161,7 @@ class Yolov10LConfig(Yolov10BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv10-X
 class Yolov10XConfig(Yolov10BaseConfig):
@@ -176,4 +176,4 @@ class Yolov10XConfig(Yolov10BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0

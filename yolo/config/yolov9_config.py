@@ -129,7 +129,7 @@ class GElanCConfig(GElanBaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # GELAN-S
 class GElanSConfig(GElanBaseConfig):
@@ -164,7 +164,7 @@ class GElanSConfig(GElanBaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5           # approximated by the YOLOX's mixup
+        self.copy_paste  = 0.0           # approximated by the YOLOX's mixup
 
     def print_config(self):
         config_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('__')}

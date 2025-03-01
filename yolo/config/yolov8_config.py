@@ -119,7 +119,7 @@ class Yolov8NConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv8-S
 class Yolov8SConfig(Yolov8BaseConfig):
@@ -134,7 +134,7 @@ class Yolov8SConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.0
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv8-M
 class Yolov8MConfig(Yolov8BaseConfig):
@@ -149,7 +149,7 @@ class Yolov8MConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv8-L
 class Yolov8LConfig(Yolov8BaseConfig):
@@ -164,7 +164,7 @@ class Yolov8LConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
 
 # YOLOv8-X
 class Yolov8XConfig(Yolov8BaseConfig):
@@ -179,4 +179,4 @@ class Yolov8XConfig(Yolov8BaseConfig):
         # ---------------- Data process config ----------------
         self.mosaic_prob = 1.0
         self.mixup_prob  = 0.1
-        self.copy_paste  = 0.5
+        self.copy_paste  = 0.0
