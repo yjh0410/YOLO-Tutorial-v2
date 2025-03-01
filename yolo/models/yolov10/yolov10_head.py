@@ -118,7 +118,7 @@ class Yolov10DetHead(nn.Module):
                    "pred_reg":       reg_preds,        # List(Tensor) [B, M, 4*(reg_max)]
                    "pred_box":       box_preds,        # List(Tensor) [B, M, 4]
                    "anchors":        anchors,          # List(Tensor) [M, 2]
-                   "stride_tensors": strides,          # List(Tensor) [M, 1]
+                   "stride_tensor": strides,          # List(Tensor) [M, 1]
                    "strides":        self.out_stride,  # List(Int) = [8, 16, 32]
                    }
 
