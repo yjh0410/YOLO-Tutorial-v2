@@ -32,11 +32,12 @@ class Yolov10(nn.Module):
         ## Backbone
         self.backbone = Yolov10Backbone(cfg)
         self.pyramid_feat_dims = self.backbone.feat_dims[-3:]
-        ## Neck: PaFPN
+
+        ## PaFPN
         self.fpn = Yolov10PaFPN(cfg, self.backbone.feat_dims)
+
         ## Head
         self.head = Yolov10DetHead(cfg, self.fpn.out_dims)
-        ## Pred
         self.pred = Yolov10DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
 
     def post_process(self, cls_preds, box_preds):
@@ -120,10 +121,8 @@ class Yolov10(nn.Module):
     def forward(self, x):
         # ---------------- Backbone ----------------
         pyramid_feats = self.backbone(x)
-        # ---------------- Neck: SPP ----------------
-        pyramid_feats[-1] = self.neck(pyramid_feats[-1])
 
-        # ---------------- Neck: PaFPN ----------------
+        # ---------------- PaFPN ----------------
         pyramid_feats = self.fpn(pyramid_feats)
 
         # ---------------- Heads ----------------
