@@ -33,7 +33,7 @@ class DetHead(nn.Module):
                 cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=1))
             else:
                 cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, stride=1, groups=self.cls_head_dim))
-                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, stride=1))
+                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=1))
         
         ## bbox regression head
         reg_feats = []
