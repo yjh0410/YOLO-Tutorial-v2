@@ -30,19 +30,19 @@ class DetHead(nn.Module):
         for i in range(num_cls_head):
             if i == 0:
                 cls_feats.append(ConvModule(in_dim, in_dim, kernel_size=3, stride=1, groups=in_dim))
-                cls_feats.append(ConvModule(in_dim, self.cls_head_dim, kernel_size=1))
+                cls_feats.append(ConvModule(in_dim, cls_head_dim, kernel_size=1))
             else:
-                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=3, stride=1, groups=self.cls_head_dim))
-                cls_feats.append(ConvModule(self.cls_head_dim, self.cls_head_dim, kernel_size=1))
+                cls_feats.append(ConvModule(cls_head_dim, cls_head_dim, kernel_size=3, stride=1, groups=cls_head_dim))
+                cls_feats.append(ConvModule(cls_head_dim, cls_head_dim, kernel_size=1))
         
         ## bbox regression head
         reg_feats = []
         self.reg_head_dim = reg_head_dim
         for i in range(num_reg_head):
             if i == 0:
-                reg_feats.append(ConvModule(in_dim, self.reg_head_dim, kernel_size=3, stride=1))
+                reg_feats.append(ConvModule(in_dim, reg_head_dim, kernel_size=3, stride=1))
             else:
-                reg_feats.append(ConvModule(self.reg_head_dim, self.reg_head_dim, kernel_size=3, stride=1))
+                reg_feats.append(ConvModule(reg_head_dim, reg_head_dim, kernel_size=3, stride=1))
         
         self.cls_feats = nn.Sequential(*cls_feats)
         self.reg_feats = nn.Sequential(*reg_feats)
