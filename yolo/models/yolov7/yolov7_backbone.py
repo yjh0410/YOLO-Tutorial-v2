@@ -11,7 +11,7 @@ in1k_pretrained_urls = {
     "elannet_large": "https://github.com/yjh0410/image_classification_pytorch/releases/download/weight/yolov7_elannet_large.pth",
 }
 
-# --------------------- Yolov7 backbone (CSPDarkNet-53 with SiLU) -----------------------
+# --------------------- Yolov7 backbone -----------------------
 class Yolov7Backbone(nn.Module):
     def __init__(self, use_pretrained: bool = False):
         super(Yolov7Backbone, self).__init__()
@@ -30,22 +30,38 @@ class Yolov7Backbone(nn.Module):
         ## P2/4: Stage-1
         self.layer_2 = nn.Sequential(   
             ConvModule(self.feat_dims[1], self.feat_dims[2], kernel_size=3, stride=2),             
-            ELANBlock(self.feat_dims[2], self.feat_dims[3], self.squeeze_ratios[0], self.branch_depths[0])
+            ELANBlock(in_dim = self.feat_dims[2],
+                      out_dim = self.feat_dims[3],
+                      expansion = self.squeeze_ratios[0],
+                      branch_depth = self.branch_depths[0],
+                      )
         )
         ## P3/8: Stage-2
         self.layer_3 = nn.Sequential(
             DownSample(self.feat_dims[3], self.feat_dims[3]),
-            ELANBlock(self.feat_dims[3], self.feat_dims[4], self.squeeze_ratios[1], self.branch_depths[1])
+            ELANBlock(in_dim = self.feat_dims[3],
+                      out_dim = self.feat_dims[4],
+                      expansion = self.squeeze_ratios[1],
+                      branch_depth = self.branch_depths[1],
+                      )
         )
         ## P4/16: Stage-3
         self.layer_4 = nn.Sequential(
             DownSample(self.feat_dims[4], self.feat_dims[4]),
-            ELANBlock(self.feat_dims[4], self.feat_dims[5], self.squeeze_ratios[2], self.branch_depths[2])
+            ELANBlock(in_dim = self.feat_dims[4],
+                      out_dim = self.feat_dims[5],
+                      expansion = self.squeeze_ratios[2],
+                      branch_depth = self.branch_depths[2],
+                      )
         )
         ## P5/32: Stage-4
         self.layer_5 = nn.Sequential(
             DownSample(self.feat_dims[5], self.feat_dims[5]),
-            ELANBlock(self.feat_dims[5], self.feat_dims[6], self.squeeze_ratios[3], self.branch_depths[3])
+            ELANBlock(in_dim = self.feat_dims[5],
+                      out_dim = self.feat_dims[6],
+                      expansion = self.squeeze_ratios[3],
+                      branch_depth = self.branch_depths[3],
+                      )
         )
 
         # Initialize all layers

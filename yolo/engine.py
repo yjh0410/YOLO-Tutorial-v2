@@ -163,7 +163,7 @@ class YoloTrainer(object):
         metric_logger.add_meter('gnorm', SmoothedValue(window_size=1, fmt='{value:.1f}'))
         header = 'Epoch: [{} / {}]'.format(self.epoch, self.cfg.max_epoch)
         epoch_size = len(self.train_loader)
-        print_freq = 10
+        print_freq = 100
         gnorm = 0.0
 
         # basic parameters
