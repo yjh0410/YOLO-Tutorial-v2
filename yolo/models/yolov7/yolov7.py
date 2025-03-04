@@ -30,7 +30,7 @@ class Yolov7(nn.Module):
         
         # ------------------- Network Structure -------------------
         self.backbone = Yolov7Backbone(use_pretrained=cfg.use_pretrained)
-        self.neck     = SPPFBlockCSP(self.backbone.feat_dims[-1], self.backbone.feat_dims[-1] // 2, expand_ratio=0.5)
+        self.neck     = SPPFBlockCSP(self.backbone.feat_dims[-1], self.backbone.feat_dims[-1] // 2, expansion=0.5)
         self.backbone.feat_dims[-1] = self.backbone.feat_dims[-1] // 2
         self.fpn      = Yolov7PaFPN(self.backbone.feat_dims[-3:], head_dim=cfg.head_dim)
         self.non_shared_heads = nn.ModuleList([DecoupledHead(cfg, in_dim)
