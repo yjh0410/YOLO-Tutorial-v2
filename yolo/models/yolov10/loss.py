@@ -175,7 +175,10 @@ class SetCriterion(object):
         return loss_dict
 
     def __call__(self, outputs, targets):
+        self.matcher.topk_candidates = 1
         loss_o2o = self.compute_loss(outputs["outputs_o2o"], targets)
+
+        self.matcher.topk_candidates = self.cfg.tal_topk_candidates
         loss_o2m = self.compute_loss(outputs["outputs_o2m"], targets)
 
         loss_dict = {}
