@@ -34,10 +34,10 @@ class Yolov10BaseConfig(object):
 
         # ---------------- Post-process config ----------------
         ## Post process
-        self.val_topk = 1000
-        self.val_conf_thresh = 0.001
+        self.val_topk = 100   # per level
+        self.val_conf_thresh = 0.2
         self.val_nms_thresh  = 0.7
-        self.test_topk = 100
+        self.test_topk = 100  # per level
         self.test_conf_thresh = 0.2
         self.test_nms_thresh  = 0.5
 
