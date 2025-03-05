@@ -1,4 +1,5 @@
 # --------------- Torch components ---------------
+import copy
 import torch
 import torch.nn as nn
 
@@ -37,8 +38,11 @@ class Yolov10(nn.Module):
         self.fpn = Yolov10PaFPN(cfg, self.backbone.feat_dims)
 
         ## Head
-        self.head = Yolov10DetHead(cfg, self.fpn.out_dims)
-        self.pred = Yolov10DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+        self.head_o2m = Yolov10DetHead(cfg, self.fpn.out_dims)
+        self.pred_o2m = Yolov10DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+
+        self.head_o2o = copy.deepcopy(self.head_o2m)
+        self.pred_o2o = copy.deepcopy(self.pred_o2m)
 
     def post_process(self, cls_preds, box_preds):
         """
@@ -125,16 +129,15 @@ class Yolov10(nn.Module):
         # ---------------- PaFPN ----------------
         pyramid_feats = self.fpn(pyramid_feats)
 
-        # ---------------- Heads ----------------
-        cls_feats, reg_feats = self.head(pyramid_feats)
-
-        # ---------------- Preds ----------------
-        outputs = self.pred(cls_feats, reg_feats)
-        outputs['image_size'] = [x.shape[2], x.shape[3]]
+        # ---------------- Heads (one-to-one) ----------------
+        pyramid_feats_detach = [feat.detach() for feat in pyramid_feats]
+        cls_feats, reg_feats = self.head_o2o(pyramid_feats_detach)
+        outputs_o2o = self.pred_o2o(cls_feats, reg_feats)
+        outputs_o2o['image_size'] = [x.shape[2], x.shape[3]]
 
         if not self.training:
-            all_cls_preds = outputs['pred_cls']
-            all_box_preds = outputs['pred_box']
+            all_cls_preds = outputs_o2o['pred_cls']
+            all_box_preds = outputs_o2o['pred_box']
 
             # post process
             bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
@@ -143,5 +146,16 @@ class Yolov10(nn.Module):
                 "labels": labels,
                 "bboxes": bboxes
             }
-        
+        else:
+            # ---------------- Heads (one-to-many) ----------------
+            cls_feats, reg_feats = self.head_o2m(pyramid_feats)
+            outputs_o2m = self.pred_o2m(cls_feats, reg_feats)
+            outputs_o2m['image_size'] = [x.shape[2], x.shape[3]]
+
+            outputs = {
+                "outputs_o2o": outputs_o2o,
+                "outputs_o2m": outputs_o2m,
+            }
+            
+
         return outputs 

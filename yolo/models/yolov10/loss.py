@@ -70,7 +70,7 @@ class SetCriterion(object):
 
         return loss_dfl
 
-    def __call__(self, outputs, targets):        
+    def compute_loss(self, outputs, targets):        
         """
             outputs['pred_cls']: List(Tensor) [B, M, C]
             outputs['pred_reg']: List(Tensor) [B, M, 4*(reg_max+1)]
@@ -173,7 +173,22 @@ class SetCriterion(object):
         )
 
         return loss_dict
-    
+
+    def __call__(self, outputs, targets):
+        loss_o2o = self.compute_loss(outputs["outputs_o2o"], targets)
+        loss_o2m = self.compute_loss(outputs["outputs_o2m"], targets)
+
+        loss_dict = {}
+        for k in loss_o2o:
+            loss_dict[k+"_o2o"] = loss_o2o[k]
+
+        for k in loss_o2m:
+            loss_dict[k+"_o2m"] = loss_o2m[k]
+
+        loss_dict["losses"] = loss_o2o["losses"] + loss_o2m["losses"]
+
+        return loss_dict
+
 
 if __name__ == "__main__":
     pass
