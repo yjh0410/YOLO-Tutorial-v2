@@ -120,6 +120,11 @@ class Yolov10(nn.Module):
         scores, labels, bboxes = multiclass_nms(
             scores, labels, bboxes, self.nms_thresh, self.num_classes)
         
+        # keep top-300 results
+        scores = scores[:300]
+        bboxes = bboxes[:300]
+        labels = labels[:300]
+        
         return bboxes, scores, labels
     
     def forward(self, x):
