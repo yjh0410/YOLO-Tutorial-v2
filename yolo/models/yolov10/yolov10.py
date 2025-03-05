@@ -39,7 +39,7 @@ class Yolov10(nn.Module):
 
         ## Head
         self.head_o2m = Yolov10DetHead(cfg, self.fpn.out_dims)
-        self.pred_o2m = Yolov10DetPredLayer(cfg, self.head.cls_head_dim, self.head.reg_head_dim)
+        self.pred_o2m = Yolov10DetPredLayer(cfg, self.head_o2m.cls_head_dim, self.head_o2m.reg_head_dim)
 
         self.head_o2o = copy.deepcopy(self.head_o2m)
         self.pred_o2o = copy.deepcopy(self.pred_o2m)
@@ -116,9 +116,9 @@ class Yolov10(nn.Module):
         labels = labels.cpu().numpy()
         bboxes = bboxes.cpu().numpy()
 
-        # nms
-        scores, labels, bboxes = multiclass_nms(
-            scores, labels, bboxes, self.nms_thresh, self.num_classes)
+        # # nms
+        # scores, labels, bboxes = multiclass_nms(
+        #     scores, labels, bboxes, self.nms_thresh, self.num_classes)
         
         # keep top-300 results
         scores = scores[:300]
