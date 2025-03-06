@@ -15,7 +15,9 @@ class Yolov8PaFPN(nn.Module):
         super(Yolov8PaFPN, self).__init__()
         # --------------------------- Basic Parameters ---------------------------
         self.in_dims = in_dims[::-1]
-        self.out_dims = [round(256*cfg.width), round(512*cfg.width), round(512*cfg.width*cfg.ratio)]
+        self.out_dims = [round(256*cfg.width),
+                         round(512*cfg.width),
+                         round(512*cfg.width*cfg.ratio)]
 
         # ----------------------------- Yolov8's Top-down FPN -----------------------------
         ## P5 -> P4
