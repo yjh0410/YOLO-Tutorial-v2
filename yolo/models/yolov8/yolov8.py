@@ -121,7 +121,7 @@ class Yolov8(nn.Module):
         
         return bboxes, scores, labels
     
-    def forward(self, x):
+    def forward(self, x, deploy=True):
         # ---------------- Backbone ----------------
         pyramid_feats = self.backbone(x)
         # ---------------- Neck: SPP ----------------
@@ -141,12 +141,18 @@ class Yolov8(nn.Module):
             all_cls_preds = outputs['pred_cls']
             all_box_preds = outputs['pred_box']
 
-            # post process
-            bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
-            outputs = {
-                "scores": scores,
-                "labels": labels,
-                "bboxes": bboxes
-            }
+            if deploy:
+                cls_preds = torch.cat(all_cls_preds, dim=1)[0]
+                box_preds = torch.cat(all_box_preds, dim=1)[0]
+                outputs = torch.cat([box_preds, cls_preds.sigmoid()], dim=-1)
+                
+            else:
+                # post process
+                bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
+                outputs = {
+                    "scores": scores,
+                    "labels": labels,
+                    "bboxes": bboxes
+                }
         
         return outputs 
