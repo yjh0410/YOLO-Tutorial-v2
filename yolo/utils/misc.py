@@ -368,7 +368,7 @@ def load_weight(model, path_to_ckpt, fuse_cbn=False):
     if fuse_cbn:
         print('Fusing Conv & BN ...')
         model = fuse_conv_bn(model)
-
+    
     return model
 
 ## Model EMA

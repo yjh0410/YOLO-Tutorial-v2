@@ -13,11 +13,12 @@ class ConvModule(nn.Module):
                  padding=0,     # padding
                  stride=1,      # padding
                  groups=1,      # groups
+                 use_act = True,
                 ):
         super(ConvModule, self).__init__()
         self.conv = nn.Conv2d(in_dim, out_dim, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups, bias=False)
         self.norm = nn.BatchNorm2d(out_dim)
-        self.act  = nn.SiLU(inplace=True)
+        self.act  = nn.SiLU(inplace=True) if use_act else nn.Identity()
 
     def forward(self, x):
         return self.act(self.norm(self.conv(x)))
@@ -52,8 +53,8 @@ class RepConvN(nn.Module):
         self.act = nn.SiLU(inplace=True)
 
         self.bn = None
-        self.conv1 = ConvModule(in_dim, out_dim, kernel_size=k, padding=p, stride=s)
-        self.conv2 = ConvModule(in_dim, out_dim, kernel_size=1, padding=(p - k // 2), stride=s)
+        self.conv1 = ConvModule(in_dim, out_dim, kernel_size=k, padding=p, stride=s, use_act=False)
+        self.conv2 = ConvModule(in_dim, out_dim, kernel_size=1, padding=(p - k // 2), stride=s, use_act=False)
 
     def forward(self, x):
         """Forward process"""
