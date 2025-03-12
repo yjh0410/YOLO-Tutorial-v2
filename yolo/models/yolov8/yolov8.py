@@ -141,18 +141,12 @@ class Yolov8(nn.Module):
             all_cls_preds = outputs['pred_cls']
             all_box_preds = outputs['pred_box']
 
-            if deploy:
-                cls_preds = torch.cat(all_cls_preds, dim=1)[0]
-                box_preds = torch.cat(all_box_preds, dim=1)[0]
-                outputs = torch.cat([box_preds, cls_preds.sigmoid()], dim=-1)
-                
-            else:
-                # post process
-                bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
-                outputs = {
-                    "scores": scores,
-                    "labels": labels,
-                    "bboxes": bboxes
-                }
+            # post process
+            bboxes, scores, labels = self.post_process(all_cls_preds, all_box_preds)
+            outputs = {
+                "scores": scores,
+                "labels": labels,
+                "bboxes": bboxes
+            }
         
         return outputs 
