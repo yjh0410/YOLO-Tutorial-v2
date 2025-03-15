@@ -9,9 +9,6 @@ from .yolov10_pafpn    import Yolov10PaFPN
 from .yolov10_head     import Yolov10DetHead
 from .yolov10_pred     import Yolov10DetPredLayer
 
-# --------------- External components ---------------
-from utils.misc import multiclass_nms
-
 
 # YOLOv10
 class Yolov10(nn.Module):
@@ -115,10 +112,6 @@ class Yolov10(nn.Module):
         scores = scores.cpu().numpy()
         labels = labels.cpu().numpy()
         bboxes = bboxes.cpu().numpy()
-
-        # # nms
-        # scores, labels, bboxes = multiclass_nms(
-        #     scores, labels, bboxes, self.nms_thresh, self.num_classes)
         
         # keep top-300 results
         scores = scores[:300]
