@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 try:
-    from .modules import ConvModule, YoloStage, SPPF, C2PSA
+    from .modules import ConvModule, C3k2fBlock, SPPF, C2PSA
 except:
-    from  modules import ConvModule, YoloStage, SPPF, C2PSA
+    from  modules import ConvModule, C3k2fBlock, SPPF, C2PSA
 
 
 # ---------------------------- YOLO11 Backbone ----------------------------
@@ -21,46 +21,46 @@ class Yolo11Backbone(nn.Module):
         # P2/4
         self.layer_2 = nn.Sequential(
             ConvModule(int(64 * cfg.width), int(128 * cfg.width), kernel_size=3, stride=2),
-            YoloStage(in_dim     = int(128 * cfg.width),
-                      out_dim    = int(256 * cfg.width),
-                      num_blocks = round(2*cfg.depth),
-                      shortcut   = True,
-                      expansion  = 0.25,
-                      use_c3k    = False if self.model_scale in "ns" else True,
-                      )
+            C3k2fBlock(in_dim     = int(128 * cfg.width),
+                       out_dim    = int(256 * cfg.width),
+                       num_blocks = round(2*cfg.depth),
+                       shortcut   = True,
+                       expansion  = 0.25,
+                       use_c3k    = False if self.model_scale in "ns" else True,
+                       )
         )
         # P3/8
         self.layer_3 = nn.Sequential(
             ConvModule(int(256 * cfg.width), int(256 * cfg.width), kernel_size=3, stride=2),
-            YoloStage(in_dim     = int(256 * cfg.width),
-                      out_dim    = int(512 * cfg.width),
-                      num_blocks = round(2*cfg.depth),
-                      shortcut   = True,
-                      expansion  = 0.25,
-                      use_c3k    = False if self.model_scale in "ns" else True,
-                      )
+            C3k2fBlock(in_dim     = int(256 * cfg.width),
+                       out_dim    = int(512 * cfg.width),
+                       num_blocks = round(2*cfg.depth),
+                       shortcut   = True,
+                       expansion  = 0.25,
+                       use_c3k    = False if self.model_scale in "ns" else True,
+                       )
         )
         # P4/16
         self.layer_4 = nn.Sequential(
             ConvModule(int(512 * cfg.width), int(512 * cfg.width), kernel_size=3, stride=2),
-            YoloStage(in_dim     = int(512 * cfg.width),
-                      out_dim    = int(512 * cfg.width),
-                      num_blocks = round(2*cfg.depth),
-                      shortcut   = True,
-                      expansion  = 0.5,
-                      use_c3k    = True,
-                      )
+            C3k2fBlock(in_dim     = int(512 * cfg.width),
+                       out_dim    = int(512 * cfg.width),
+                       num_blocks = round(2*cfg.depth),
+                       shortcut   = True,
+                       expansion  = 0.5,
+                       use_c3k    = True,
+                       )
         )
         # P5/32
         self.layer_5 = nn.Sequential(
             ConvModule(int(512 * cfg.width), int(512 * cfg.width * cfg.ratio), kernel_size=3, stride=2),
-            YoloStage(in_dim     = int(512 * cfg.width * cfg.ratio),
-                      out_dim    = int(512 * cfg.width * cfg.ratio),
-                      num_blocks = round(2*cfg.depth),
-                      shortcut   = True,
-                      expansion  = 0.5,
-                      use_c3k    = True,
-                      )
+            C3k2fBlock(in_dim     = int(512 * cfg.width * cfg.ratio),
+                       out_dim    = int(512 * cfg.width * cfg.ratio),
+                       num_blocks = round(2*cfg.depth),
+                       shortcut   = True,
+                       expansion  = 0.5,
+                       use_c3k    = True,
+                       )
         )
         # Extra module (no pretrained weight)
         self.layer_6 = SPPF(in_dim  = int(512 * cfg.width * cfg.ratio),

@@ -150,7 +150,7 @@ class C2PSA(nn.Module):
 
 
 # ----------------- YOLO11 components -----------------
-class YoloStage(nn.Module):
+class C3k2fBlock(nn.Module):
     def __init__(self, in_dim, out_dim, num_blocks=1, use_c3k=True, expansion=0.5, shortcut=True):
         super().__init__()
         inter_dim = int(out_dim * expansion)  # hidden channels
