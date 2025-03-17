@@ -151,7 +151,8 @@ class C2PSA(nn.Module):
 
 # ----------------- YOLO11 components -----------------
 class C3k2fBlock(nn.Module):
-    def __init__(self, in_dim, out_dim, num_blocks=1, use_c3k=True, expansion=0.5, shortcut=True):
+    def __init__(self, in_dim: int, out_dim: int, num_blocks: int = 1,
+                 use_c3k: bool = True, expansion: float = 0.5, shortcut: bool = True):
         super().__init__()
         inter_dim = int(out_dim * expansion)  # hidden channels
         self.cv1 = ConvModule(in_dim, 2 * inter_dim, kernel_size=1)
@@ -159,12 +160,12 @@ class C3k2fBlock(nn.Module):
 
         if use_c3k:
             self.m = nn.ModuleList(
-                C3kBlock(inter_dim, inter_dim, 2, shortcut)
+                C3kBlock(inter_dim, inter_dim, num_blocks=2, shortcut=shortcut)
                 for _ in range(num_blocks)
             )
         else:
             self.m = nn.ModuleList(
-                Bottleneck(inter_dim, inter_dim, [3, 3], shortcut, expansion=0.5)
+                Bottleneck(inter_dim, inter_dim, kernel_size=[3, 3], shortcut=shortcut, expansion=0.5)
                 for _ in range(num_blocks)
             )
 
