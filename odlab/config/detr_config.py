@@ -34,7 +34,7 @@ class DetrBaseConfig(object):
         self.train_topk = 300
         self.train_conf_thresh = 0.05
         self.test_topk = 300
-        self.test_conf_thresh = 0.3
+        self.test_conf_thresh = 0.5
 
         # --------- Label Assignment ---------
         self.matcher_hpy = {'cost_class': 1.0,
