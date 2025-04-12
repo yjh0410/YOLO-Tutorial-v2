@@ -32,6 +32,13 @@ python setup_ms_deformable_attn_op.py install
 如果你的设备不支持2.x版本的torch，可以自行安装其他版本的，确保torch版本是在1.0以上即可。
 
 ## 实验内容
+准备VOC数据集有两种方法，第一种是从百度网盘链接中直接下载已处理成COCO格式的VOC数据集文件，下载链接如下：
+
+- COCO格式的VOC数据集文件：通过网盘分享的文件：[VOC0712.zip](https://pan.baidu.com/s/1mD96yO96bPwBeZo7U72CWA)
+- 提取码：p426
+
+第二种是参考下面的做法来手动处理，不推荐。
+
 ### 准备 VOC 数据
 - 下载VOC2007 和VOC2012数据.
 ```Shell
