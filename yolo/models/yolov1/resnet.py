@@ -101,7 +101,7 @@ def build_resnet(model_name="resnet18", pretrained=False):
         model = resnet50(pretrained)
         feat_dim = 2048
     elif model_name == 'resnet101':
-        model = resnet34(pretrained)
+        model = resnet101(pretrained)
         feat_dim = 2048
     else:
         raise NotImplementedError("Unknown resnet: {}".format(model_name))
